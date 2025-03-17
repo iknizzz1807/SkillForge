@@ -27,7 +27,7 @@ export const actions = {
     const data = await request.formData();
     const email = data.get("email");
     const password = data.get("password");
-    const redirectTo = data.get("redirectTo") || "/dashboard";
+    const redirectTo = (data.get("redirectTo") as string) || "/dashboard";
 
     if (!email || !password) {
       return fail(400, {
@@ -70,7 +70,20 @@ export const actions = {
       });
 
       // Redirect to the requested page or dashboard
-      throw redirect(303, redirectTo.toString());
+      // Use a simple redirect - no need for extra processing
+      // Make sure redirectTo is properly decoded if it's URL encoded
+      let decodedRedirectTo = redirectTo;
+      if (typeof redirectTo === "string" && redirectTo.includes("%")) {
+        try {
+          decodedRedirectTo = decodeURIComponent(redirectTo);
+        } catch (e) {
+          console.error("Failed to decode redirectTo:", e);
+          // Fall back to the original value
+        }
+      }
+
+      // Redirect to the requested page or dashboard
+      return { success: true, redirectTo: decodedRedirectTo };
     } catch (err) {
       console.error("Login error:", err);
       return fail(500, {

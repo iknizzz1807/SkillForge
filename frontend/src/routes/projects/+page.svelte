@@ -4,356 +4,471 @@
 
   let { form, data }: { form: ActionData; data: PageData } = $props();
 
-  type Project = {
+  let creating: boolean = $state(false);
+
+  $effect(() => {
+    if (form?.project) {
+      projectsDisplay.push(form.project);
+      form.project = undefined;
+      skills = [];
+    }
+  });
+
+  type ProjectDisplay = {
+    id: string;
     title: string;
     description: string;
-    category: string;
+    skills: string[];
     timeline: string;
+    created_by: string;
+    status: string;
+    repo_url: string;
+    created_at: string;
   };
 
-  let projects: Project[] = $state(data.projects);
+  let projectsDisplay: ProjectDisplay[] = $state(data.projects);
   let errorLoadingProjects: string | null = $state(data.error);
-
-  let creating: boolean = $state(false);
-  let loading: boolean = $state(false);
 
   // Bind value input
   let title: string = $state("");
   let description: string = $state("");
-  let category: string = $state("");
+  let skills: string[] = $state([]);
   let timeline: string = $state("");
 
   // Categories for projects
-  const categories = [
-    "Web Development",
-    "Mobile Development",
-    "Machine Learning",
-    "Data Science",
-    "Cloud Computing",
-    "DevOps",
-    "UI/UX Design",
-    "Blockchain",
-    "Cybersecurity",
-    "Game Development",
-  ];
+  const skillsAvailable = ["Python", "C++", "JavaScript", "Go", "HTML", "CSS"];
 
-  // Difficulty levels
-  const difficultyLevels = [
-    { value: "BEGINNER", label: "Beginner" },
-    { value: "INTERMEDIATE", label: "Intermediate" },
-    { value: "ADVANCED", label: "Advanced" },
-  ];
-
-  // Toggle project creation form
-  function toggleCreateProject() {
-    creating = !creating;
+  function toggleSkill(skill: string) {
+    if (skills.includes(skill)) {
+      skills = skills.filter((s) => s !== skill);
+    } else {
+      skills = [...skills, skill];
+    }
   }
 
-  // Handle form submission with enhance
-  function handleSubmit() {
-    loading = true;
-    // return async ({ result, update }) => {
-    //   loading = false;
-    //   if (result.type === "success") {
-    //     creating = false;
-    //     await invalidateAll(); // Refresh data
-    //   }
-    //   update();
-    // };
+  // Get status badge class
+  function getStatusClass(status: string): string {
+    switch (status.toLowerCase()) {
+      case "open":
+        return "status-open";
+      case "in progress":
+        return "status-progress";
+      case "completed":
+        return "status-completed";
+      default:
+        return "status-default";
+    }
+  }
+
+  // Chuyển đổi ngày thành format thân thiện
+  function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
   }
 </script>
 
-<div class="projects-container">
-  <div class="projects-header">
-    <h1>Projects</h1>
-    <button class="create-btn" onclick={toggleCreateProject}>
-      {creating ? "Cancel" : "Create Project"}
-    </button>
+<form method="POST" use:enhance>
+  <div class="form-group">
+    <label for="title">Project Title</label>
+    <input type="text" id="title" name="title" bind:value={title} required />
   </div>
 
-  {#if creating}
-    <div class="create-project-form">
-      <h2>Create New Project</h2>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea
+      id="description"
+      name="description"
+      bind:value={description}
+      required
+    ></textarea>
+  </div>
 
-      {#if form?.error}
-        <div class="error-message">
-          {form.message}
+  <!-- Multi-select skills input -->
+  <div class="form-group">
+    <label for="skills">Skills Required</label>
+    <div class="skills-selector">
+      {#each skillsAvailable as skill}
+        <div class="skill-item">
+          <label class="skill-label">
+            <input
+              type="checkbox"
+              checked={skills.includes(skill)}
+              onchange={() => toggleSkill(skill)}
+            />
+            <span class="skill-name">{skill}</span>
+          </label>
         </div>
-      {/if}
-
-      <form method="POST" action="?/createProject" use:enhance={handleSubmit}>
-        <div class="form-group">
-          <label for="title"
-            >Project Title <span class="required">*</span></label
-          >
-          <input
-            type="text"
-            id="title"
-            name="title"
-            required
-            bind:value={title}
-            placeholder="Enter project title"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="description"
-            >Description <span class="required">*</span></label
-          >
-          <textarea
-            id="description"
-            name="description"
-            required
-            bind:value={description}
-            placeholder="Describe your project"
-            rows="4"
-          ></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group half">
-            <label for="category"
-              >Category <span class="required">*</span></label
-            >
-            <select
-              id="category"
-              name="category"
-              required
-              bind:value={category}
-            >
-              <option value="" disabled selected>Select a category</option>
-              {#each categories as category}
-                <option value={category}>
-                  {category}
-                </option>
-              {/each}
-            </select>
-          </div>
-        </div>
-
-        <!-- <div class="form-group">
-          <label for="requirements"
-            >Requirements <span class="required">*</span></label
-          >
-          <textarea
-            id="requirements"
-            name="requirements"
-            required
-            value={form?.requirements || ""}
-            placeholder="List the requirements for this project (e.g. technologies, skills)"
-            rows="3"
-          ></textarea>
-        </div> -->
-
-        <!-- <div class="form-group">
-          <label for="learningOutcomes"
-            >Learning Outcomes <span class="required">*</span></label
-          >
-          <textarea
-            id="learningOutcomes"
-            name="learningOutcomes"
-            required
-            value={form?.learningOutcomes || ""}
-            placeholder="What will users learn from this project?"
-            rows="3"
-          ></textarea>
-        </div> -->
-
-        <div class="form-group">
-          <label for="estimatedTime"
-            >Estimated Completion Time (hours) <span class="required">*</span
-            ></label
-          >
-          <input
-            type="number"
-            id="estimatedTime"
-            name="estimatedTime"
-            required
-            min="1"
-            bind:value={timeline}
-            placeholder="e.g. 10"
-          />
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="submit-btn" disabled={loading}>
-            {loading ? "Creating..." : "Create Project"}
-          </button>
-          <button
-            type="button"
-            class="cancel-btn"
-            onclick={toggleCreateProject}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+      {/each}
     </div>
-  {:else if projects.length}
-    <div class="projects-list">
-      <!-- Project list would go here -->
-      <p>Your projects will be displayed here</p>
+
+    <!-- Hidden inputs to send selected skills -->
+    {#each skills as skill}
+      <input type="hidden" name="skills" value={skill} />
+    {/each}
+
+    <div class="selected-skills">
+      <p>
+        Selected skills:
+        {#if skills.length === 0}
+          <span class="none-selected">None</span>
+        {:else}
+          {#each skills as skill, i}
+            <span class="skill-tag">
+              {skill}
+              <button
+                type="button"
+                class="remove-skill"
+                onclick={() => toggleSkill(skill)}>×</button
+              >
+            </span>
+          {/each}
+        {/if}
+      </p>
     </div>
-  {:else if errorLoadingProjects}
+  </div>
+
+  <div class="form-group">
+    <label for="timeline">Timeline (weeks)</label>
+    <input
+      type="number"
+      id="timeline"
+      name="timeline"
+      bind:value={timeline}
+      required
+    />
+  </div>
+
+  <button type="submit" class="submit-btn">Create Project</button>
+
+  {#if form?.error}
+    <div class="error-message">
+      {form.error}
+    </div>
+  {/if}
+</form>
+
+<!-- Display projects -->
+<section class="projects-section">
+  <h2>Available Projects</h2>
+
+  {#if errorLoadingProjects}
     <div class="error-message">
       {errorLoadingProjects}
     </div>
-  {:else}
+  {:else if projectsDisplay.length === 0}
     <div class="no-projects">
-      <p>You haven't created any projects yet.</p>
-      <button class="create-btn" onclick={toggleCreateProject}
-        >Create Your First Project</button
-      >
+      <p>No projects available at the moment.</p>
+    </div>
+  {:else}
+    <div class="projects-grid">
+      {#each projectsDisplay as project (project.id)}
+        <div class="project-card">
+          <div class="project-header">
+            <h3 class="project-title">{project.title}</h3>
+            <span class="status-badge {getStatusClass(project.status)}">
+              {project.status}
+            </span>
+          </div>
+
+          <p class="project-description">{project.description}</p>
+
+          <div class="project-skills">
+            {#each project.skills as skill}
+              <span class="project-skill-tag">{skill}</span>
+            {/each}
+          </div>
+
+          <div class="project-meta">
+            <div class="meta-item">
+              <span class="meta-label">Timeline:</span>
+              <span class="meta-value">{project.timeline} weeks</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Created by:</span>
+              <span class="meta-value">{project.created_by}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Posted:</span>
+              <span class="meta-value">{formatDate(project.created_at)}</span>
+            </div>
+          </div>
+
+          {#if project.repo_url}
+            <a
+              href={project.repo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="repo-link"
+            >
+              View Repository
+            </a>
+          {/if}
+
+          <a href={`/projects/${project.id}`} class="view-details">
+            View Details
+          </a>
+        </div>
+      {/each}
     </div>
   {/if}
-</div>
+</section>
 
 <style>
-  .projects-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-  }
-
-  .projects-header {
+  .skills-selector {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
   }
 
-  h1 {
-    margin: 0;
-    font-size: 2rem;
-  }
-
-  h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-  }
-
-  .create-btn {
-    background-color: #4a6cf7;
-    color: white;
-    border: none;
+  .skill-item {
+    background-color: #f5f5f5;
     border-radius: 4px;
-    padding: 0.5rem 1rem;
+    padding: 6px 12px;
+  }
+
+  .skill-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
-    font-weight: 500;
   }
 
-  .create-btn:hover {
-    background-color: #3a5cd7;
+  .selected-skills {
+    margin-top: 10px;
   }
 
-  .create-project-form {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  .skill-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e0f7fa;
+    color: #00796b;
+    border-radius: 16px;
+    padding: 4px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
+  .remove-skill {
+    background: none;
+    border: none;
+    color: #00796b;
+    margin-left: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 4px;
+  }
+
+  .none-selected {
+    color: #999;
+    font-style: italic;
   }
 
   .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 20px;
   }
 
-  .form-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .half {
-    flex: 1;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-  }
-
-  .required {
-    color: #e53935;
-  }
-
-  input,
-  select,
+  input[type="text"],
+  input[type="number"],
   textarea {
     width: 100%;
-    padding: 0.75rem;
+    padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 1rem;
-    font-family: inherit;
   }
 
-  input:focus,
-  select:focus,
-  textarea:focus {
-    outline: none;
-    border-color: #4a6cf7;
-    box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2);
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .submit-btn,
-  .cancel-btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 1rem;
+  textarea {
+    min-height: 100px;
   }
 
   .submit-btn {
-    background-color: #4a6cf7;
+    background-color: #0277bd;
     color: white;
     border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
   }
 
-  .submit-btn:hover:not(:disabled) {
-    background-color: #3a5cd7;
-  }
-
-  .cancel-btn {
-    background-color: transparent;
-    border: 1px solid #ddd;
-    color: #666;
-  }
-
-  .cancel-btn:hover:not(:disabled) {
-    background-color: #f2f2f2;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  .submit-btn:hover {
+    background-color: #01579b;
   }
 
   .error-message {
+    color: #d32f2f;
+    margin-top: 15px;
+    padding: 10px;
     background-color: #ffebee;
-    color: #c62828;
-    padding: 0.75rem;
     border-radius: 4px;
-    margin-bottom: 1.5rem;
+  }
+
+  /* Projects Section Styles */
+  .projects-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #eee;
+  }
+
+  .projects-section h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
   }
 
   .no-projects {
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
     text-align: center;
-    padding: 3rem 0;
-    color: #666;
   }
 
-  .no-projects p {
-    margin-bottom: 1.5rem;
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .project-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .project-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .project-title {
+    font-size: 18px;
+    margin: 0;
+    color: #333;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .status-open {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .status-progress {
+    background-color: #fff8e1;
+    color: #ff8f00;
+  }
+
+  .status-completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  .status-default {
+    background-color: #f5f5f5;
+    color: #616161;
+  }
+
+  .project-description {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .project-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 15px;
+  }
+
+  .project-skill-tag {
+    background-color: #f1f8e9;
+    color: #558b2f;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .project-meta {
+    margin-bottom: 15px;
+    font-size: 13px;
+  }
+
+  .meta-item {
+    margin-bottom: 6px;
+    display: flex;
+  }
+
+  .meta-label {
+    color: #757575;
+    width: 80px;
+  }
+
+  .meta-value {
+    color: #424242;
+    font-weight: 500;
+  }
+
+  .repo-link,
+  .view-details {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 12px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .repo-link {
+    background-color: #f5f5f5;
+    color: #424242;
+    margin-right: 8px;
+  }
+
+  .repo-link:hover {
+    background-color: #e0e0e0;
+  }
+
+  .view-details {
+    background-color: #e0f7fa;
+    color: #00796b;
+  }
+
+  .view-details:hover {
+    background-color: #b2ebf2;
   }
 </style>

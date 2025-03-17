@@ -64,7 +64,6 @@ func Run() {
 
 	// Đăng ký middleware (nếu cần)
 	// Ví dụ: r.Use(middleware.AuthMiddleware())
-	r.Use(gin.Logger())
 
 	// Đăng ký các route từ routes.go
 	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService)

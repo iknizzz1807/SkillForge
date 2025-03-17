@@ -13,6 +13,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
 
 	// "github.com/iknizzz1807/SkillForge/internal/integrations"
+	"github.com/iknizzz1807/SkillForge/internal/middleware"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -47,6 +48,7 @@ func RegisterRoutes(
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
+	api.Use(middleware.AuthMiddleware())
 	{
 		// User routes
 		api.GET("/users/:id", userHandler.GetUser)

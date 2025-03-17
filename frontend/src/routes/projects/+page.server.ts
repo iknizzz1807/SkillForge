@@ -1,11 +1,23 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { type Cookies, fail } from "@sveltejs/kit";
 
-type Project = {
+type ProjectInput = {
   title: string;
   description: string;
-  category: string;
+  skills: string[];
   timeline: string;
+};
+
+type ProjectDisplay = {
+  id: string;
+  title: string;
+  description: string;
+  skills: string[];
+  timeline: string;
+  created_by: string;
+  status: string;
+  repo_url: string;
+  created_at: string;
 };
 
 export const load = (async ({ fetch, cookies }) => {
@@ -30,16 +42,37 @@ export const load = (async ({ fetch, cookies }) => {
     }
 
     // Parse the response data
-    const projectsData: Project[] = await response.json();
+    const responseData = await response.json();
+
+    // Handle null response - treat as empty array
+    if (responseData === null) {
+      console.log("API returned null, treating as empty array");
+      return {
+        projects: [],
+        error: null,
+      };
+    }
+
+    // Check if the response data is an array
+    if (!Array.isArray(responseData)) {
+      console.error("API returned invalid data format:", responseData);
+      return {
+        projects: [],
+        error: "Received invalid data format from server",
+      };
+    }
 
     // Map the returned data to our frontend format
-    const projects: Project[] = projectsData.map((project: any) => ({
-      title: project.title,
-      description: project.description,
-      // skills: project.skills || [],
-      timeline: project.timeline,
-      // status: project.status,
-      category: project.category,
+    const projects: ProjectDisplay[] = responseData.map((project: any) => ({
+      id: project.id || "",
+      title: project.title || "",
+      description: project.description || "",
+      skills: Array.isArray(project.skills) ? project.skills : [],
+      timeline: project.timeline || "",
+      created_by: project.created_by || "",
+      status: project.status || "open",
+      repo_url: project.repo_url || "",
+      created_at: project.created_at || new Date().toISOString(),
     }));
 
     return {
@@ -63,17 +96,13 @@ export const actions = {
     request: Request;
     cookies: Cookies;
   }) => {
-    let message: string = "";
-    let error: string = "";
-    const projects: Project[] = [];
-
     try {
       const data = await request.formData();
 
-      const title = data.get("title");
-      const description = data.get("description");
-      const category = data.get("category");
-      const timeline = data.get("timeline");
+      const title = data.get("title")?.toString();
+      const description = data.get("description")?.toString();
+      const skills = data.getAll("skills").map((skill) => skill.toString());
+      const timeline = data.get("timeline")?.toString();
 
       const token = cookies.get("auth_token");
       if (!token) {
@@ -83,11 +112,10 @@ export const actions = {
         });
       }
 
-      if (!title || !description || !timeline || !category) {
+      if (!title || !description || !timeline || skills.length === 0) {
         return fail(400, {
           success: false,
           error: "All fields are required",
-          data: { title, description, timeline, category },
         });
       }
 
@@ -101,25 +129,33 @@ export const actions = {
         body: JSON.stringify({
           title,
           description,
+          skills,
           timeline,
-          // Additional fields required by your API
-          status: "open",
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorMessage = "Failed to create project";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Ignore JSON parsing error
+        }
+
         return fail(response.status, {
           success: false,
-          error: errorData.error || "Failed to create project",
-          data: { title, description, timeline, category },
+          error: errorMessage,
         });
       }
+
+      // Parse the created project
+      const createdProject = await response.json();
 
       // Success
       return {
         success: true,
-        message: "Project created successfully!",
+        project: createdProject,
       };
     } catch (error) {
       console.error("Error creating project:", error);

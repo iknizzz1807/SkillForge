@@ -1,7 +1,7 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 
 // List of routes that don't require authentication
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = ["/login", "/register", "/api/public"];
 
 // List of auth routes that authenticated users shouldn't access
 const authRoutes = ["/login", "/register"];
@@ -41,10 +41,16 @@ function decodeJWT(token: string): UserData | null {
 export const handle: Handle = async ({ event, resolve }) => {
   const { url, cookies } = event;
   const token = cookies.get("auth_token");
+  const path = url.pathname;
 
-  // Make token available in locals for server routes
+  // Initialize locals with a default state
+  event.locals = {
+    token: null,
+    user: null,
+  };
+
+  // Make token available in locals for server routes if it exists and is valid
   if (token) {
-    // Decode the token to extract user information
     const userData = decodeJWT(token);
     if (userData) {
       event.locals = {
@@ -52,114 +58,63 @@ export const handle: Handle = async ({ event, resolve }) => {
         user: userData,
       };
     } else {
-      // If token cannot be decoded, consider it invalid
-      event.locals = {
-        token: null,
-        user: null,
-      };
+      // Token is invalid, clear it
       cookies.delete("auth_token", { path: "/" });
     }
-  } else {
-    event.locals = {
-      token: null,
-      user: null,
-    };
   }
-
-  // console.log(event.locals);
-
-  // Check path
-  const path = url.pathname;
 
   // CASE 1: Authenticated users trying to access auth routes (login/register)
   // Redirect them to dashboard instead
-  if (token && authRoutes.some((route) => path.startsWith(route))) {
+  if (event.locals.user && authRoutes.some((route) => path.startsWith(route))) {
+    // Don't redirect if they're already being redirected somewhere else
+    const redirectParam = url.searchParams.get("redirectTo");
+    if (redirectParam) {
+      throw redirect(303, decodeURIComponent(redirectParam));
+    }
     throw redirect(303, "/dashboard");
   }
 
   // CASE 2: Unauthenticated users trying to access protected routes
   // Redirect them to login
-  if (!token && !publicRoutes.some((route) => path.startsWith(route))) {
-    const redirectTo = encodeURIComponent(url.pathname);
+  if (
+    !event.locals.user &&
+    !publicRoutes.some((route) => path.startsWith(route))
+  ) {
+    const redirectTo = encodeURIComponent(path);
     throw redirect(303, `/login?redirectTo=${redirectTo}`);
   }
 
-  // For API calls that need authentication, add the token to the headers
   try {
-    // Handle the request and catch any errors that might occur
-    const response = await resolve(event, {
-      transformPageChunk: ({ html }) => html,
-      filterSerializedResponseHeaders: (name) => name === "content-type",
-    });
+    // Process the request
+    const response = await resolve(event);
 
-    // Check if the response is an API response that indicates auth failure
+    // Handle auth failure from API responses
     if (response.status === 401 || response.status === 403) {
-      // If this is an API call and the backend rejected our auth,
-      // clear the invalid token and redirect to login
       cookies.delete("auth_token", { path: "/" });
 
-      // Only redirect to login for HTML responses, not for API calls
-      const isHtmlResponse = response.headers
-        .get("content-type")
-        ?.includes("text/html");
-      if (isHtmlResponse) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("text/html")) {
         throw redirect(303, "/login");
       }
     }
 
     return response;
   } catch (error) {
-    // Handle error
+    // Key part: Properly handle redirects that happen during the flow
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      "location" in error
+    ) {
+      throw error; // Make sure redirects from page actions are properly propagated
+    }
+
     if (error instanceof Response) {
       return error;
     }
 
     console.error("Hooks error:", error);
-    // If the error is from a redirect, allow it to propagate
-    if (error instanceof Error && "status" in error && "location" in error) {
-      throw error;
-    }
-
-    // For other errors, return a generic error response
     return new Response("Internal Server Error", { status: 500 });
   }
 };
-
-// Helper for API fetch calls to add the auth token automatically
-export async function fetchWithAuth(
-  fetch: typeof globalThis.fetch,
-  url: string,
-  options: RequestInit = {}
-) {
-  // Get the token from cookies on the client side
-  const token = document.cookie
-    .split(";")
-    .find((c) => c.trim().startsWith("auth_token="))
-    ?.split("=")[1];
-
-  // Add the authorization header if token exists
-  const headers = {
-    ...options.headers,
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  // Make the API call
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  // Handle auth errors
-  if (response.status === 401 || response.status === 403) {
-    // Clear the auth cookie if it's invalid
-    document.cookie =
-      "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-    // Redirect to login
-    window.location.href = "/login";
-    return new Response(null, { status: 401 });
-  }
-
-  return response;
-}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -33,6 +34,11 @@ func (h *ProjectHandler) GetProjects(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Đảm bảo không trả về null cho mảng trống
+	if projects == nil {
+		projects = []*models.Project{} // Trả về mảng trống thay vì nil
 	}
 
 	// Trả về danh sách project
