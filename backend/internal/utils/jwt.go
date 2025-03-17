@@ -25,10 +25,12 @@ const (
 // GenerateJWT tạo token JWT cho user
 // Input: userID (string), role (string)
 // Return: string (token), error (nếu có lỗi)
-func GenerateJWT(userID, role string) (string, error) {
+func GenerateJWT(userID, email, name, role string) (string, error) {
 	// Tạo claims cho token
 	claims := jwt.MapClaims{
 		"user_id": userID,
+		"email":   email,
+		"name":    name,
 		"role":    role,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(), // Hết hạn sau 24 giờ
 		"iat":     time.Now().Unix(),                     // Thời gian phát hành

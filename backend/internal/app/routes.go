@@ -42,8 +42,8 @@ func RegisterRoutes(
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
-	r.POST("/auth/register", authHandler.Register)
-	r.POST("/auth/login", authHandler.Login)
+	r.POST("/auth/register", authHandler.Register) // Tạo user mới
+	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")

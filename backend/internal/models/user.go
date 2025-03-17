@@ -17,6 +17,9 @@ type User struct {
 	// Email là địa chỉ email của user, dùng để đăng nhập
 	Email string `json:"email" bson:"email"`
 
+	// Name là name của user, dùng để hiển thị thông tin trong app
+	Name string `json:"name" bson:"name"`
+
 	// Password là mật khẩu đã được hash, không trả về trong JSON
 	Password string `json:"-" bson:"password"`
 

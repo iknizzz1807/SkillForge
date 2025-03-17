@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iknizzz1807/SkillForge/internal/constants"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -32,6 +33,7 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
 		Email    string `json:"email" binding:"required,email"`
+		Name     string `json:"name" binding:"required"`
 		Password string `json:"password" binding:"required,min=6"`
 		Role     string `json:"role" binding:"required"`
 	}
@@ -43,7 +45,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	// Gọi service để đăng ký user
-	user, token, err := h.authService.Register(req.Email, req.Password, req.Role)
+	if req.Role != constants.RoleStudent && req.Role != constants.RoleBusiness {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be \"student\" or \"business\""}) // Validate dữ liệu đảm bảo roel phải chính xác
+		return
+	}
+	user, token, err := h.authService.Register(req.Email, req.Name, req.Password, req.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
