@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SKILLFORGE - Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Inter từ Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Thêm Chart.js để vẽ biểu đồ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #eef2f6; /* Giảm độ sáng trắng */
+        color: #2d3748;
+        overflow-x: hidden;
+      }
+      .sidebar {
+        background-color: #6b48ff; /* Nền tím đậm */
+        color: white;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Thêm bóng để phân tách */
+      }
+      .card {
+        background-color: #f9fafb; /* Nền card nhạt hơn để nổi bật */
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .btn {
+        background-color: #6b48ff;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #5a3de6;
+      }
+      .accent-color {
+        color: #ff6f61;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="sidebar w-56 p-4 flex-shrink-0">
+      <h1 class="text-xl font-bold mb-6">SKILLFORGE</h1>
+      <nav class="space-y-3">
+        <a
+          href="/dashboard"
+          class="block text-base font-bold bg-white bg-opacity-20 rounded px-2 py-1"
+          >Dashboard</a
+        >
+        <a
+          href="/project"
+          class="block text-base hover:bg-white hover:bg-opacity-20 rounded px-2 py-1"
+          >Projects</a
+        >
+        <a
+          href="/marketplace"
+          class="block text-base hover:bg-white hover:bg-opacity-20 rounded px-2 py-1"
+          >Marketplace</a
+        >
+        <a
+          href="/chat"
+          class="block text-base hover:bg-white hover:bg-opacity-20 rounded px-2 py-1"
+          >Chat</a
+        >
+        <a
+          href="/profile"
+          class="block text-base hover:bg-white hover:bg-opacity-20 rounded px-2 py-1"
+          >Profile</a
+        >
+        <a
+          href="/analytics"
+          class="block text-base hover:bg-white hover:bg-opacity-20 rounded px-2 py-1"
+          >Analytics</a
+        >
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-xl font-semibold">Welcome back, Nguyen My Thong</h2>
+          <p class="text-sm text-gray-600">March 18, 2025</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <!-- Notification Icon -->
+          <div class="relative">
+            <button class="focus:outline-none">
+              <svg
+                class="w-6 h-6 text-gray-600 hover:text-[#6b48ff]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                class="absolute top-0 right-0 w-2 h-2 bg-[#ff6f61] rounded-full"
+              ></span>
+            </button>
+            <!-- Dropdown Notifications -->
+            <div
+              class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg hidden"
+            >
+              <div class="p-2 text-sm">
+                <p class="font-semibold">New project assigned!</p>
+                <span class="text-xs text-gray-500">18/03/2025</span>
+              </div>
+              <div class="p-2 text-sm">
+                <p class="font-semibold">Task review pending</p>
+                <span class="text-xs text-gray-500">17/03/2025</span>
+              </div>
+            </div>
+          </div>
+          <!-- User Avatar -->
+          <div class="relative">
+            <button class="focus:outline-none">
+              <img
+                class="w-8 h-8 rounded-full"
+                src="https://avatars.githubusercontent.com/u/123456?v=4"
+                alt="User Avatar"
+              />
+            </button>
+            <!-- Dropdown User Menu -->
+            <div
+              class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg hidden"
+            >
+              <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100"
+                >Account</a
+              >
+              <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100"
+                >Settings</a
+              >
+              <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100"
+                >Log Out</a
+              >
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="space-y-4">
+        <!-- Quick Stats -->
+        <div class="flex space-x-3">
+          <div class="card p-3 w-1/3">
+            <h3 class="text-sm font-semibold">Active Projects</h3>
+            <p class="text-xl mt-1 accent-color">3</p>
+          </div>
+          <div class="card p-3 w-1/3">
+            <h3 class="text-sm font-semibold">Pending Tasks</h3>
+            <p class="text-xl mt-1 accent-color">5</p>
+          </div>
+          <!-- <div class="card p-3 w-1/4">
+            <h3 class="text-sm font-semibold">Skill Match</h3>
+            <p class="text-xl mt-1 accent-color">87%</p>
+          </div> -->
+          <div class="card p-3 w-1/3">
+            <h3 class="text-sm font-semibold">Completed Tasks</h3>
+            <p class="text-xl mt-1 accent-color">12</p>
+          </div>
+        </div>
+
+        <!-- Progress Chart -->
+        <div class="card p-3 w-full overflow-x-auto">
+          <h3 class="text-base font-semibold mb-2">Your Progress</h3>
+          <canvas id="progressChart" height="60"></canvas>
+        </div>
+
+        <!-- Suggested Projects & Project Status -->
+        <div class="flex space-x-3">
+          <!-- Suggested Projects -->
+          <div class="card p-3 w-2/5">
+            <h3 class="text-base font-semibold mb-2">Suggested Projects</h3>
+            <div class="space-y-2">
+              <div
+                class="flex justify-between items-center p-2 bg-gray-100 rounded"
+              >
+                <div>
+                  <p class="text-sm font-medium">Build a Chat App</p>
+                  <p class="text-xs text-gray-500">
+                    Skills: React, Node.js | 90% Match
+                  </p>
+                </div>
+                <button class="btn text-xs">Apply</button>
+              </div>
+              <div
+                class="flex justify-between items-center p-2 bg-gray-100 rounded"
+              >
+                <div>
+                  <p class="text-sm font-medium">E-commerce Backend</p>
+                  <p class="text-xs text-gray-500">
+                    Skills: Python, MongoDB | 85% Match
+                  </p>
+                </div>
+                <button class="btn text-xs">Apply</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Status -->
+          <div class="card p-3 w-3/5">
+            <h3 class="text-base font-semibold mb-2">Project Status</h3>
+            <div class="space-y-2">
+              <div class="p-2 bg-gray-100 rounded">
+                <p class="text-sm font-medium">Portfolio Site</p>
+                <p class="text-xs text-gray-500">75% Complete | Due: 22/03</p>
+              </div>
+              <div class="p-2 bg-gray-100 rounded">
+                <p class="text-sm font-medium">API Integration</p>
+                <p class="text-xs text-gray-500">40% Complete | Due: 25/03</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Script để vẽ biểu đồ -->
+    <script>
+      const ctx = document.getElementById("progressChart").getContext("2d");
+      const progressChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["10/03", "12/03", "14/03", "16/03", "18/03"],
+          datasets: [
+            {
+              label: "Completion (%)",
+              data: [20, 35, 50, 70, 85],
+              borderColor: "#6b48ff",
+              backgroundColor: "rgba(107, 72, 255, 0.1)",
+              fill: true,
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, max: 100 },
+          },
+        },
+      });
+
+      // Toggle Dropdown
+      document.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const dropdown = btn.nextElementSibling;
+          if (dropdown && dropdown.classList.contains("hidden")) {
+            dropdown.classList.remove("hidden");
+          } else if (dropdown) {
+            dropdown.classList.add("hidden");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
