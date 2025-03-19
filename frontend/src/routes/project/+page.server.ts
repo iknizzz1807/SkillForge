@@ -20,10 +20,12 @@ type ProjectDisplay = {
   created_at: string;
 };
 
-export const load = (async ({ fetch, cookies }) => {
+export const load = (async ({ fetch, cookies, parent }) => {
   try {
     // Get auth token from cookies
     const token = cookies.get("auth_token");
+    const parentData = await parent();
+    const role = parentData.role || "user";
 
     // Make API request with proper URL and headers
     const response = await fetch("http://localhost:8080/api/projects", {
@@ -75,7 +77,9 @@ export const load = (async ({ fetch, cookies }) => {
       created_at: project.created_at || new Date().toISOString(),
     }));
 
+    // Success
     return {
+      role: role,
       projects,
       error: null,
     };
