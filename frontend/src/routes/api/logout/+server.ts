@@ -1,15 +1,12 @@
 import type { Cookies } from "@sveltejs/kit";
 import type { RequestHandler } from "../$types";
-import type { Url } from "url";
 import { redirect } from "@sveltejs/kit";
 
 // logout handler
 export const POST: RequestHandler = async ({
   cookies,
-  url,
 }: {
   cookies: Cookies;
-  url: Url;
 }) => {
   // Clear the authentication token
   cookies.delete("auth_token", { path: "/" });

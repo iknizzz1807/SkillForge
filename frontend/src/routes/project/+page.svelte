@@ -19,7 +19,7 @@
   let errorLoadingProjects: string | null = $state(data.error);
 </script>
 
-<main class="flex-1 p-4 ml-56">
+<main class="flex-1 pr-4 pl-4 ml-56">
   <!-- View Toggle
   <div class="flex justify-end mb-4">
     <div class="bg-gray-200 rounded-lg p-1 inline-flex">
@@ -52,7 +52,7 @@
       {#if projectsDisplay.length !== 0 && !errorLoadingProjects}
         {#each projectsDisplay as ProjectDisplay}
           <!-- Project Card demo -->
-          <a href="/project-management" class="card p-3 block">
+          <a href="/project/project-management" class="card p-3 block">
             <div class="flex justify-between items-center">
               <div>
                 <h4 class="text-base font-medium">{ProjectDisplay.title}</h4>

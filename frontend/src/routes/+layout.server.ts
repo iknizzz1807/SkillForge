@@ -1,4 +1,3 @@
-import type { Url } from "url";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async (event) => {

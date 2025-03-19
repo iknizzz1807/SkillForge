@@ -60,9 +60,14 @@
   });
 
   const logout = async () => {
-    await fetch("/api/logout", {
+    const response = await fetch("/api/logout", {
       method: "POST",
     });
+
+    if (response.ok) {
+      // Chuyển hướng thủ công sau khi logout thành công
+      window.location.href = "/login";
+    }
   };
 
   const toggleAccountForm = () => {
@@ -80,42 +85,42 @@
     <nav class="space-y-3">
       <a
         href="/dashboard"
-        class={url === "dashboard"
+        class={url.startsWith("/dashboard")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Dashboard</a
       >
       <a
         href="/project"
-        class={url === "project"
+        class={url.startsWith("/project")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Projects</a
       >
       <a
         href="/marketplace"
-        class={url === "marketplace"
+        class={url.startsWith("/marketplace")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Marketplace</a
       >
       <a
         href="/chat"
-        class={url === "chat"
+        class={url.startsWith("/chat")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Chats</a
       >
       <a
         href="/profile"
-        class={url === "profile"
+        class={url.startsWith("/profile")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Profile</a
       >
       <a
         href="/analytics"
-        class={url === "analytics"
+        class={url.startsWith("/analytics")
           ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
           : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
         >Analytics</a
@@ -123,7 +128,7 @@
     </nav>
   </aside>
 
-  <header class="flex justify-between items-center mb-4 ml-56 p-4">
+  <header class="flex justify-between items-center mb-4 ml-56 pr-4 pl-4 pt-4">
     <div>
       <h2 class="text-xl font-semibold">{header}</h2>
       <p class="text-sm text-gray-600">{description}</p>

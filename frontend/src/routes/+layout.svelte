@@ -11,22 +11,22 @@
 
   $effect(() => {
     if (page.url.pathname) {
-      if (page.url.pathname === "/project") {
+      if (page.url.pathname.startsWith("/project")) {
         header = "Your projects";
         description = "Manage your projects";
-      } else if (page.url.pathname === "/dashboard") {
+      } else if (page.url.pathname.startsWith("/dashboard")) {
         header = "Welcome back, " + data.userName;
         description = new Date().toLocaleString();
-      } else if (page.url.pathname === "/marketplace") {
+      } else if (page.url.pathname.startsWith("/marketplace")) {
         header = "Project Marketplace";
         description = "Find and apply to projects that match your skills";
-      } else if (page.url.pathname === "/chat") {
+      } else if (page.url.pathname.startsWith("/chat")) {
         header = "Chat";
         description = "Chat with your collaborators and business";
-      } else if (page.url.pathname === "/profile") {
+      } else if (page.url.pathname.startsWith("/profile")) {
         header = "Your Profile";
         description = "Manage your personal information";
-      } else if (page.url.pathname === "/analytics") {
+      } else if (page.url.pathname.startsWith("/analytics")) {
         header = "Analytics";
         description = "Track your performance and skills";
       }
