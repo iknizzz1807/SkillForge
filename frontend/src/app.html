@@ -1,12 +1,68 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		%sveltekit.head%
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    %sveltekit.head%
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #eef2f6;
+        color: #2d3748;
+      }
+      .sidebar {
+        background-color: #6b48ff;
+        color: white;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .card {
+        background-color: #f9fafb;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .btn {
+        background-color: #6b48ff;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #5a3de6;
+      }
+      .btn-secondary {
+        background-color: #ffffff;
+        color: #6b48ff;
+        border: 1px solid #6b48ff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+      .btn-secondary:hover {
+        background-color: #6b48ff;
+        color: white;
+      }
+      .accent-color {
+        color: #ff6f61;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
 </html>

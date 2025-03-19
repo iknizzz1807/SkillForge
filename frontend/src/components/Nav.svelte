@@ -1,34 +1,54 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { fade, scale } from "svelte/transition";
-  import { cubicOut } from "svelte/easing";
+  import { onMount, type Snippet } from "svelte";
 
-  let isMobileMenuOpen: boolean = $state(false);
+  let {
+    header,
+    description,
+    url,
+    children,
+  }: { header: string; description: string; url: string; children: Snippet } =
+    $props();
+
+  // console.log(url);
+
   // State for user dropdown menu
   let isUserMenuOpen: boolean = $state(false);
-  // Reference to dropdown container for click outside detection
-  let userMenuContainer: HTMLDivElement;
+  // State for notification dropdown menu
+  let isNotificationOpen: boolean = $state(false);
 
-  // Toggle mobile menu
-  function toggleMobileMenu() {
-    isMobileMenuOpen = !isMobileMenuOpen;
-  }
+  // Reference to dropdown containers for click outside detection
+  let userMenuContainer: HTMLDivElement | null = $state(null);
+  let notificationContainer: HTMLDivElement | null = $state(null);
 
   // Toggle user dropdown
   function toggleUserMenu() {
     isUserMenuOpen = !isUserMenuOpen;
-  }
-
-  // Handle clicks outside the dropdown to close it
-  function handleClickOutside(event: MouseEvent) {
-    if (
-      userMenuContainer &&
-      !userMenuContainer.contains(event.target as Node) &&
-      isUserMenuOpen
-    ) {
-      isUserMenuOpen = false;
+    if (isUserMenuOpen) {
+      isNotificationOpen = false; // Close notification dropdown when opening user menu
     }
   }
+
+  // Toggle notification dropdown
+  function toggleNotificationMenu() {
+    isNotificationOpen = !isNotificationOpen;
+    if (isNotificationOpen) {
+      isUserMenuOpen = false; // Close user dropdown when opening notification
+    }
+  }
+
+  // Handle clicks outside the dropdowns to close them
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as Node;
+
+    if (userMenuContainer && !userMenuContainer.contains(target)) {
+      isUserMenuOpen = false;
+    }
+
+    if (notificationContainer && !notificationContainer.contains(target)) {
+      isNotificationOpen = false;
+    }
+  }
+
   onMount(() => {
     // Add global click listener when component mounts
     document.addEventListener("click", handleClickOutside);
@@ -38,230 +58,135 @@
       document.removeEventListener("click", handleClickOutside);
     };
   });
+
+  const logout = async () => {
+    await fetch("/api/logout", {
+      method: "POST",
+    });
+  };
+
+  const toggleAccountForm = () => {
+    //
+  };
+
+  const toggleSettingForm = () => {
+    //
+  };
 </script>
 
-<nav class="bg-gray-800">
-  <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-    <div class="relative flex h-16 items-center justify-between">
-      <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
-        <!-- Mobile menu button-->
-        <button
-          type="button"
-          class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset"
-          aria-controls="mobile-menu"
-          aria-expanded={isMobileMenuOpen}
-          onclick={toggleMobileMenu}
-        >
-          <span class="absolute -inset-0.5"></span>
-          <span class="sr-only">Open main menu</span>
-          <!--
-                Icon when menu is closed.
-    
-                Menu open: "hidden", Menu closed: "block"
-              -->
-          <svg
-            class={isMobileMenuOpen ? "hidden size-6" : "block size-6"}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-            data-slot="icon"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
-          </svg>
-          <!--
-                Icon when menu is open.
-    
-                Menu open: "block", Menu closed: "hidden"
-              -->
-          <svg
-            class={isMobileMenuOpen ? "block size-6" : "hidden size-6"}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-            data-slot="icon"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18 18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-      </div>
-      <div
-        class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+{#if url !== "/login" && url !== "/register"}
+  <aside class="sidebar fixed h-full w-56 p-4 flex-shrink-0">
+    <h1 class="text-xl font-bold mb-6">SKILLFORGE</h1>
+    <nav class="space-y-3">
+      <a
+        href="/dashboard"
+        class={url === "dashboard"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Dashboard</a
       >
-        <div class="flex shrink-0 items-center">
+      <a
+        href="/project"
+        class={url === "project"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Projects</a
+      >
+      <a
+        href="/marketplace"
+        class={url === "marketplace"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Marketplace</a
+      >
+      <a
+        href="/chat"
+        class={url === "chat"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Chats</a
+      >
+      <a
+        href="/profile"
+        class={url === "profile"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Profile</a
+      >
+      <a
+        href="/analytics"
+        class={url === "analytics"
+          ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+          : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+        >Analytics</a
+      >
+    </nav>
+  </aside>
+
+  <header class="flex justify-between items-center mb-4 ml-56 p-4">
+    <div>
+      <h2 class="text-xl font-semibold">{header}</h2>
+      <p class="text-sm text-gray-600">{description}</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <!-- Notification Icon -->
+      <!-- svelte-ignore a11y_consider_explicit_label a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->
+      <div class="relative" bind:this={notificationContainer}>
+        <button class="focus:outline-none" onclick={toggleNotificationMenu}>
+          <svg
+            class="w-6 h-6 text-gray-600 hover:text-[#6b48ff]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            ></path>
+          </svg>
+          <span class="absolute top-0 right-0 w-2 h-2 bg-[#ff6f61] rounded-full"
+          ></span>
+        </button>
+        <div
+          class={`absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg ${!isNotificationOpen ? "hidden" : ""}`}
+        >
+          <div class="p-2 text-sm">
+            <p class="font-semibold">Task submitted!</p>
+            <span class="text-xs text-gray-500">18/03/2025</span>
+          </div>
+        </div>
+      </div>
+      <!-- User Avatar -->
+      <div class="relative" bind:this={userMenuContainer}>
+        <button class="focus:outline-none" onclick={toggleUserMenu}>
           <img
-            class="h-8 w-auto"
-            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-            alt="Your Company"
+            class="w-8 h-8 rounded-full"
+            src="https://avatars.githubusercontent.com/u/123456?v=4"
+            alt="User Avatar"
           />
-        </div>
-        <div class="hidden sm:ml-6 sm:block">
-          <div class="flex space-x-4">
-            <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-            <a
-              href="/dashboard"
-              class="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white"
-              aria-current="page">Dashboard</a
-            >
-            <a
-              href="/team"
-              class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-              >Team</a
-            >
-            <a
-              href="/projects"
-              class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-              >Projects</a
-            >
-            <a
-              href="/calendar"
-              class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-              >Calendar</a
-            >
-          </div>
-        </div>
-      </div>
-      <div
-        class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
-      >
-        <button
-          type="button"
-          class="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-        >
-          <span class="absolute -inset-1.5"></span>
-          <span class="sr-only">View notifications</span>
-          <svg
-            class="size-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-            data-slot="icon"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-            />
-          </svg>
         </button>
-
-        <!-- Profile dropdown -->
-        <div class="relative ml-3" bind:this={userMenuContainer}>
-          <div>
-            <button
-              type="button"
-              class="relative flex rounded-full bg-gray-800 text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-              id="user-menu-button"
-              aria-expanded={isUserMenuOpen}
-              aria-haspopup="true"
-              onclick={toggleUserMenu}
-            >
-              <span class="absolute -inset-1.5"></span>
-              <span class="sr-only">Open user menu</span>
-              <img
-                class="size-8 rounded-full"
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                alt=""
-              />
-            </button>
-          </div>
-
-          <!-- Dropdown menu with transitions -->
-          {#if isUserMenuOpen}
-            <div
-              in:scale={{
-                duration: 200,
-                start: 0.95,
-                opacity: 0,
-                easing: cubicOut,
-              }}
-              out:scale={{
-                duration: 150,
-                start: 0.95,
-                opacity: 0,
-                easing: cubicOut,
-              }}
-              class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5 focus:outline-hidden"
-              role="menu"
-              aria-orientation="vertical"
-              aria-labelledby="user-menu-button"
-              tabindex="-1"
-            >
-              <!-- Active: "bg-gray-100 outline-hidden", Not Active: "" -->
-              <a
-                href="/profile"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-                tabindex="-1"
-                id="user-menu-item-0">Your Profile</a
-              >
-              <a
-                href="/settings"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-                tabindex="-1"
-                id="user-menu-item-1">Settings</a
-              >
-              <form method="POST" action="/api/logout">
-                <button
-                  type="submit"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  role="menuitem"
-                  tabindex="-1"
-                  id="user-menu-item-2">Sign out</button
-                >
-              </form>
-            </div>
-          {/if}
+        <div
+          class={`absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg ${!isUserMenuOpen ? "hidden" : ""}`}
+        >
+          <button
+            class="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
+            onclick={toggleAccountForm}>Account</button
+          >
+          <button
+            class="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
+            onclick={toggleSettingForm}>Settings</button
+          >
+          <button
+            class="block px-4 py-2 text-sm hover:bg-gray-100 w-full text-left"
+            onclick={logout}>Log Out</button
+          >
         </div>
       </div>
     </div>
-  </div>
+  </header>
+{/if}
 
-  <!-- Mobile menu with transitions -->
-  {#if isMobileMenuOpen}
-    <div
-      class="sm:hidden"
-      id="mobile-menu"
-      in:fade={{ duration: 200 }}
-      out:fade={{ duration: 150 }}
-    >
-      <div class="space-y-1 px-2 pt-2 pb-3">
-        <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-        <a
-          href="/dashboard"
-          class="block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white"
-          aria-current="page">Dashboard</a
-        >
-        <a
-          href="/team"
-          class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-          >Team</a
-        >
-        <a
-          href="/projects"
-          class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-          >Projects</a
-        >
-        <a
-          href="/calendar"
-          class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-          >Calendar</a
-        >
-      </div>
-    </div>
-  {/if}
-</nav>
+{@render children()}
