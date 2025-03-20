@@ -13,10 +13,12 @@ type ProjectDisplay = {
   title: string;
   description: string;
   skills: string[];
-  timeline: string;
+  start_time: Date;
+  end_time: Date;
   created_by: string;
+  max_member: number;
+  current_member: number;
   status: string;
-  repo_url: string;
   created_at: string;
 };
 
@@ -70,10 +72,12 @@ export const load = (async ({ fetch, cookies, parent }) => {
       title: project.title || "",
       description: project.description || "",
       skills: Array.isArray(project.skills) ? project.skills : [],
-      timeline: project.timeline || "",
+      start_time: project.start_time || new Date().toISOString(),
+      end_time: project.end_time || new Date().toISOString(),
       created_by: project.created_by || "",
-      status: project.status || "open",
-      repo_url: project.repo_url || "",
+      max_member: project.max_member || 0,
+      current_member: project.current_member || 0,
+      status: project.status || "",
       created_at: project.created_at || new Date().toISOString(),
     }));
 

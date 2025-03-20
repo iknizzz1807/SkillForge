@@ -102,6 +102,7 @@
               Timeline: 2 weeks | Posted: 15/03/2025
             </p>
           </div>
+
           <div class="flex flex-row gap-2">
             <p class="text-sm text-gray-500">3/5</p>
             <svg

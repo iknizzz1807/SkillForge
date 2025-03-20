@@ -12,7 +12,7 @@
 
 <main class="flex-1 pr-4 pl-4 ml-56">
   <div class="flex items-center mb-6">
-    <button class="text-gray-500 hover:text-gray-700 mr-3" on:click={goBack}>
+    <button class="text-gray-500 hover:text-gray-700 mr-3" onclick={goBack}>
       <svg
         class="w-5 h-5"
         fill="none"
@@ -345,7 +345,7 @@
         <button
           type="button"
           class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-          on:click={goBack}
+          onclick={goBack}
         >
           Cancel
         </button>

@@ -9,6 +9,8 @@ package handlers
 import (
 	"net/http"
 
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
@@ -64,11 +66,18 @@ func (h *ProjectHandler) GetProject(c *gin.Context) {
 // CreateProject xử lý endpoint POST /api/projects
 // Return: Trả về JSON project vừa tạo hoặc lỗi
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
+	// Chỉ business mới đuọc tạo project
+	if c.GetString("role") != "business" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User cannot create project"})
+		return
+	}
 	var req struct {
-		Title       string   `json:"title" binding:"required"`
-		Description string   `json:"description" binding:"required"`
-		Skills      []string `json:"skills" binding:"required"`
-		Timeline    string   `json:"timeline" binding:"required"`
+		Title       string    `json:"title" binding:"required"`
+		Description string    `json:"description" binding:"required"`
+		Skills      []string  `json:"skills" binding:"required"`
+		StartTime   time.Time `json:"start_time" binding:"required"`
+		EndTime     time.Time `json:"end_time" binding:"required"`
+		MaxMember   int       `json:"max_member" binding:"required"`
 	}
 
 	// Parse và validate request body
@@ -81,7 +90,7 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 	userID := c.GetString("userID")
 
 	// Gọi service để tạo project
-	project, err := h.projectService.CreateProject(userID, req.Title, req.Description, req.Skills, req.Timeline)
+	project, err := h.projectService.CreateProject(userID, req.Title, req.Description, req.Skills, req.StartTime, req.EndTime, req.MaxMember)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

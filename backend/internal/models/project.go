@@ -7,7 +7,12 @@ package models
 // Vai trò trong flow:
 // - Là mô hình dữ liệu chính cho các dự án mà doanh nghiệp tạo và sinh viên tham gia
 
-import "time"
+// * Lưu ý: json và việc decode json trong body của request được gửi tới, còn tag bson là
+// định nghĩa tên trường được lưu trong MongoDB
+
+import (
+	"time"
+)
 
 // Project biểu diễn thông tin dự án trong hệ thống
 type Project struct {
@@ -23,8 +28,15 @@ type Project struct {
 	// Skills là danh sách kỹ năng yêu cầu cho dự án
 	Skills []string `json:"skills" bson:"skills"`
 
-	// Timeline là thời gian dự kiến hoàn thành (ví dụ: "2 weeks")
-	Timeline string `json:"timeline" bson:"timeline"`
+	// StartTime là thời gian bắt đầu dự án
+	StartTime time.Time `json:"start_time" bson:"start_time"`
+
+	// EndTime là thời gian kết thúc dự án
+	EndTime time.Time `json:"end_time" bson:"end_time"`
+
+	MaxMember int `json:"max_member" bson:"max_member"`
+
+	CurrentMember int `json:"current_member" bson:"current_member"`
 
 	// CreatedBy là ID của user tạo dự án (doanh nghiệp)
 	CreatedBy string `json:"created_by" bson:"created_by"`
@@ -32,9 +44,9 @@ type Project struct {
 	// Status là trạng thái dự án: "open", "active", "closed"
 	Status string `json:"status" bson:"status"`
 
-	// RepoURL là đường dẫn repository GitHub (nếu có)
-	RepoURL string `json:"repo_url,omitempty" bson:"repo_url,omitempty"`
-
-	// CreatedAt là thời gian tạo dự án
+	// CreatedAt là thời gian tạo dự án, nó khác với thời gian bắt đầu
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+
+	// RepoURL là đường dẫn repository GitHub (nếu có)
+	// RepoURL string `json:"repo_url,omitempty" bson:"repo_url,omitempty"`
 }
