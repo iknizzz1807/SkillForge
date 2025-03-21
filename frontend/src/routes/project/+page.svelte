@@ -38,26 +38,88 @@
       }
     }
   });
+
+  // Thêm các biến mới để xử lý markdown
+  let markdownContent: string = $state("");
+  let previewMode: boolean = $state(false);
+
+  // // Hàm để xử lý khi submit form
+  // async function handleSubmitMarkdown() {
+  //   try {
+  //     const response = await fetch("/api/save-markdown", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         content: markdownContent,
+  //         projectId: "your-project-id", // Thay thế bằng ID dự án thích hợp
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       alert("Markdown đã được lưu thành công!");
+  //     } else {
+  //       alert("Có lỗi khi lưu markdown!");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving markdown:", error);
+  //     alert("Có lỗi khi lưu markdown!");
+  //   }
+  // }
+
+  // Thêm các ký tự định dạng vào vị trí con trỏ
+  function addMarkdownFormat(format: string) {
+    const textarea = document.getElementById(
+      "markdown-editor"
+    ) as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = markdownContent.substring(start, end);
+
+    let insertion = "";
+    switch (format) {
+      case "bold":
+        insertion = `**${selectedText || "text in bold"}**`;
+        break;
+      case "italic":
+        insertion = `*${selectedText || "text in italic"}*`;
+        break;
+      case "heading":
+        insertion = `\n# ${selectedText || "Heading"}\n`;
+        break;
+      case "link":
+        insertion = `[${selectedText || "link text"}](url)`;
+        break;
+      case "list":
+        insertion = `\n- ${selectedText || "List item"}\n`;
+        break;
+      case "code":
+        insertion = `\`${selectedText || "code"}\``;
+        break;
+      case "codeblock":
+        insertion = `\n\`\`\`\n${selectedText || "code block"}\n\`\`\`\n`;
+        break;
+    }
+
+    markdownContent =
+      markdownContent.substring(0, start) +
+      insertion +
+      markdownContent.substring(end);
+
+    // Focus lại textarea sau khi chèn
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = start + insertion.length;
+      textarea.selectionEnd = start + insertion.length;
+    }, 0);
+  }
 </script>
 
-<!-- View Toggle
-<div class="flex justify-end mb-4">
-  <div class="bg-gray-200 rounded-lg p-1 inline-flex">
-    <button class="px-3 py-1 rounded-md text-sm bg-white shadow">
-      Freelancer View
-    </button>
-    <button class="px-3 py-1 rounded-md text-sm text-gray-600">
-      Business View
-    </button>
-  </div>
-</div> -->
-
-<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
-  <div>
-    <h2 class="text-xl font-semibold">Projects</h2>
-    <p class="text-sm text-gray-600">Manage your projects</p>
-  </div>
-  {#if data.role === "business"}
+{#if data.role === "business"}
+  <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
     <button class="btn">
       <a href="/project/create">
         <div class="flex items-center">
@@ -79,37 +141,10 @@
         </div>
       </a>
     </button>
-  {/if}
-</header>
+  </header>
+{/if}
 
 <main class="flex-1 pr-4 pl-4 ml-64">
-  <div class="flex justify-between items-center mb-4">
-    <!-- <h2 class="text-xl font-semibold">Projects</h2> -->
-    <!-- {#if data.role === "business"}
-      <button class="btn">
-        <a href="/project/create">
-          <div class="flex items-center">
-            <svg
-              class="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              ></path>
-            </svg>
-            Create Project
-          </div>
-        </a>
-      </button>
-    {/if} -->
-  </div>
-
   <div class="flex space-x-4">
     <!-- Phần danh sách dự án active -->
     <div class="w-3/5 space-y-3">
@@ -263,11 +298,6 @@
                 <div class="h-full bg-green-500" style="width: 92%"></div>
               </div>
             </div>
-            <!-- <div class="flex justify-center mt-2">
-            <button class="text-sm text-[#6b48ff] hover:underline">
-              View Detailed Analytics
-            </button>
-          </div> -->
           </div>
         </div>
 

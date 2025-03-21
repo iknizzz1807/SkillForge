@@ -3,7 +3,7 @@
   //  xem thêm ở phần /design để implement trong tương lai.
 </script>
 
-<main class="flex-1 flex flex-col ml-64 pr-4 pl-4 h-[calc(100vh-100px)]">
+<main class="flex-1 flex flex-col ml-64 pr-4 pl-4 h-[calc(100vh-20px)] pt-4">
   <div class="flex space-x-4 flex-1">
     <!-- Chat Rooms List -->
     <div class="card p-3 w-64 flex flex-col">

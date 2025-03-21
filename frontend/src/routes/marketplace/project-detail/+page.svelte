@@ -2,7 +2,7 @@
   <title>Project Detail</title>
 </svelte:head>
 
-<main class="flex-1 ml-64 pl-4 pr-4">
+<main class="flex-1 ml-64 pl-4 pr-4 pt-4">
   <div class="flex space-x-4">
     <!-- Project Info Card -->
     <div class="card p-4 w-2/3">
@@ -32,7 +32,10 @@
           Documentation
         </p>
       </div>
-      <button class="btn-secondary mt-4">Chat with Mentor</button>
+      <button class="btn-secondary mt-4"
+        >Chat with Mentor (change this button please we only support group chat
+        chat)</button
+      >
     </div>
 
     <!-- Proposal Form -->
@@ -54,7 +57,7 @@
           <button type="button" class="btn-secondary w-1/2">
             AI Suggest
           </button>
-          <button type="submit" class="btn w-1/2">Submit</button>
+          <button type="submit" class="btn w-1/2">Apply</button>
         </div>
       </form>
     </div>

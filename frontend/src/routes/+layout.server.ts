@@ -17,12 +17,13 @@ export const load = (async (event) => {
   // Chỉ chuyển hướng nếu đáp ứng điều kiện cụ thể
   if (user && path === "/") {
     // Không sử dụng throw redirect để không cắt luồng xử lý
+    console.log("djtme vai lon");
     return {
       ...userData,
-      redirect: {
-        status: 302,
-        location: "/dashboard",
-      },
+      // redirect: {
+      //   status: 302,
+      //   location: "/dashboard",
+      // },
     };
   }
 

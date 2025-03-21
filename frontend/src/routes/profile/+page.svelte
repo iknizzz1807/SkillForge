@@ -182,7 +182,7 @@
   </div>
 {/if}
 
-<main class="flex-1 pr-4 pl-4 ml-64">
+<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <!-- Two Column Layout -->
   <div class="grid grid-cols-2 gap-4">
     <!-- Left Column -->

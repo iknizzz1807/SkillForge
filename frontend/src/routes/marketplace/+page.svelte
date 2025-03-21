@@ -1,4 +1,4 @@
-<div class="flex space-x-4 ml-64 pl-4 pr-4">
+<div class="flex space-x-4 ml-64 pl-4 pr-4 pt-4">
   <!-- Left Column - Contains both Filter and Suggested Projects -->
   <div class="w-2/5 space-y-4 flex-shrink-0">
     <!-- Filter Panel -->
@@ -47,7 +47,9 @@
               Skills: React, Node.js | 90% Match
             </p>
           </div>
-          <button class="btn text-xs">Apply</button>
+          <a href="/marketplace/project-detail">
+            <button class="btn text-xs">View</button>
+          </a>
         </div>
         <div class="flex justify-between items-center p-2 bg-gray-100 rounded">
           <div>
@@ -56,7 +58,9 @@
               Skills: Python, MongoDB | 85% Match
             </p>
           </div>
-          <button class="btn text-xs">Apply</button>
+          <a href="/marketplace/project-detail">
+            <button class="btn text-xs">View</button>
+          </a>
         </div>
       </div>
     </div>
