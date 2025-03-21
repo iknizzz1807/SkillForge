@@ -19,6 +19,25 @@
 
   let projectsDisplay: ProjectDisplay[] = $state(data.projects);
   let errorLoadingProjects: string | null = $state(data.error);
+
+  let filterState: string = $state("all");
+  let projectsDisplayCopy = [...projectsDisplay];
+
+  $effect(() => {
+    if (filterState) {
+      if (filterState === "open") {
+        projectsDisplay = projectsDisplayCopy.filter(
+          (project) => project.status === "open"
+        );
+      } else if (filterState === "close") {
+        projectsDisplay = projectsDisplayCopy.filter(
+          (project) => project.status === "close"
+        );
+      } else if (filterState === "all") {
+        projectsDisplay = [...projectsDisplayCopy];
+      }
+    }
+  });
 </script>
 
 <!-- View Toggle
@@ -32,11 +51,41 @@
     </button>
   </div>
 </div> -->
-<!-- Form tạo dự án với layout đã tối ưu -->
+
+<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+  <div>
+    <h2 class="text-xl font-semibold">Projects</h2>
+    <p class="text-sm text-gray-600">Manage your projects</p>
+  </div>
+  {#if data.role === "business"}
+    <button class="btn">
+      <a href="/project/create">
+        <div class="flex items-center">
+          <svg
+            class="w-4 h-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            ></path>
+          </svg>
+          Create Project
+        </div>
+      </a>
+    </button>
+  {/if}
+</header>
+
 <main class="flex-1 pr-4 pl-4 ml-64">
   <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold">Projects</h2>
-    {#if data.role === "business"}
+    <!-- <h2 class="text-xl font-semibold">Projects</h2> -->
+    <!-- {#if data.role === "business"}
       <button class="btn">
         <a href="/project/create">
           <div class="flex items-center">
@@ -58,7 +107,7 @@
           </div>
         </a>
       </button>
-    {/if}
+    {/if} -->
   </div>
 
   <div class="flex space-x-4">
@@ -67,13 +116,28 @@
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">Your Active Projects</h3>
         <div class="flex space-x-2">
-          <button class="text-sm text-gray-500 hover:text-[#6b48ff]">
+          <button
+            class={filterState === "all"
+              ? "text-sm text-[#6b48ff] border-b-2 hover:text-[#6b48ff]"
+              : "text-sm text-gray-500 hover:text-[#6b48ff]"}
+            onclick={() => (filterState = "all")}
+          >
             All
           </button>
-          <button class="text-sm text-[#6b48ff] border-b-2 border-[#6b48ff]">
+          <button
+            class={filterState === "open"
+              ? "text-sm text-[#6b48ff] border-b-2 hover:text-[#6b48ff]"
+              : "text-sm text-gray-500 hover:text-[#6b48ff]"}
+            onclick={() => (filterState = "open")}
+          >
             Open
           </button>
-          <button class="text-sm text-gray-500 hover:text-[#6b48ff]">
+          <button
+            class={filterState === "close"
+              ? "text-sm text-[#6b48ff] border-b-2 hover:text-[#6b48ff]"
+              : "text-sm text-gray-500 hover:text-[#6b48ff]"}
+            onclick={() => (filterState = "close")}
+          >
             Close
           </button>
         </div>

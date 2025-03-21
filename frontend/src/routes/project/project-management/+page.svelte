@@ -1,3 +1,36 @@
+<script lang="ts">
+  import { goto } from "$app/navigation";
+
+  const goBack = () => {
+    goto("/project");
+  };
+</script>
+
+<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+  <div class="flex items-center mb-6">
+    <button class="text-gray-500 hover:text-gray-700 mr-3" onclick={goBack}>
+      <svg
+        class="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        ></path>
+      </svg>
+    </button>
+    <div>
+      <h2 class="text-xl font-semibold">[Project-name]</h2>
+      <p class="text-sm text-gray-600">Manage your projects</p>
+    </div>
+  </div>
+</header>
+
 <main class="flex-1 pr-4 pl-4 ml-64">
   <div class="space-y-4">
     <!-- Timeline Bar -->

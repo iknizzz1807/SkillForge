@@ -4,13 +4,15 @@
   function goBack() {
     goto("/project");
   }
+
+  let member: number = $state(1);
 </script>
 
 <svelte:head>
   <title>Create New Project</title>
 </svelte:head>
 
-<main class="flex-1 pr-4 pl-4 ml-64">
+<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <div class="flex items-center mb-6">
     <button class="text-gray-500 hover:text-gray-700 mr-3" onclick={goBack}>
       <svg
@@ -46,6 +48,7 @@
             />
           </div>
 
+          <!-- Project type
           <div>
             <label class="block text-sm font-medium mb-1">Project Type*</label>
             <div class="grid grid-cols-3 gap-3">
@@ -131,7 +134,7 @@
                 </div>
               </label>
             </div>
-          </div>
+          </div> -->
 
           <div>
             <label class="block text-sm font-medium mb-1"
@@ -159,20 +162,23 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Team Size*</label>
+            <label for="max-member" class="block text-sm font-medium mb-1"
+              >Team Size*</label
+            >
             <div class="flex items-center space-x-2">
               <input
+                name="max-member"
                 type="range"
                 min="1"
-                max="10"
-                value="3"
+                max="20"
+                bind:value={member}
                 class="w-full accent-[#6b48ff]"
               />
-              <span class="text-sm w-8 text-center">3</span>
+              <span class="text-sm w-8 text-center">{member}</span>
             </div>
             <div class="flex justify-between text-xs text-gray-500 mt-1">
               <span>1</span>
-              <span>10</span>
+              <span>20</span>
             </div>
           </div>
         </div>
@@ -365,12 +371,5 @@
     content: attr(placeholder);
     color: #9ca3af;
     display: block;
-  }
-
-  /* Styling for selected project type cards */
-  input[type="radio"]:checked + .project-type-card {
-    border-color: #6b48ff;
-    border-width: 2px;
-    background-color: rgba(107, 72, 255, 0.05);
   }
 </style>

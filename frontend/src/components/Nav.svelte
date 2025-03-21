@@ -247,12 +247,12 @@
     </div>
   </aside>
 
-  <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+  <!-- <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
     <div>
       <h2 class="text-xl font-semibold">{header}</h2>
       <p class="text-sm text-gray-600">{description}</p>
     </div>
-  </header>
+  </header> -->
 {/if}
 
 {@render children()}
