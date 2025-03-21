@@ -1,4 +1,4 @@
-<div class="flex space-x-4 ml-56 pl-4 pr-4">
+<div class="flex space-x-4 ml-64 pl-4 pr-4">
   <!-- Left Column - Contains both Filter and Suggested Projects -->
   <div class="w-2/5 space-y-4 flex-shrink-0">
     <!-- Filter Panel -->

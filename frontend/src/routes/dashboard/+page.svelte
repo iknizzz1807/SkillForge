@@ -35,7 +35,7 @@
   });
 </script>
 
-<main class="flex-1 ml-56 pr-4 pl-4">
+<main class="flex-1 ml-64 pr-4 pl-4">
   <div class="space-y-4">
     <!-- Quick Stats -->
     <div class="flex space-x-3">

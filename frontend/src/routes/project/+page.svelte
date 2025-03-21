@@ -33,28 +33,30 @@
   </div>
 </div> -->
 <!-- Form tạo dự án với layout đã tối ưu -->
-<main class="flex-1 pr-4 pl-4 ml-56">
+<main class="flex-1 pr-4 pl-4 ml-64">
   <div class="flex justify-between items-center mb-4">
     <h2 class="text-xl font-semibold">Projects</h2>
     {#if data.role === "business"}
       <button class="btn">
-        <div class="flex items-center">
-          <svg
-            class="w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            ></path>
-          </svg>
-          Create Project
-        </div>
+        <a href="/project/create">
+          <div class="flex items-center">
+            <svg
+              class="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              ></path>
+            </svg>
+            Create Project
+          </div>
+        </a>
       </button>
     {/if}
   </div>
@@ -223,7 +225,7 @@
                   <p class="text-xs text-gray-500">React, Node.js</p>
                 </div>
               </div>
-              <button class="btn-secondary text-xs">Chat</button>
+              <button class="btn-secondary text-xs">View</button>
             </div>
             <div
               class="flex items-center justify-between p-2 bg-gray-100 rounded"
@@ -239,7 +241,7 @@
                   <p class="text-xs text-gray-500">Python, MongoDB</p>
                 </div>
               </div>
-              <button class="btn-secondary text-xs">Chat</button>
+              <button class="btn-secondary text-xs">View</button>
             </div>
             <div
               class="flex items-center justify-between p-2 bg-gray-100 rounded"
@@ -255,7 +257,7 @@
                   <p class="text-xs text-gray-500">UI/UX, Vue.js</p>
                 </div>
               </div>
-              <button class="btn-secondary text-xs">Chat</button>
+              <button class="btn-secondary text-xs">View</button>
             </div>
             <div class="flex justify-center mt-2">
               <button class="text-sm text-[#6b48ff] hover:underline">

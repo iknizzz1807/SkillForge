@@ -1,4 +1,4 @@
-<main class="flex-1 pr-4 pl-4 ml-56">
+<main class="flex-1 pr-4 pl-4 ml-64">
   <div class="space-y-4">
     <!-- Timeline Bar -->
     <div class="card p-3 w-full">

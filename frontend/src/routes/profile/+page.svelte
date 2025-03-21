@@ -1,4 +1,7 @@
 <script lang="ts">
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
 
@@ -179,7 +182,7 @@
   </div>
 {/if}
 
-<main class="flex-1 pr-4 pl-4 ml-56">
+<main class="flex-1 pr-4 pl-4 ml-64">
   <!-- Two Column Layout -->
   <div class="grid grid-cols-2 gap-4">
     <!-- Left Column -->
@@ -193,9 +196,9 @@
             alt="User Avatar"
           />
           <div class="flex-1">
-            <h3 class="text-lg font-semibold">John Doe</h3>
-            <p class="text-sm text-gray-500">Student | Web Developer</p>
-            <p class="text-sm">Email: john.doe@example.com</p>
+            <h3 class="text-lg font-semibold">{data.name}</h3>
+            <p class="text-sm text-gray-500">{data.role} | Web Developer</p>
+            <p class="text-sm">Email: {data.email}</p>
           </div>
           <button
             id="editProfileBtn"

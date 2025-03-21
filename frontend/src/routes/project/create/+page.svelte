@@ -10,7 +10,7 @@
   <title>Create New Project</title>
 </svelte:head>
 
-<main class="flex-1 pr-4 pl-4 ml-56">
+<main class="flex-1 pr-4 pl-4 ml-64">
   <div class="flex items-center mb-6">
     <button class="text-gray-500 hover:text-gray-700 mr-3" onclick={goBack}>
       <svg

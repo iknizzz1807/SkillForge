@@ -2,7 +2,7 @@
   <title>Project Detail</title>
 </svelte:head>
 
-<main class="flex-1 ml-56 pl-4 pr-4">
+<main class="flex-1 ml-64 pl-4 pr-4">
   <div class="flex space-x-4">
     <!-- Project Info Card -->
     <div class="card p-4 w-2/3">

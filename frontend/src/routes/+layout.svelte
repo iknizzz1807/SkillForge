@@ -1,13 +1,23 @@
 <script lang="ts">
   import "../app.css";
-  let { children, data }: { children: Snippet; data: PageData } = $props();
+  let { children, data }: { children: Snippet; data: LayoutData } = $props();
   import Nav from "../components/Nav.svelte";
   import { page } from "$app/state";
-  import type { PageData } from "./$types"; // để lấy giữ liệu người dùng hiện tại mà hiển thị cho chuẩn xác
+  import type { LayoutData } from "./$types"; // để lấy giữ liệu người dùng hiện tại mà hiển thị cho chuẩn xác
   import type { Snippet } from "svelte";
 
   let header: string = $state("");
   let description: string = $state("");
+
+  let role: string = $state("");
+  let name: string = $state("");
+
+  $effect(() => {
+    if (data.role && data.userName) {
+      role = data.role;
+      name = data.userName;
+    }
+  });
 
   $effect(() => {
     if (page.url.pathname) {
@@ -38,6 +48,6 @@
   <title>{header}</title>
 </svelte:head>
 
-<Nav {header} {description} url={page.url.pathname}>
+<Nav {header} {description} url={page.url.pathname} {role} {name}>
   {@render children()}
 </Nav>
