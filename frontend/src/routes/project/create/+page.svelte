@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-
-  function goBack() {
-    goto("/project");
-  }
+  import { enhance } from "$app/forms";
 
   let member: number = $state(1);
+
+  let description: string = $state("");
 </script>
 
 <svelte:head>
@@ -14,34 +12,40 @@
 
 <main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <div class="flex items-center mb-6">
-    <button class="text-gray-500 hover:text-gray-700 mr-3" onclick={goBack}>
-      <svg
-        class="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 19l-7-7m0 0l7-7m-7 7h18"
-        ></path>
-      </svg>
-    </button>
+    <a href="/project">
+      <button class="text-gray-500 hover:text-gray-700 mr-3">
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          ></path>
+        </svg>
+      </button>
+    </a>
     <h2 class="text-xl font-semibold">Create New Project</h2>
   </div>
 
   <div class="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
-    <form class="space-y-6">
+    <form class="space-y-6" method="POST" use:enhance>
       <!-- Basic Project Info -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Project Title*</label>
+            <label class="block text-sm font-medium mb-1" for="title"
+              >Project Title*</label
+            >
             <input
               type="text"
+              id="title"
+              name="title"
               class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               placeholder="Enter a descriptive title"
               required
@@ -137,13 +141,15 @@
           </div> -->
 
           <div>
-            <label class="block text-sm font-medium mb-1"
+            <label for="skills" class="block text-sm font-medium mb-1"
               >Required Skills*</label
             >
             <select
               class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               multiple
               size="4"
+              name="skills"
+              id="skills"
             >
               <option>React</option>
               <option>Node.js</option>
@@ -168,6 +174,7 @@
             <div class="flex items-center space-x-2">
               <input
                 name="max-member"
+                id="max-member"
                 type="range"
                 min="1"
                 max="20"
@@ -185,23 +192,29 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1"
+            <label class="block text-sm font-medium mb-1" for=""
               >Project Timeline*</label
             >
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="text-xs text-gray-500 block mb-1"
+                <label class="text-xs text-gray-500 block mb-1" for="start-date"
                   >Start Date</label
                 >
                 <input
                   type="date"
+                  name="start-time"
+                  id="start-time"
                   class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 />
               </div>
               <div>
-                <label class="text-xs text-gray-500 block mb-1">End Date</label>
+                <label class="text-xs text-gray-500 block mb-1" for="end-time"
+                  >End Date</label
+                >
                 <input
                   type="date"
+                  name="end-time"
+                  id="end-time"
                   class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 />
               </div>
@@ -210,7 +223,7 @@
 
           <!-- External Links -->
           <div>
-            <label class="block text-sm font-medium mb-1"
+            <label class="block text-sm font-medium mb-1" for=""
               >External References (Optional)</label
             >
             <div class="space-y-3">
@@ -288,7 +301,7 @@
 
       <!-- Project Description -->
       <div>
-        <label class="block text-sm font-medium mb-1"
+        <label class="block text-sm font-medium mb-1" for=""
           >Project Description*</label
         >
         <!-- Rich Text Editor -->
@@ -338,23 +351,23 @@
             </button>
           </div>
           <!-- Editor content area with increased height -->
-          <div
-            contenteditable="true"
-            class="p-3 min-h-[250px] focus:outline-none"
+          <textarea
+            name="description"
+            id="description"
+            class="p-3 min-h-[250px] focus:outline-none w-full resize-none"
             placeholder="Describe your project requirements, goals, and expectations in detail..."
-          ></div>
+          ></textarea>
         </div>
       </div>
 
       <!-- Form Actions -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-        <button
+        <!-- <button
           type="button"
           class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-          onclick={goBack}
         >
           Cancel
-        </button>
+        </button> -->
         <button
           type="submit"
           class="bg-[#6b48ff] hover:bg-[#5a3de6] text-white py-2 px-4 rounded transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6b48ff]"
