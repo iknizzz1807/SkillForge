@@ -26,7 +26,7 @@ export const load = (async ({ fetch, cookies }) => {
     const token = cookies.get("auth_token");
 
     // Make API request with proper URL and headers
-    const response = await fetch("http://localhost:8080/api/projects", {
+    const response = await fetch("http://backend:8080/api/projects", {
       headers: {
         Authorization: token ? `Bearer ${token}` : "",
         "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export const actions = {
       }
 
       // Send data to API
-      const response = await fetch("http://localhost:8080/api/projects", {
+      const response = await fetch("http://backend:8080/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

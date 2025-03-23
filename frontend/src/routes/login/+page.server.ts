@@ -40,7 +40,7 @@ export const actions = {
 
     try {
       // Call the login endpoint
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch("http://backend:8080/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

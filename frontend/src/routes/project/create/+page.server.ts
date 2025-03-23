@@ -1,5 +1,5 @@
-import { start } from "repl";
-import type { Actions } from "./$types";
+import { redirect } from "@sveltejs/kit";
+import type { Actions, PageServerLoad } from "./$types";
 import { type Cookies, fail } from "@sveltejs/kit";
 
 // type ProjectInput = {
@@ -20,6 +20,11 @@ import { type Cookies, fail } from "@sveltejs/kit";
 //   repo_url: string;
 //   created_at: string;
 // };
+
+export const load = (async ({ parent }) => {
+  const parentData = await parent();
+  if (parentData.role !== "business") throw redirect(302, "/project");
+}) satisfies PageServerLoad;
 
 export const actions = {
   default: async ({
@@ -65,7 +70,7 @@ export const actions = {
       }
 
       // Send data to API
-      const response = await fetch("http://localhost:8080/api/projects", {
+      const response = await fetch("http://backend:8080/api/projects", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

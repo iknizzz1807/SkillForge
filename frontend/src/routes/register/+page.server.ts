@@ -45,7 +45,7 @@ export const actions = {
 
     try {
       //   Call the registration endpoint
-      const response = await fetch("http://localhost:8080/auth/register", {
+      const response = await fetch("http://backend:8080/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

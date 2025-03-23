@@ -144,7 +144,7 @@
   </header>
 {/if}
 
-<main class="flex-1 pr-4 pl-4 ml-64">
+<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <div class="flex space-x-4">
     <!-- Phần danh sách dự án active -->
     <div class="w-3/5 space-y-3">
@@ -259,7 +259,7 @@
       {:else}
         <div class="card p-4 text-center">
           <p class="text-gray-500">No active projects found.</p>
-          <button class="btn mt-2">Create Your First Project</button>
+          <!-- <button class="btn mt-2">Create Your First Project</button> -->
         </div>
       {/if}
     </div>

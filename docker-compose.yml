@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/skillforge
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      # Loại trừ rõ ràng node_modules từ mount để tránh xung đột
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    # Để Next.js, Vite, hoặc các dev server khác nhận connections từ bên ngoài container
+    environment:
+      - HOST=0.0.0.0
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
