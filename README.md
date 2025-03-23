@@ -13,4 +13,7 @@ Web Dev Adventure UIT project
   ```bash
   
   ```
-### Docker will be updated later
+### Docker
+```bash
+docker-compose up --build
+```
