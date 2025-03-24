@@ -8,8 +8,14 @@ export const POST: RequestHandler = async ({
 }: {
   cookies: Cookies;
 }) => {
+  const domainProduction = "skillforge.ikniz.site";
+  const domainDevelopment = "localhost";
   // Clear the authentication token
-  cookies.delete("auth_token", { path: "/" });
+  cookies.delete("auth_token", { path: "/", domain: domainProduction || "" });
+  cookies.delete("auth_token", {
+    path: "/",
+    domain: domainDevelopment || "",
+  });
   // Get the redirectTo parameter if it exists (optional)
   // const redirectTo = url.searchParams.get("redirectTo") || "/login";
   const redirectTo = "/login";
