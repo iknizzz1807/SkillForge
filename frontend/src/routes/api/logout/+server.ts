@@ -1,23 +1,20 @@
-import type { RequestHandler } from "./$types";
+import type { Cookies } from "@sveltejs/kit";
+import type { RequestHandler } from "../$types";
+import { redirect } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies, request }) => {
-  // Set the auth cookie to empty with explicit domain
-  cookies.set("auth_token", "", {
-    path: "/",
-    // domain: "143.244.147.141",
-    httpOnly: true,
-    secure: false, // Correct since you're using HTTP
-    sameSite: "lax", // Using lax for better compatibility
-    maxAge: 0, // Immediately expire the cookie
-  });
+// logout handler
+export const POST: RequestHandler = async ({
+  cookies,
+}: {
+  cookies: Cookies;
+}) => {
+  // Clear the authentication token
+  cookies.delete("auth_token", { path: "/" });
+  // Get the redirectTo parameter if it exists (optional)
+  // const redirectTo = url.searchParams.get("redirectTo") || "/login";
+  const redirectTo = "/login";
 
-  // Return a proper redirect response
-  return new Response(null, {
-    status: 303,
-    headers: {
-      Location: "/login",
-      // Clear-Site-Data is a powerful way to ensure logout
-      "Clear-Site-Data": '"cookies"',
-    },
-  });
+  // Redirect to login page
+  throw redirect(303, redirectTo);
+  // return new Response();
 };
