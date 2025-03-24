@@ -67,55 +67,6 @@
   //     alert("Có lỗi khi lưu markdown!");
   //   }
   // }
-
-  // Thêm các ký tự định dạng vào vị trí con trỏ
-  function addMarkdownFormat(format: string) {
-    const textarea = document.getElementById(
-      "markdown-editor"
-    ) as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = markdownContent.substring(start, end);
-
-    let insertion = "";
-    switch (format) {
-      case "bold":
-        insertion = `**${selectedText || "text in bold"}**`;
-        break;
-      case "italic":
-        insertion = `*${selectedText || "text in italic"}*`;
-        break;
-      case "heading":
-        insertion = `\n# ${selectedText || "Heading"}\n`;
-        break;
-      case "link":
-        insertion = `[${selectedText || "link text"}](url)`;
-        break;
-      case "list":
-        insertion = `\n- ${selectedText || "List item"}\n`;
-        break;
-      case "code":
-        insertion = `\`${selectedText || "code"}\``;
-        break;
-      case "codeblock":
-        insertion = `\n\`\`\`\n${selectedText || "code block"}\n\`\`\`\n`;
-        break;
-    }
-
-    markdownContent =
-      markdownContent.substring(0, start) +
-      insertion +
-      markdownContent.substring(end);
-
-    // Focus lại textarea sau khi chèn
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = start + insertion.length;
-      textarea.selectionEnd = start + insertion.length;
-    }, 0);
-  }
 </script>
 
 {#if data.role === "business"}
@@ -180,7 +131,7 @@
       {#if projectsDisplay.length !== 0 && !errorLoadingProjects}
         {#each projectsDisplay as ProjectDisplay}
           <!-- Project Card demo -->
-          <a href="/project/project-management" class="card p-3 block">
+          <a href={"/project/" + ProjectDisplay.id} class="card p-3 block">
             <div class="flex justify-between items-center">
               <div>
                 <h4 class="text-base font-medium">{ProjectDisplay.title}</h4>

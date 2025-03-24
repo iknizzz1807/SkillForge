@@ -1,3 +1,82 @@
+<script lang="ts">
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
+  const project = data.project;
+
+  // Format date function
+  function formatDate(dateString: string): string {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    // Format: "Mar 24, 2025"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  // Format date and time function (with time)
+  function formatDateTime(dateString: string): string {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    // Format: "Mar 24, 2025, 2:30 PM"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+  }
+
+  // Calculate project progress based on start and end dates
+  function calculateProgress(start: string, end: string): number {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const currentDate = new Date();
+
+    // If dates are invalid, return 0
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return 0;
+    }
+
+    // If project hasn't started yet
+    if (currentDate < startDate) {
+      return 0;
+    }
+
+    // If project is completed
+    if (currentDate > endDate) {
+      return 100;
+    }
+
+    // Calculate progress percentage
+    const totalDuration = endDate.getTime() - startDate.getTime();
+    const elapsedDuration = currentDate.getTime() - startDate.getTime();
+    const progress = Math.floor((elapsedDuration / totalDuration) * 100);
+
+    return progress;
+  }
+
+  // Calculate progress percentage
+  const progressPercentage = calculateProgress(
+    project.start_time,
+    project.end_time
+  );
+</script>
+
 <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-6">
     <a href="/project">
@@ -19,8 +98,8 @@
       </button>
     </a>
     <div>
-      <h2 class="text-xl font-semibold">[Project-name]</h2>
-      <p class="text-sm text-gray-600">Manage your projects</p>
+      <h2 class="text-xl font-semibold">{project.title}</h2>
+      <p class="text-sm text-gray-600">Manage your project</p>
     </div>
   </div>
 </header>
@@ -33,21 +112,21 @@
       <div class="flex items-center justify-between">
         <div class="text-center">
           <p class="text-sm font-medium">Start</p>
-          <p class="text-xs text-gray-500">15/03/2025</p>
+          <p class="text-xs text-gray-500">{formatDate(project.start_time)}</p>
         </div>
         <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
           <div
             class="absolute h-2 bg-[#6b48ff] rounded"
-            style="width: 60%"
+            style="width: {progressPercentage}%"
           ></div>
         </div>
         <div class="text-center">
           <p class="text-sm font-medium">End</p>
-          <p class="text-xs text-gray-500">29/03/2025</p>
+          <p class="text-xs text-gray-500">{formatDate(project.end_time)}</p>
         </div>
       </div>
       <p class="text-sm mt-2">
-        Progress: <span class="accent-color">60%</span>
+        Progress: <span class="accent-color">{progressPercentage}%</span>
       </p>
     </div>
 
