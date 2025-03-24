@@ -6,6 +6,7 @@ export const POST: RequestHandler = async ({ cookies, request }) => {
   // Clear the authentication token with explicit domain matching
   cookies.delete("auth_token", {
     path: "/",
+    domain: host || "",
     httpOnly: true,
     secure: false, // Correct since you're using HTTP
     sameSite: "strict", // Try "lax" instead of "strict" for better compatibility
