@@ -4,4 +4,11 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  server: {
+    // ...existing code...
+    allowedHosts: [
+      // ...existing allowed hosts...
+      'skillforge.ikniz.site'
+    ]
+  },
 });
