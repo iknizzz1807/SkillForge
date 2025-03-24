@@ -33,6 +33,9 @@ services:
     # Để Next.js, Vite, hoặc các dev server khác nhận connections từ bên ngoài container
     environment:
       - HOST=0.0.0.0
+      # Thêm biến môi trường cho Vite
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
 
   mongodb:
     image: mongo:latest

@@ -1,3 +1,11 @@
+<script lang="ts">
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
+
+  const project = data.project;
+</script>
+
 <svelte:head>
   <title>Project Detail</title>
 </svelte:head>
@@ -6,36 +14,42 @@
   <div class="flex space-x-4">
     <!-- Project Info Card -->
     <div class="card p-4 w-2/3">
-      <h3 class="text-lg font-semibold mb-3">Build a Chat App</h3>
+      <h3 class="text-lg font-semibold mb-3">{project.title}</h3>
       <div class="space-y-3">
         <p class="text-sm">
-          <span class="font-medium">Skills Required:</span> React, Node.js, Socket.IO
+          <span class="font-medium">Skills Required:</span>{project.skills}
         </p>
         <p class="text-sm">
+          <!-- Change this base on AI matchi system -->
           <span class="font-medium">Match:</span>
           <span class="accent-color">90%</span>
         </p>
         <p class="text-sm">
-          <span class="font-medium">Timeline:</span> 2 weeks
+          <span class="font-medium">Timeline:</span>
+          {project.start_time} - {project.end_time}
         </p>
         <p class="text-sm">
-          <span class="font-medium">Posted:</span> 15/03/2025 by
-          <a href="#" class="text-[#6b48ff] hover:underline">TechCorp</a>
+          <span class="font-medium">Posted:</span>
+          {project.created_at} by
+          <!-- Change this in backend: need to pass the username into the create project handler and store it -->
+          <a href="#" class="text-[#6b48ff] hover:underline"
+            >{project.created_by}</a
+          >
         </p>
         <p class="text-sm">
-          <span class="font-medium">Description:</span> Create a real-time chat application
-          with user authentication and messaging features. The project requires a
-          responsive frontend and a scalable backend.
+          <span class="font-medium">Description:</span>
+          {project.description}
         </p>
+        <!-- What the hell is this shit, is it required? -->
         <p class="text-sm">
           <span class="font-medium">Deliverables:</span> Frontend UI, Backend API,
           Documentation
         </p>
       </div>
-      <button class="btn-secondary mt-4"
+      <!-- <button class="btn-secondary mt-4"
         >Chat with Mentor (change this button please we only support group chat
         chat)</button
-      >
+      > -->
     </div>
 
     <!-- Proposal Form -->
