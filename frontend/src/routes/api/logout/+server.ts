@@ -3,15 +3,12 @@ import type { RequestHandler } from "./$types";
 export const POST: RequestHandler = async ({ cookies, request }) => {
   // Get the cookie domain from the request
   const host = request.headers.get("host");
-  const domain = host?.includes(":") ? host.split(":")[0] : host;
-
   // Clear the authentication token with explicit domain matching
   cookies.delete("auth_token", {
     path: "/",
-    domain: domain || undefined,
     httpOnly: true,
-    secure: false, // Set to true if you're using HTTPS
-    sameSite: "strict",
+    secure: false, // Correct since you're using HTTP
+    sameSite: "strict", // Try "lax" instead of "strict" for better compatibility
   });
 
   // Return a proper redirect response
