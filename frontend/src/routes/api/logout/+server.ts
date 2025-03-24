@@ -11,7 +11,12 @@ export const POST: RequestHandler = async ({
   const domainProduction = "skillforge.ikniz.site";
   const domainDevelopment = "localhost";
   // Clear the authentication token
-  cookies.delete("auth_token", { path: "/", domain: domainProduction || "" });
+  cookies.delete("auth_token", {
+    path: "/",
+    domain: domainProduction || "",
+    secure: false,
+    sameSite: "lax",
+  });
   cookies.delete("auth_token", {
     path: "/",
     domain: domainDevelopment || "",
