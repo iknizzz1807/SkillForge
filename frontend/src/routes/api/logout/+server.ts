@@ -8,7 +8,8 @@ export const POST: RequestHandler = async ({
 }: {
   cookies: Cookies;
 }) => {
-  const domainProduction = "skillforge.ikniz.site";
+  // Fix this shit pleaseeeeeeeeee
+  const domainProduction = ".skillforge.ikniz.site";
   const domainDevelopment = "localhost";
   // Clear the authentication token
   cookies.delete("auth_token", {

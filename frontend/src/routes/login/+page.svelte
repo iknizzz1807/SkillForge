@@ -105,6 +105,11 @@
         {#if form?.error}
           <div class="text-red-400 text-1xl">{form.message}</div>
         {/if}
+        {#if form?.success}
+          <div class="text-green-400 text-1xl">
+            {"Successfully, redirecting"}
+          </div>
+        {/if}
         <button type="submit" class="btn w-full">Login</button>
       </form>
 

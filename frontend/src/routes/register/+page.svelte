@@ -10,7 +10,7 @@
       // Wait 1s then redirect
       setTimeout(() => {
         goto("/login");
-      }, 1000);
+      }, 1500);
     }
   });
 </script>
