@@ -23,6 +23,14 @@ type Task struct {
 	// Status là trạng thái task: "todo", "in_progress", "review", "done"
 	Status string `json:"status" bson:"status"`
 
+	// Review là nhận xét của business về task đó, và có thể có hay không có
+	// bởi vì task có thể được review xấu rồi từ status "in_progress" hay "review" quay về status todo
+	Review string `json:"review" bson:"review"`
+
+	// Finished_by là id của người đã hoàn thành task này, để trống nếu đang ở status
+	//  "todo" hoặc "in_progress"
+	Finished_by string `json:"finished_by" bson:"finished_by"`
+
 	// CreatedAt là thời gian tạo task
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 

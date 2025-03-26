@@ -68,6 +68,8 @@ func (s *TaskService) CreateTask(projectID, description string) (*models.Task, e
 		ProjectID:   projectID,
 		Description: description,
 		Status:      "todo",
+		Review:      "",
+		Finished_by: "",
 		CreatedAt:   time.Now(),
 	}
 
@@ -81,6 +83,8 @@ func (s *TaskService) CreateTask(projectID, description string) (*models.Task, e
 	// Gửi thông báo (giả sử thông báo đến người tạo dự án)
 	projectRepo := repositories.NewProjectRepository(s.db)
 	project, _ := projectRepo.FindProjectByID(context.Background(), projectID)
+	// Implement send email and send notification with sound on website uisng websocket
+	// Redeisgn these services to make it send to every members in the team, not just one member
 	if project != nil {
 		s.notificationService.SendEmail(project.CreatedBy, "New Task", "A new task was added to your project.")
 	}

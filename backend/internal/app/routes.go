@@ -12,10 +12,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
 
-	// "github.com/iknizzz1807/SkillForge/internal/integrations"
+	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/middleware"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
+
+// // WebSocket upgrader cấu hình
+// var upgrader = websocket.Upgrader{
+// 	ReadBufferSize:  1024,
+// 	WriteBufferSize: 1024,
+// 	// Cho phép tất cả các origin để dễ phát triển
+// 	// Trong production nên giới hạn origin cụ thể
+// 	CheckOrigin: func(r *http.Request) bool {
+// 		return true
+// 	},
+// }
 
 func RegisterRoutes(
 	r *gin.Engine,
@@ -28,8 +39,12 @@ func RegisterRoutes(
 	portfolioService *services.PortfolioService,
 	analyticsService *services.AnalyticsService,
 	authService *services.AuthService,
+	notificationService *services.NotificationService,
 	// paymentClient *integrations.PaymentClient,
 ) {
+	// Khởi tạo integrations ở đây
+	realtimeClient := integrations.NewRealtimeClient()
+
 	// Khởi tạo các handler với service tương ứng
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(authService)
@@ -40,15 +55,23 @@ func RegisterRoutes(
 	messageHandler := handlers.NewMessageHandler(messageService)
 	portfolioHandler := handlers.NewPortfolioHandler(portfolioService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
+	websocketHanlder := handlers.NewWebSocketHandler(realtimeClient, messageService, notificationService,
+		taskService,
+		projectService)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
 	r.POST("/auth/register", authHandler.Register) // Tạo user mới
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
 
+	// Route để server web socket client
+	// Todo: chia cái này thành handler riêng để dễ xử lý và code sạch, cân nhắc tên là websocket hanlder
+	r.GET("/ws", websocketHanlder.HandleConnection)
+
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
-	api.Use(middleware.AuthMiddleware())
+	r.Use(middleware.AuthMiddleware())
+
 	{
 		// User routes
 		api.GET("/users/:id", userHandler.GetUser)
