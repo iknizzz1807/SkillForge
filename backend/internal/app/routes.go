@@ -13,7 +13,6 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
 
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
-	"github.com/iknizzz1807/SkillForge/internal/middleware"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -70,7 +69,8 @@ func RegisterRoutes(
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
-	r.Use(middleware.AuthMiddleware())
+	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
+	// r.Use(middleware.AuthMiddleware())
 
 	{
 		// User routes
@@ -87,9 +87,12 @@ func RegisterRoutes(
 		api.GET("/applications/:id", applicationHandler.GetApplication)
 
 		// Task routes
-		api.GET("/tasks/:id", taskHandler.GetTask)
-		api.POST("/tasks", taskHandler.CreateTask)
+		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
+		api.POST("/tasks", taskHandler.CreateTasks)
 		api.PUT("/tasks/:id", taskHandler.UpdateTask)
+		api.PUT("/tasks/:id/assign", taskHandler.AssignTask)
+		api.PUT("/tasks/:id/finish", taskHandler.FinishTask)
+		api.DELETE("/tasks/:id", taskHandler.DeleteTask)
 
 		// Review routes
 		api.POST("/reviews", reviewHandler.SubmitReview)

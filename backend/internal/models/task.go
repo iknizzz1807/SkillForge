@@ -27,6 +27,9 @@ type Task struct {
 	// bởi vì task có thể được review xấu rồi từ status "in_progress" hay "review" quay về status todo
 	Review string `json:"review" bson:"review"`
 
+	// Assigned by là id của người chịu trách nhiệm hoàn thành task này
+	Assigned_to string `json:"assigned_to" bson:"assigned_to"`
+
 	// Finished_by là id của người đã hoàn thành task này, để trống nếu đang ở status
 	//  "todo" hoặc "in_progress"
 	Finished_by string `json:"finished_by" bson:"finished_by"`

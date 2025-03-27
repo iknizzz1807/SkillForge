@@ -63,10 +63,10 @@ func Run() {
 	r := gin.Default()
 
 	// Đăng ký middleware (nếu cần)
-	// Ví dụ: r.Use(middleware.AuthMiddleware())
+	// Ví dụ: r.Use(middleware.LogMiddleware())
 
 	// Đăng ký các route từ routes.go
-	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService)
+	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService)
 
 	// Chạy server
 	if err := r.Run(":8080"); err != nil {

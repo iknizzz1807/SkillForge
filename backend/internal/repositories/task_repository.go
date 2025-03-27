@@ -10,6 +10,8 @@ package repositories
 import (
 	"context"
 
+	"errors"
+
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,17 +31,60 @@ func NewTaskRepository(db *mongo.Database) *TaskRepository {
 	}
 }
 
-// InsertTask thêm task mới vào collection "tasks"
-// Input: ctx (context.Context), task (*models.Task)
+// InsertTasks thêm nhiều tasks mới vào collection "tasks"
+// Input: ctx (context.Context), tasks ([]*models.Task)
 // Return: error (nếu có lỗi)
-func (r *TaskRepository) InsertTask(ctx context.Context, task *models.Task) error {
-	// Chèn task vào collection
-	_, err := r.collection.InsertOne(ctx, task)
+func (r *TaskRepository) InsertTasks(ctx context.Context, tasks []*models.Task) error {
+	// Kiểm tra danh sách tasks không rỗng
+	if len(tasks) == 0 {
+		return errors.New("danh sách tasks không được rỗng")
+	}
+
+	// Chuyển đổi danh sách tasks thành slice các interface{}
+	documents := make([]interface{}, len(tasks))
+	for i, task := range tasks {
+		documents[i] = task
+	}
+
+	// Chèn nhiều tasks vào collection một lúc
+	_, err := r.collection.InsertMany(ctx, documents)
 	if err != nil {
 		return err
 	}
+
 	// Trả về nil nếu thành công
 	return nil
+}
+
+// FindTaskByProjectID tìm các task thuộc về một project cụ thể
+// Input: ctx (context.Context), projectID (string)
+// Return: []models.Task (danh sách task), error (nếu có lỗi)
+func (r *TaskRepository) FindTasksByProjectID(ctx context.Context, projectID string) ([]*models.Task, error) {
+	// Tạo filter để tìm các task thuộc về project
+	filter := bson.M{"project_id": projectID}
+
+	// Tạo mảng lưu kết quả
+	var tasks []*models.Task
+
+	// Truy vấn database
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	// Đọc tất cả các task tìm được vào mảng
+	if err := cursor.All(ctx, &tasks); err != nil {
+		return nil, err
+	}
+
+	// Nếu không tìm thấy task nào, trả về slice rỗng
+	if len(tasks) == 0 {
+		return []*models.Task{}, nil
+	}
+
+	// Trả về danh sách task
+	return tasks, nil
 }
 
 // FindTaskByID tìm task theo ID
@@ -79,5 +124,26 @@ func (r *TaskRepository) UpdateTask(ctx context.Context, task *models.Task) erro
 	}
 
 	// Trả về nil nếu thành công
+	return nil
+}
+
+// DeleteTask xóa task theo ID
+// Input: ctx (context.Context), taskID (string)
+// Return: error (nếu có lỗi)
+func (r *TaskRepository) DeleteTask(ctx context.Context, taskID string) error {
+	// Tạo filter để tìm theo ID
+	filter := bson.M{"_id": taskID}
+
+	// Xóa task từ collection
+	result, err := r.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	// Kiểm tra xem có bản ghi nào bị xóa không
+	if result.DeletedCount == 0 {
+		return errors.New("there is no task to delete")
+	}
+
 	return nil
 }
