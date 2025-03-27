@@ -67,6 +67,23 @@
   //     alert("Có lỗi khi lưu markdown!");
   //   }
   // }
+
+  // Format date function
+  function formatDate(dateString: string): string {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    // Format: "Mar 24, 2025"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 </script>
 
 {#if data.role === "business"}
@@ -139,8 +156,11 @@
                   Skills: {ProjectDisplay.skills}
                 </p>
                 <p class="text-xs text-gray-400 mt-1">
-                  Progress: <span class="accent-color">60%</span> | Start: {ProjectDisplay.start_time}
-                  | End: {ProjectDisplay.end_time}
+                  <!-- Thay số 60% bằng số tasks đã hoàn thành / số task tổng -->
+                  Progress: <span class="accent-color">60%</span> | Start: {formatDate(
+                    ProjectDisplay.start_time.toString()
+                  )}
+                  | End: {formatDate(ProjectDisplay.end_time.toString())}
                 </p>
               </div>
 
@@ -186,8 +206,8 @@
                   </svg>
                 </div>
                 <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
-                  >{ProjectDisplay.status}</span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-bold"
+                  >{ProjectDisplay.status.toUpperCase()}</span
                 >
                 <svg
                   class="w-5 h-5 text-gray-400"

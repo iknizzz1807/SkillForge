@@ -77,7 +77,7 @@
   );
 </script>
 
-<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+<header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-6">
     <a href="/project">
       <button class="text-gray-500 hover:text-gray-700 mr-3">
@@ -106,126 +106,67 @@
 
 <main class="flex-1 pr-4 pl-4 ml-64">
   <div class="space-y-4">
-    <!-- Timeline Bar -->
-    <div class="card p-3 w-full">
-      <h3 class="text-base font-semibold mb-2">Timeline</h3>
-      <div class="flex items-center justify-between">
-        <div class="text-center">
-          <p class="text-sm font-medium">Start</p>
-          <p class="text-xs text-gray-500">{formatDate(project.start_time)}</p>
-        </div>
-        <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
-          <div
-            class="absolute h-2 bg-[#6b48ff] rounded"
-            style="width: {progressPercentage}%"
-          ></div>
-        </div>
-        <div class="text-center">
-          <p class="text-sm font-medium">End</p>
-          <p class="text-xs text-gray-500">{formatDate(project.end_time)}</p>
-        </div>
-      </div>
-      <p class="text-sm mt-2">
-        Progress: <span class="accent-color">{progressPercentage}%</span>
-      </p>
-    </div>
-
-    <!-- Main content grid with Kanban + Recent Activities -->
+    <!-- Top section: Timeline, Progression, and Recent Activities -->
     <div class="flex space-x-4">
-      <!-- Left content (Kanban + Chat) -->
-      <div class="space-y-4 flex-1">
-        <!-- Kanban Board -->
+      <!-- Timeline and Progression -->
+      <div class="flex-1 space-y-4">
+        <!-- Timeline Bar -->
         <div class="card p-3 w-full">
-          <h3 class="text-base font-semibold mb-3">Tasks</h3>
-          <div class="grid grid-cols-4 gap-3">
-            <!-- To-do -->
-            <div>
-              <h4 class="text-sm font-medium mb-2">To-do</h4>
-              <div class="card p-2 bg-gray-100">
-                <p class="text-sm">Design UI</p>
-                <p class="text-xs text-gray-500">Due: 20/03</p>
-              </div>
+          <h3 class="text-base font-semibold mb-2">Timeline</h3>
+          <div class="flex items-center justify-between">
+            <div class="text-center">
+              <p class="text-sm font-medium">Start</p>
+              <p class="text-xs text-gray-500">
+                {formatDate(project.start_time)}
+              </p>
             </div>
-            <!-- In Progress -->
-            <div>
-              <h4 class="text-sm font-medium mb-2">In Progress</h4>
-              <div class="card p-2 bg-yellow-50">
-                <p class="text-sm">Code Backend</p>
-                <p class="text-xs text-gray-500">Due: 22/03</p>
-              </div>
+            <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
+              <div
+                class="absolute h-2 bg-[#6b48ff] rounded"
+                style="width: {progressPercentage}%"
+              ></div>
             </div>
-            <!-- Review -->
-            <div>
-              <h4 class="text-sm font-medium mb-2">Review</h4>
-              <div class="card p-2 bg-blue-50">
-                <p class="text-sm">Test Features</p>
-                <p class="text-xs text-gray-500">Due: 25/03</p>
-              </div>
-            </div>
-            <!-- Done -->
-            <div>
-              <h4 class="text-sm font-medium mb-2">Done</h4>
-              <div class="card p-2 bg-green-50">
-                <p class="text-sm">Setup DB</p>
-                <p class="text-xs text-gray-500">Completed</p>
-              </div>
+            <div class="text-center">
+              <p class="text-sm font-medium">End</p>
+              <p class="text-xs text-gray-500">
+                {formatDate(project.end_time)}
+              </p>
             </div>
           </div>
+          <p class="text-sm mt-2">
+            Progress: <span class="accent-color">{progressPercentage}%</span>
+          </p>
         </div>
 
-        <!-- Chat Panel -->
+        <!-- New Progression Bar -->
         <div class="card p-3 w-full">
-          <h3 class="text-base font-semibold mb-3">
-            Chat - replace this with github changes or keep (the /chat different
-            will display all the damn chat)
-          </h3>
-          <div class="h-40 overflow-y-auto bg-gray-100 p-2 rounded mb-3">
-            <div class="flex justify-start mb-2">
-              <p class="text-sm bg-white p-2 rounded">
-                Hey, how's the backend going?
-              </p>
+          <h3 class="text-base font-semibold mb-2">Progression</h3>
+          <div class="flex items-center justify-between">
+            <div class="text-center">
+              <p class="text-sm font-medium">Tasks</p>
+              <p class="text-xs text-gray-500">Completed</p>
             </div>
-            <div class="flex justify-end mb-2">
-              <p
-                class="text-sm p-2 rounded text-white"
-                style="background-color: #6b48ff"
-              >
-                Good, almost done!
-              </p>
+            <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
+              <div
+                class="absolute h-2 bg-green-500 rounded"
+                style="width: 35%"
+              ></div>
+            </div>
+            <div class="text-center">
+              <p class="text-sm font-medium">Total</p>
+              <p class="text-xs text-gray-500">4/12</p>
             </div>
           </div>
-          <div class="flex space-x-2">
-            <input
-              type="text"
-              class="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              placeholder="Type a message..."
-            />
-            <button class="btn">Send</button>
-            <button class="btn-secondary">
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          <button class="btn-secondary mt-2">Start Video Call</button>
+          <p class="text-sm mt-2">
+            Tasks completed: <span class="text-green-600">35%</span>
+          </p>
         </div>
       </div>
 
       <!-- Right sidebar - Recent Activities -->
       <div class="w-72">
         <div class="card p-4 sticky top-4">
-          <h3 class="text-base font-semibold mb-4">Recent Activities</h3>
+          <h3 class="text-base font-semibold mb-2">Recent Activities</h3>
           <!-- Timeline -->
           <div class="relative">
             <!-- Timeline line -->
@@ -262,8 +203,7 @@
                 </p>
               </div>
 
-              <div class="relative pl-8">
-                <!-- Timeline dot -->
+              <!-- <div class="relative pl-8">
                 <div
                   class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
                 ></div>
@@ -277,9 +217,7 @@
                 </p>
               </div>
 
-              <!-- Yesterday's activities -->
               <div class="relative pl-8">
-                <!-- Timeline dot -->
                 <div
                   class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-gray-400 border-2 border-white"
                 ></div>
@@ -293,7 +231,6 @@
               </div>
 
               <div class="relative pl-8">
-                <!-- Timeline dot -->
                 <div
                   class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-gray-400 border-2 border-white"
                 ></div>
@@ -304,7 +241,7 @@
                   <span class="font-medium">Emma</span> created
                   <span class="font-medium">Test Features</span> task
                 </p>
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -312,6 +249,187 @@
           <button class="btn-secondary w-full mt-4 text-sm">
             View All Activities
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban Board (full width, full height) -->
+    <div class="card p-3 w-full min-h-[calc(100vh-380px)] mb-4">
+      <h3 class="text-base font-semibold mb-2">Tasks</h3>
+      <div class="grid grid-cols-4 gap-3 h-full">
+        <!-- To-do -->
+        <div class="flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <div class="p-1.5 rounded-md bg-gray-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-gray-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              </div>
+              <h4 class="text-sm font-medium">To-do</h4>
+            </div>
+            <span
+              class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-gray-100 text-gray-700"
+              >3</span
+            >
+          </div>
+          <button class="text-xs text-[#6b48ff] mb-2">+ Add tasks</button>
+          <div class="bg-gray-50 rounded-lg p-2 flex-1 overflow-y-auto">
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Design UI</p>
+              <p class="text-xs text-gray-500">Due: 20/03</p>
+            </div>
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Create Wireframes</p>
+              <p class="text-xs text-gray-500">Due: 22/03</p>
+            </div>
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Research API</p>
+              <p class="text-xs text-gray-500">Due: 25/03</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <div class="p-1.5 rounded-md bg-yellow-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-yellow-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                  ></path>
+                </svg>
+              </div>
+              <h4 class="text-sm font-medium">In Progress</h4>
+            </div>
+            <span
+              class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700"
+              >2</span
+            >
+          </div>
+          <div class="bg-yellow-50 rounded-lg p-2 flex-1 overflow-y-auto">
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Code Backend</p>
+              <p class="text-xs text-gray-500">Due: 22/03</p>
+            </div>
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Implement Auth</p>
+              <p class="text-xs text-gray-500">Due: 24/03</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review -->
+        <div class="flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <div class="p-1.5 rounded-md bg-blue-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </div>
+              <h4 class="text-sm font-medium">Review</h4>
+            </div>
+            <span
+              class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-blue-100 text-blue-700"
+              >1</span
+            >
+          </div>
+          <div class="bg-blue-50 rounded-lg p-2 flex-1 overflow-y-auto">
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Test Features</p>
+              <p class="text-xs text-gray-500">Due: 25/03</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Done -->
+        <div class="flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <div class="p-1.5 rounded-md bg-green-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-green-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 6L9 17l-5-5"></path>
+                </svg>
+              </div>
+              <h4 class="text-sm font-medium">Done</h4>
+            </div>
+            <span
+              class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-green-100 text-green-700"
+              >6</span
+            >
+          </div>
+          <div class="bg-green-50 rounded-lg p-2 flex-1 overflow-y-auto">
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Setup DB</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Project Setup</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div class="card p-2 bg-white mb-2 shadow-sm">
+              <p class="text-sm font-medium">Create Repository</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Initial Planning</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Initial Planning</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+
+            <div class="card p-2 bg-white shadow-sm">
+              <p class="text-sm font-medium">Initial Planning</p>
+              <p class="text-xs text-gray-500">Completed</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

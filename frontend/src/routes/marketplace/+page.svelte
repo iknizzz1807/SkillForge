@@ -5,6 +5,23 @@
 
   const projectsDisplay = data.projects;
   const projectsSuggest = data.projects; // Tạm thời để nó như vậy, khi nào hoàn thiện hệ thống AI
+
+  // Format date function
+  function formatDate(dateString: string): string {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    // Format: "Mar 24, 2025"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 </script>
 
 <div class="flex space-x-4 ml-64 pl-4 pr-4 pt-4">
@@ -14,30 +31,67 @@
     <div class="card p-4">
       <h3 class="text-base font-semibold mb-3">Filters</h3>
       <form class="space-y-3">
+        <!-- Skills và Difficulty đặt cùng hàng -->
+        <div class="flex space-x-3">
+          <div class="w-1/2">
+            <label class="block text-sm font-medium mb-1">Fields</label>
+            <select
+              class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+            >
+              <option>All Fields</option>
+              <option>Web Development</option>
+              <option>Mobile App</option>
+              <option>Data Science</option>
+              <option>AI engineer</option>
+            </select>
+          </div>
+          <div class="w-1/2">
+            <label class="block text-sm font-medium mb-1">Difficulty</label>
+            <select
+              class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+            >
+              <option>All Levels</option>
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+              <option>Expert</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Field với checkbox chia làm 2 cột -->
         <div>
           <label class="block text-sm font-medium mb-1">Skills</label>
-          <select
-            class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-          >
-            <option>All Skills</option>
-            <option>React</option>
-            <option>Node.js</option>
-            <option>Python</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Difficulty</label>
-          <input type="range" min="1" max="5" value="3" class="w-full" />
-          <p class="text-xs text-gray-500 mt-1">Intermediate</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Field</label>
-          <div class="space-y-1">
+          <div class="grid grid-cols-2 gap-1">
             <label class="flex items-center text-sm">
-              <input type="checkbox" class="mr-2" /> Web Development
+              <input type="checkbox" class="mr-2" /> ReactJS
             </label>
             <label class="flex items-center text-sm">
-              <input type="checkbox" class="mr-2" /> Data Science
+              <input type="checkbox" class="mr-2" /> Python
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> JavaScript
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> Docker
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> Machine Learning
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> Golang
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> C++
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> Rust
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> Java
+            </label>
+            <label class="flex items-center text-sm">
+              <input type="checkbox" class="mr-2" /> TypeScript
             </label>
           </div>
         </div>
@@ -59,27 +113,24 @@
                 Skills: {project.skills} | 90% Match
               </p>
               <p class="text-xs text-gray-500">
-                Timeline: {project.start_time} - {project.end_time} | By {project.created_by}
+                Timeline: {formatDate(project.start_time.toString())} - {formatDate(
+                  project.end_time.toString()
+                )} | By
+                <a
+                  href={"/user/profile/" + project.created_by}
+                  class="text-xs text-[#6b48ff]"
+                >
+                  <!-- {project.created_by} -->
+                  Com2us
+                </a>
+                <!-- Change the "created_by" to the name of business and href link to
+                business profile -->
               </p>
             </div>
             <a href={"/marketplace/" + project.id}>
               <button class="btn text-xs">View</button>
             </a>
           </div>
-
-          <!-- <div
-            class="flex justify-between items-center p-2 bg-gray-100 rounded"
-          >
-            <div>
-              <p class="text-sm font-medium">E-commerce Backend</p>
-              <p class="text-xs text-gray-500">
-                Skills: Python, MongoDB | 85% Match
-              </p>
-            </div>
-            <a href="/marketplace/project-detail">
-              <button class="btn text-xs">View</button>
-            </a>
-          </div> -->
         {/each}
       </div>
     </div>
@@ -124,7 +175,9 @@
                 {project.skills} | 90% Match
               </p>
               <p class="text-xs text-gray-400 mt-1">
-                Timeline: {project.start_time} - {project.end_time} | Posted: {project.created_at}
+                Timeline: {formatDate(project.start_time.toString())} - {formatDate(
+                  project.end_time.toString()
+                )} | Posted: {formatDate(project.created_at.toString())}
               </p>
             </div>
 
