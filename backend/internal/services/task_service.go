@@ -54,38 +54,40 @@ func (s *TaskService) GetTasksByProjectID(projectID string) ([]*models.Task, err
 }
 
 // CreateTasks tạo nhiều tasks mới cho một project
-// Input: projectID (string), descriptions ([]string)
+// Input: projectID (string), taskInputs ([]TaskInput)
 // Return: []*models.Task (danh sách tasks vừa tạo), error (nếu có lỗi)
-func (s *TaskService) CreateTasks(projectID string, descriptions []string) ([]*models.Task, error) {
+func (s *TaskService) CreateTasks(projectID string, taskInputs []models.TaskInput) ([]*models.Task, error) {
 	// Kiểm tra input hợp lệ
-	if projectID == "" || len(descriptions) == 0 {
-		return nil, errors.New("project ID hoặc danh sách mô tả không hợp lệ")
+	if projectID == "" || len(taskInputs) == 0 {
+		return nil, errors.New("invalid inputs")
 	}
 
 	// Tạo danh sách tasks mới
 	var tasks []*models.Task
-	now := time.Now()
 
-	for _, description := range descriptions {
-		if description == "" {
-			continue // Bỏ qua mô tả rỗng
+	for _, input := range taskInputs {
+		if input.Title == "" {
+			continue // Bỏ qua task không có tiêu đề
 		}
 
 		task := &models.Task{
 			ID:          utils.GenerateUUID(),
 			ProjectID:   projectID,
-			Description: description,
+			Title:       input.Title,
+			Description: input.Description,
+			Note:        input.Note,
+			Assigned_to: input.AssignedTo,
 			Status:      "todo",
 			Review:      "",
 			Finished_by: "",
-			CreatedAt:   now,
+			CreatedAt:   time.Now(),
 		}
 		tasks = append(tasks, task)
 	}
 
 	// Kiểm tra xem có tasks nào được tạo không
 	if len(tasks) == 0 {
-		return nil, errors.New("không có task hợp lệ nào được tạo")
+		return nil, errors.New("no valid task is created")
 	}
 
 	// Lưu tasks vào database
@@ -94,16 +96,6 @@ func (s *TaskService) CreateTasks(projectID string, descriptions []string) ([]*m
 	if err != nil {
 		return nil, err
 	}
-
-	// // Gửi thông báo (giả sử thông báo đến người tạo dự án)
-	// projectRepo := repositories.NewProjectRepository(s.db)
-	// project, _ := projectRepo.FindProjectByID(context.Background(), projectID)
-	// if project != nil {
-	// 	message := fmt.Sprintf("%d tasks mới đã được thêm vào dự án của bạn", len(tasks))
-	// 	s.notificationService.SendEmail(project.CreatedBy, "New Tasks Added", message)
-
-	// 	// Có thể thêm thông báo realtime qua WebSocket ở đây
-	// }
 
 	// Trả về danh sách tasks
 	return tasks, nil

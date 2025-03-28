@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -47,9 +48,10 @@ func (h *TaskHandler) GetTasksByProjectID(c *gin.Context) {
 // Tạo nhiều tasks một lúc
 // Return: Trả về JSON danh sách các task vừa tạo hoặc lỗi
 func (h *TaskHandler) CreateTasks(c *gin.Context) {
+	// TaskRequest định nghĩa cấu trúc yêu cầu từ client
 	var req struct {
-		ProjectID    string   `json:"project_id" binding:"required"`
-		Descriptions []string `json:"descriptions" binding:"required"`
+		ProjectID string             `json:"project_id" binding:"required"`
+		Tasks     []models.TaskInput `json:"tasks" binding:"required"`
 	}
 
 	// Parse và validate request body
@@ -58,14 +60,14 @@ func (h *TaskHandler) CreateTasks(c *gin.Context) {
 		return
 	}
 
-	// Kiểm tra danh sách descriptions không rỗng
-	if len(req.Descriptions) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Must have at least one task description"})
+	// Kiểm tra danh sách tasks không rỗng
+	if len(req.Tasks) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Must have at least one task"})
 		return
 	}
 
 	// Gọi service để tạo các tasks
-	tasks, err := h.taskService.CreateTasks(req.ProjectID, req.Descriptions)
+	tasks, err := h.taskService.CreateTasks(req.ProjectID, req.Tasks)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

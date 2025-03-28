@@ -17,6 +17,9 @@ type Task struct {
 	// ProjectID là ID của dự án chứa task
 	ProjectID string `json:"project_id" bson:"project_id"`
 
+	// Title là tiêu đề của task
+	Title string `json:"title" bson:"title"`
+
 	// Description là mô tả chi tiết task
 	Description string `json:"description" bson:"description"`
 
@@ -26,6 +29,9 @@ type Task struct {
 	// Review là nhận xét của business về task đó, và có thể có hay không có
 	// bởi vì task có thể được review xấu rồi từ status "in_progress" hay "review" quay về status todo
 	Review string `json:"review" bson:"review"`
+
+	// Note là một trường khác ngoài description để ghi chú thích về task
+	Note string `json:"note" bson:"note"`
 
 	// Assigned by là id của người chịu trách nhiệm hoàn thành task này
 	Assigned_to string `json:"assigned_to" bson:"assigned_to"`
@@ -39,4 +45,11 @@ type Task struct {
 
 	// UpdatedAt là thời gian cập nhật task (nếu có)
 	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+}
+
+type TaskInput struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Note        string `json:"note"`
+	AssignedTo  string `json:"assigned_to"`
 }

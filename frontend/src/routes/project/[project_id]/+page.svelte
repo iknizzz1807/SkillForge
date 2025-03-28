@@ -75,6 +75,56 @@
     project.start_time,
     project.end_time
   );
+
+  // Task creation modal
+  let showTaskModal = $state(false);
+
+  let newTasks = $state([
+    { name: "", description: "", note: "", assignedTo: "" },
+  ]);
+  let teamMembers = $state([
+    { id: 1, name: "John Doe" },
+    { id: 2, name: "Sarah Smith" },
+    { id: 3, name: "Alex Johnson" },
+    { id: 4, name: "Emma Wilson" },
+  ]);
+
+  function addAnotherTask() {
+    newTasks.push({ name: "", description: "", note: "", assignedTo: "" });
+  }
+
+  function removeTask(index: number) {
+    newTasks = newTasks.filter((_, i) => i !== index);
+  }
+
+  function openTaskModal() {
+    showTaskModal = true;
+  }
+
+  function closeTaskModal() {
+    showTaskModal = false;
+    // Reset tasks form
+    newTasks = [{ name: "", description: "", note: "", assignedTo: "" }];
+  }
+
+  function createTasksWithConfirm() {
+    // Filter out empty tasks
+    const validTasks = newTasks.filter((task) => task.name.trim() !== "");
+
+    if (validTasks.length === 0) {
+      alert("Please add at least one task with a name");
+      return;
+    }
+
+    createTasks();
+  }
+
+  function createTasks() {
+    // Here you would send the tasks to your backend
+    // console.log("Creating tasks:", validTasks);
+
+    closeTaskModal();
+  }
 </script>
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
@@ -284,19 +334,76 @@
               >3</span
             >
           </div>
-          <button class="text-xs text-[#6b48ff] mb-2">+ Add tasks</button>
+          <button class="text-xs text-[#6b48ff] mb-2" onclick={openTaskModal}
+            >+ Add tasks</button
+          >
           <div class="bg-gray-50 rounded-lg p-2 flex-1 overflow-y-auto">
             <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Design UI</p>
-              <p class="text-xs text-gray-500">Due: 20/03</p>
+              <div class="flex justify-between items-center">
+                <div class="flex-1">
+                  <p class="text-sm font-medium">Create Wireframes</p>
+                  <p class="text-xs text-gray-500">
+                    Assign to:
+                    <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
+                  </p>
+                </div>
+                <button
+                  class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
+
             <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Create Wireframes</p>
-              <p class="text-xs text-gray-500">Due: 22/03</p>
+              <div class="flex justify-between items-center">
+                <div class="flex-1">
+                  <p class="text-sm font-medium">Create Wireframes</p>
+                  <p class="text-xs text-gray-500">
+                    Assign to:
+                    <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
+                  </p>
+                </div>
+                <button
+                  class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
+
             <div class="card p-2 bg-white shadow-sm">
               <p class="text-sm font-medium">Research API</p>
-              <p class="text-xs text-gray-500">Due: 25/03</p>
+              <p class="text-xs text-gray-500">
+                Assign to:
+                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
+              </p>
             </div>
           </div>
         </div>
@@ -331,11 +438,17 @@
           <div class="bg-yellow-50 rounded-lg p-2 flex-1 overflow-y-auto">
             <div class="card p-2 bg-white mb-2 shadow-sm">
               <p class="text-sm font-medium">Code Backend</p>
-              <p class="text-xs text-gray-500">Due: 22/03</p>
+              <p class="text-xs text-gray-500">
+                Doing by:
+                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
+              </p>
             </div>
             <div class="card p-2 bg-white shadow-sm">
               <p class="text-sm font-medium">Implement Auth</p>
-              <p class="text-xs text-gray-500">Due: 24/03</p>
+              <p class="text-xs text-gray-500">
+                Doing by:
+                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
+              </p>
             </div>
           </div>
         </div>
@@ -369,7 +482,10 @@
           <div class="bg-blue-50 rounded-lg p-2 flex-1 overflow-y-auto">
             <div class="card p-2 bg-white shadow-sm">
               <p class="text-sm font-medium">Test Features</p>
-              <p class="text-xs text-gray-500">Due: 25/03</p>
+              <p class="text-xs text-gray-500">
+                Done by:
+                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
+              </p>
             </div>
           </div>
         </div>
@@ -402,32 +518,34 @@
           <div class="bg-green-50 rounded-lg p-2 flex-1 overflow-y-auto">
             <div class="card p-2 bg-white mb-2 shadow-sm">
               <p class="text-sm font-medium">Setup DB</p>
-              <p class="text-xs text-gray-500">Completed</p>
+              <p class="text-xs text-gray-500">
+                Completed by:
+                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
+              </p>
             </div>
 
             <div class="card p-2 bg-white mb-2 shadow-sm">
               <p class="text-sm font-medium">Project Setup</p>
-              <p class="text-xs text-gray-500">Completed</p>
+              <p class="text-xs text-gray-500">
+                Completed by:
+                <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
+              </p>
             </div>
 
             <div class="card p-2 bg-white mb-2 shadow-sm">
               <p class="text-sm font-medium">Create Repository</p>
-              <p class="text-xs text-gray-500">Completed</p>
+              <p class="text-xs text-gray-500">
+                Completed by:
+                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
+              </p>
             </div>
 
             <div class="card p-2 bg-white shadow-sm">
               <p class="text-sm font-medium">Initial Planning</p>
-              <p class="text-xs text-gray-500">Completed</p>
-            </div>
-
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Initial Planning</p>
-              <p class="text-xs text-gray-500">Completed</p>
-            </div>
-
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Initial Planning</p>
-              <p class="text-xs text-gray-500">Completed</p>
+              <p class="text-xs text-gray-500">
+                Completed by:
+                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
+              </p>
             </div>
           </div>
         </div>
@@ -435,3 +553,179 @@
     </div>
   </div>
 </main>
+
+<!-- Task Creation Modal -->
+{#if showTaskModal}
+  <div
+    class="fixed inset-0 bg-black z-50 flex items-center justify-center modal"
+  >
+    <div
+      class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
+    >
+      <div class="p-4 border-b border-gray-100">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Create New Tasks</h3>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeTaskModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4">
+        <!-- Task form repeater -->
+        {#each newTasks as task, index}
+          <div class="card p-3 mb-4 bg-white shadow-sm">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="font-medium">Task {index + 1}</h4>
+              {#if newTasks.length > 1}
+                <button
+                  class="text-gray-500 hover:text-red-500"
+                  onclick={() => removeTask(index)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              {/if}
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium mb-1">Task Name*</label>
+                <input
+                  type="text"
+                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  placeholder="Enter task name"
+                  bind:value={task.name}
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-1"
+                  >Description*</label
+                >
+                <textarea
+                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  placeholder="Enter task description"
+                  rows="2"
+                  bind:value={task.description}
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-1">Note</label>
+                <textarea
+                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  placeholder="Note if there is"
+                  rows="2"
+                  bind:value={task.note}
+                ></textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <!-- <div>
+                  <label class="block text-sm font-medium mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                    bind:value={task.dueDate}
+                  />
+                </div> -->
+
+                <div>
+                  <label class="block text-sm font-medium mb-1"
+                    >Assigned To</label
+                  >
+                  <select
+                    class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                    bind:value={task.assignedTo}
+                  >
+                    <option value="">Unassigned</option>
+                    {#each teamMembers as member}
+                      <option value={member.id}>{member.name}</option>
+                    {/each}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        {/each}
+
+        <!-- Add another task button -->
+        <button
+          class="w-full p-2 card shadow-sm bg-white text-gray-600 hover:bg-gray-50 mb-4 flex items-center justify-center"
+          onclick={addAnotherTask}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 mr-1 text-[#6b48ff]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Add Another Task
+        </button>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex justify-end space-x-3">
+        <button
+          class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+          onclick={closeTaskModal}
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 bg-[#6b48ff] text-white rounded-lg hover:bg-[#5a3dd4]"
+          onclick={createTasksWithConfirm}
+        >
+          Create Tasks
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<style>
+  .modal {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .card {
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+</style>
