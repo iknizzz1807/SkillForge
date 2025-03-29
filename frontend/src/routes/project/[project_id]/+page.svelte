@@ -632,7 +632,7 @@
                   >Description*</label
                 >
                 <textarea
-                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  class="w-full p-2 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   placeholder="Enter task description"
                   rows="2"
                   bind:value={task.description}
@@ -642,9 +642,9 @@
               <div>
                 <label class="block text-sm font-medium mb-1">Note</label>
                 <textarea
-                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   placeholder="Note if there is"
-                  rows="2"
+                  rows="1"
                   bind:value={task.note}
                 ></textarea>
               </div>
@@ -664,7 +664,7 @@
                     >Assigned To</label
                   >
                   <select
-                    class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                    class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                     bind:value={task.assignedTo}
                   >
                     <option value="">Unassigned</option>
@@ -679,26 +679,28 @@
         {/each}
 
         <!-- Add another task button -->
-        <button
-          class="w-full p-2 card shadow-sm bg-white text-gray-600 hover:bg-gray-50 mb-4 flex items-center justify-center"
-          onclick={addAnotherTask}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 mr-1 text-[#6b48ff]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div class="flex justify-center">
+          <button
+            class="p-2 card shadow-sm bg-white text-gray-600 hover:bg-gray-50 mb-4 flex items-center justify-center"
+            onclick={addAnotherTask}
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add Another Task
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 mr-1 text-[#6b48ff]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Another Task
+          </button>
+        </div>
       </div>
 
       <div class="p-4 border-t border-gray-100 flex justify-end space-x-3">

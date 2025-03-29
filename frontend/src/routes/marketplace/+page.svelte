@@ -179,6 +179,9 @@
                   project.end_time.toString()
                 )} | Posted: {formatDate(project.created_at.toString())}
               </p>
+              <p class="text-xs text-gray-400 mt-1">
+                By {project.created_by}
+              </p>
             </div>
 
             <div class="flex flex-row gap-2">
