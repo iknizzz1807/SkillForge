@@ -208,6 +208,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Your applications</title>
+</svelte:head>
+
 <header class="flex justify-between items-center mb-6 ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center">
     <a href="/project">
@@ -239,7 +243,7 @@
   </div>
   <div class="flex space-x-3">
     <div class="relative">
-      {#if role === "student"}
+      {#if role === "business"}
         <select
           bind:value={filterProject}
           class="appearance-none bg-white border border-gray-200 rounded px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"

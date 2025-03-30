@@ -86,21 +86,21 @@
   }
 </script>
 
-{#if data.role === "business"}
-  <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
-    <button class="btn-secondary">
-      <a href="/project/application">
-        <div class="flex items-center">
-          <div
-            class="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full mr-2"
-          >
-            5
-          </div>
-          Applications
+<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+  <button class="btn-secondary">
+    <a href="/project/application">
+      <div class="flex items-center">
+        <div
+          class="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full mr-2"
+        >
+          5
         </div>
-      </a>
-    </button>
+        Applications
+      </div>
+    </a>
+  </button>
 
+  {#if data.role === "business"}
     <button class="btn">
       <a href="/project/create">
         <div class="flex items-center">
@@ -122,8 +122,8 @@
         </div>
       </a>
     </button>
-  </header>
-{/if}
+  {/if}
+</header>
 
 <main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <div class="flex space-x-4">

@@ -94,9 +94,6 @@ func RegisterRoutes(
 		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)         // Deprecated
 		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness) // Deprecated
 
-		// Các endpoints khác giữ nguyên
-		api.POST("/applications", applicationHandler.ApplyProject)
-		api.GET("/applications/:id", applicationHandler.GetApplication)
 		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
 
 		// Task routes
