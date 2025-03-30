@@ -76,14 +76,29 @@ func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 	c.JSON(http.StatusOK, application)
 }
 
-// GetApplicationsByUser xử lý endpoint GET
-// Lấy tất cả các applications của một user
+// GetApplicationsByCurrentUser xử lý endpoint GET
+// Lấy tất cả applications liên quan đến người dùng hiện tại (dựa vào role)
+// - Nếu là student: trả về các applications mà student đã đăng ký
+// - Nếu là business: trả về các applications cho projects của business
 // Return: Trả về JSON danh sách applications hoặc lỗi
-func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
+func (h *ApplicationHandler) GetApplicationsByCurrentUser(c *gin.Context) {
 	userID := c.GetString("userID")
+	role := c.GetString("role")
 
-	// Gọi service để lấy applications của user
-	applications, err := h.applicationService.GetApplicationsByUserID(userID)
+	var applications interface{}
+	var err error
+
+	// Dựa vào role để gọi service phù hợp
+	switch role {
+	case "student":
+		applications, err = h.applicationService.GetApplicationsByUserID(userID)
+	case "business":
+		applications, err = h.applicationService.GetApplicationsByBusinessID(userID)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user role"})
+		return
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -93,20 +108,28 @@ func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, applications)
 }
 
-// GetApplicationsByBusiness xử lý endpoint GET
-// Lấy tất cả các applications cho các projects của business
-// Return: Trả về JSON danh sách applications hoặc lỗi
+// Giữ lại các functions cũ để tương thích ngược (bạn có thể xóa sau khi cập nhật tất cả frontend calls)
+func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
+	userID := c.GetString("userID")
+
+	applications, err := h.applicationService.GetApplicationsByUserID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, applications)
+}
+
 func (h *ApplicationHandler) GetApplicationsByBusiness(c *gin.Context) {
 	businessID := c.GetString("userID")
 
-	// Gọi service để lấy applications cho projects của business
 	applications, err := h.applicationService.GetApplicationsByBusinessID(businessID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Trả về danh sách applications
 	c.JSON(http.StatusOK, applications)
 }
 

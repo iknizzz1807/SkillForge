@@ -85,10 +85,19 @@ func RegisterRoutes(
 		// Application routes
 		api.POST("/applications", applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
-		// Cân nhắc hợp nhất hai user và business thành một
-		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)
-		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness)
-		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this
+
+		// Endpoint mới hợp nhất dựa vào role
+		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
+
+		// Giữ lại các endpoints cũ để tương thích ngược (có thể xóa sau khi cập nhật tất cả frontend calls)
+		// Đánh dấu deprecated để team biết sẽ loại bỏ trong tương lai
+		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)         // Deprecated
+		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness) // Deprecated
+
+		// Các endpoints khác giữ nguyên
+		api.POST("/applications", applicationHandler.ApplyProject)
+		api.GET("/applications/:id", applicationHandler.GetApplication)
+		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
 
 		// Task routes
 		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
