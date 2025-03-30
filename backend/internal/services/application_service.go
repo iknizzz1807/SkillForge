@@ -36,7 +36,7 @@ func NewApplicationService(db *mongo.Database, notificationService *Notification
 // ApplyProject xử lý ứng tuyển dự án
 // Input: userID (string), projectID (string), proposal (string)
 // Return: *models.Application (ứng tuyển), error (nếu có lỗi)
-func (s *ApplicationService) ApplyProject(userID, projectID, proposal string) (*models.Application, error) {
+func (s *ApplicationService) ApplyProject(userID, role, projectID, proposal string) (*models.Application, error) {
 	// Kiểm tra input hợp lệ
 	if userID == "" || projectID == "" || proposal == "" {
 		return nil, errors.New("invalid application data")
@@ -59,12 +59,12 @@ func (s *ApplicationService) ApplyProject(userID, projectID, proposal string) (*
 		return nil, err
 	}
 
-	// Gửi thông báo đến doanh nghiệp (giả sử CreatedBy là doanh nghiệp)
-	projectRepo := repositories.NewProjectRepository(s.db)
-	project, _ := projectRepo.FindProjectByID(context.Background(), projectID)
-	if project != nil {
-		s.notificationService.SendEmail(project.CreatedBy, "New Application", "A student applied to your project: "+project.Title)
-	}
+	// // Gửi thông báo đến doanh nghiệp (giả sử CreatedBy là doanh nghiệp)
+	// projectRepo := repositories.NewProjectRepository(s.db)
+	// project, _ := projectRepo.FindProjectByID(context.Background(), projectID)
+	// if project != nil {
+	// 	s.notificationService.SendEmail(project.CreatedBy, "New Application", "A student applied to your project: "+project.Title)
+	// }
 
 	// Trả về ứng tuyển
 	return application, nil
@@ -88,4 +88,46 @@ func (s *ApplicationService) GetApplicationByID(applicationID string) (*models.A
 
 	// Trả về ứng tuyển
 	return application, nil
+}
+
+// GetApplicationsByUserID lấy tất cả applications của một user
+func (s *ApplicationService) GetApplicationsByUserID(userID string) ([]models.Application, error) {
+	appRepo := repositories.NewApplicationRepository(s.db)
+	return appRepo.FindByUserID(userID)
+}
+
+// GetApplicationsByBusinessID lấy tất cả applications cho các projects của business
+func (s *ApplicationService) GetApplicationsByBusinessID(businessID string) ([]models.Application, error) {
+	// Lấy tất cả project của business
+	projectRepo := repositories.NewProjectRepository(s.db)
+	appRepo := repositories.NewApplicationRepository(s.db)
+	projectIDs, err := projectRepo.GetProjectIDsByCreatorID(businessID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Nếu không có project nào, trả về mảng rỗng
+	if len(projectIDs) == 0 {
+		return []models.Application{}, nil
+	}
+
+	// Lấy tất cả applications cho các projects đó
+	return appRepo.FindByProjectIDs(projectIDs)
+}
+
+// UpdateApplicationStatus cập nhật trạng thái application
+func (s *ApplicationService) UpdateApplicationStatus(id string, status string) (*models.Application, error) {
+	appRepo := repositories.NewApplicationRepository(s.db)
+	// Kiểm tra status hợp lệ
+	validStatuses := map[string]bool{
+		"pending":  true,
+		"approved": true,
+		"rejected": true,
+	}
+
+	if !validStatuses[status] {
+		return nil, errors.New("invalid status")
+	}
+
+	return appRepo.UpdateStatus(id, status)
 }

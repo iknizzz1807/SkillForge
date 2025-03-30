@@ -28,6 +28,13 @@ func NewApplicationHandler(applicationService *services.ApplicationService) *App
 // ApplyProject xử lý endpoint POST /api/applications
 // Return: Trả về JSON ứng tuyển hoặc lỗi
 func (h *ApplicationHandler) ApplyProject(c *gin.Context) {
+	// Lấy role từ context
+	role := c.GetString("role")
+	if role != "student" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Only students can apply"})
+		return
+	}
+
 	var req struct {
 		ProjectID string `json:"project_id" binding:"required"`
 		Proposal  string `json:"proposal" binding:"required"`
@@ -43,7 +50,7 @@ func (h *ApplicationHandler) ApplyProject(c *gin.Context) {
 	userID := c.GetString("userID")
 
 	// Gọi service để ứng tuyển
-	application, err := h.applicationService.ApplyProject(userID, req.ProjectID, req.Proposal)
+	application, err := h.applicationService.ApplyProject(userID, role, req.ProjectID, req.Proposal)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -67,4 +74,68 @@ func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 
 	// Trả về chi tiết ứng tuyển
 	c.JSON(http.StatusOK, application)
+}
+
+// GetApplicationsByUser xử lý endpoint GET
+// Lấy tất cả các applications của một user
+// Return: Trả về JSON danh sách applications hoặc lỗi
+func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
+	userID := c.GetString("userID")
+
+	// Gọi service để lấy applications của user
+	applications, err := h.applicationService.GetApplicationsByUserID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về danh sách applications
+	c.JSON(http.StatusOK, applications)
+}
+
+// GetApplicationsByBusiness xử lý endpoint GET
+// Lấy tất cả các applications cho các projects của business
+// Return: Trả về JSON danh sách applications hoặc lỗi
+func (h *ApplicationHandler) GetApplicationsByBusiness(c *gin.Context) {
+	businessID := c.GetString("userID")
+
+	// Gọi service để lấy applications cho projects của business
+	applications, err := h.applicationService.GetApplicationsByBusinessID(businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về danh sách applications
+	c.JSON(http.StatusOK, applications)
+}
+
+// UpdateApplicationStatus xử lý endpoint PUT
+// Cập nhật trạng thái của application
+// Return: Trả về JSON application đã cập nhật hoặc lỗi
+func (h *ApplicationHandler) UpdateApplicationStatus(c *gin.Context) {
+	id := c.Param("id")
+
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	// Parse và validate request body
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Gọi service để cập nhật status
+	application, err := h.applicationService.UpdateApplicationStatus(id, req.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về application đã cập nhật
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "Application status updated successfully",
+		"application": application,
+	})
 }

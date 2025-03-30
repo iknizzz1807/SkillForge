@@ -505,7 +505,7 @@
 <!-- Application Detail Modal -->
 {#if showModal && selectedApplication}
   <div
-    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal"
   >
     <div
       class="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col shadow-xl"
@@ -685,5 +685,9 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .modal {
+    background-color: rgba(0, 0, 0, 0.5);
   }
 </style>

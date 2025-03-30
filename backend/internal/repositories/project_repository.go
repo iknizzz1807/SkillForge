@@ -10,9 +10,12 @@ package repositories
 import (
 	"context"
 
+	"time"
+
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ProjectRepository struct {
@@ -106,4 +109,48 @@ func (r *ProjectRepository) UpdateProject(ctx context.Context, project *models.P
 
 	// Trả về nil nếu thành công
 	return nil
+}
+
+// GetProjectIDsByCreatorID lấy tất cả projectID được tạo bởi một creator (business)
+// Input: businessID (string) - ID của business user
+// Return: []string (danh sách project ID), error (nếu có lỗi)
+func (r *ProjectRepository) GetProjectIDsByCreatorID(businessID string) ([]string, error) {
+	// Tạo context với timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Tạo filter tìm theo creator_id
+	filter := bson.M{"creator_id": businessID}
+
+	// Chỉ lấy trường _id từ các documents
+	projection := bson.M{"_id": 1}
+
+	// Truy vấn database
+	cursor, err := r.collection.Find(ctx, filter, options.Find().SetProjection(projection))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	// Tạo slice để lưu danh sách project ID
+	var projectIDs []string
+
+	// Duyệt qua cursor và lấy ID của từng project
+	for cursor.Next(ctx) {
+		var result struct {
+			ID string `bson:"_id"`
+		}
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+		projectIDs = append(projectIDs, result.ID)
+	}
+
+	// Kiểm tra lỗi từ cursor
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	// Trả về danh sách project ID
+	return projectIDs, nil
 }

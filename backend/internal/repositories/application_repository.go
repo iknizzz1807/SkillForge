@@ -10,6 +10,8 @@ package repositories
 import (
 	"context"
 
+	"time"
+
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -61,4 +63,69 @@ func (r *ApplicationRepository) FindApplicationByID(ctx context.Context, applica
 
 	// Trả về application
 	return &application, nil
+}
+
+// FindByUserID tìm tất cả applications của một user
+func (r *ApplicationRepository) FindByUserID(userID string) ([]models.Application, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := r.collection.Find(ctx, bson.M{"user_id": userID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var applications []models.Application
+	if err := cursor.All(ctx, &applications); err != nil {
+		return nil, err
+	}
+	return applications, nil
+}
+
+// FindByProjectIDs tìm tất cả applications cho danh sách các projectID
+func (r *ApplicationRepository) FindByProjectIDs(projectIDs []string) ([]models.Application, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := r.collection.Find(ctx, bson.M{"project_id": bson.M{"$in": projectIDs}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var applications []models.Application
+	if err := cursor.All(ctx, &applications); err != nil {
+		return nil, err
+	}
+	return applications, nil
+}
+
+// UpdateStatus cập nhật trạng thái application
+func (r *ApplicationRepository) UpdateStatus(id string, status string) (*models.Application, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FindApplicationByID(ctx, id)
+}
+
+// Delete xóa một application
+func (r *ApplicationRepository) Delete(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
 }

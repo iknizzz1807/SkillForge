@@ -85,6 +85,10 @@ func RegisterRoutes(
 		// Application routes
 		api.POST("/applications", applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
+		// Cân nhắc hợp nhất hai user và business thành một
+		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)
+		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness)
+		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this
 
 		// Task routes
 		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
