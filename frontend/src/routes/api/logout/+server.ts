@@ -9,7 +9,7 @@ export const POST: RequestHandler = async ({
   cookies: Cookies;
 }) => {
   // Fix this shit pleaseeeeeeeeee
-  const domainProduction = ".skillforge.ikniz.site";
+  const domainProduction = "skillforge.ikniz.site";
   const domainDevelopment = "localhost";
   // Clear the authentication token
   cookies.delete("auth_token", {
@@ -18,6 +18,20 @@ export const POST: RequestHandler = async ({
     secure: false,
     sameSite: "lax",
   });
+
+  cookies.delete("auth_token", {
+    path: "/",
+    secure: false,
+    sameSite: "lax",
+  });
+
+  cookies.delete("auth_token", {
+    path: "/",
+    domain: ".skillforge.ikniz.site",
+    secure: false,
+    sameSite: "lax",
+  });
+
   cookies.delete("auth_token", {
     path: "/",
     domain: domainDevelopment || "",
