@@ -62,8 +62,10 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Gán userID và role vào context để handler sử dụng
 		userID, _ := claims["user_id"].(string)
 		role, _ := claims["role"].(string)
+		userName, _ := claims["name"].(string)
 		c.Set("userID", userID)
 		c.Set("role", role)
+		c.Set("name", userName)
 
 		// Tiếp tục xử lý request
 		c.Next()

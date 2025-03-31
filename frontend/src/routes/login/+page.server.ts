@@ -67,7 +67,7 @@ export const actions = {
         // secure: process.env.NODE_ENV === "production",
         secure: false,
         maxAge: 60 * 60 * 24, // 1 day
-        sameSite: "strict",
+        // sameSite: "strict",
       });
 
       // Redirect to the requested page or dashboard

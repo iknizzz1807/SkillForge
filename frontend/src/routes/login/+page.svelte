@@ -5,46 +5,6 @@
   let { form, data }: { form: ActionData; data: PageData } = $props();
 </script>
 
-<!-- <div class="login-container">
-  <h1>Login to SkillForge</h1>
-
-  {#if form?.error}
-    <div class="error-message">
-      {form.message}
-    </div>
-  {/if}
-
-  <form method="POST" use:enhance>
-    <input
-      type="hidden"
-      name="redirectTo"
-      value={form?.redirectTo || data.redirectTo}
-    />
-
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input
-        type="email"
-        id="email"
-        name="email"
-        required
-        value={form?.email || ""}
-      />
-    </div>
-
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" required />
-    </div>
-
-    <button type="submit">Log In</button>
-  </form>
-
-  <div class="signup-link">
-    Don't have an account? <a href="/register">Sign up</a>
-  </div>
-</div> -->
-
 <svelte:head>
   <title>Login to SkillForge</title>
 </svelte:head>
@@ -104,11 +64,6 @@
         </div>
         {#if form?.error}
           <div class="text-red-400 text-1xl">{form.message}</div>
-        {/if}
-        {#if form?.success}
-          <div class="text-green-400 text-1xl">
-            {"Successfully, redirecting"}
-          </div>
         {/if}
         <button type="submit" class="btn w-full">Login</button>
       </form>

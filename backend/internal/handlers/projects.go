@@ -68,9 +68,10 @@ func (h *ProjectHandler) GetProject(c *gin.Context) {
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
 	// Chỉ business mới đuọc tạo project
 	if c.GetString("role") != "business" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User cannot create project"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Only businesses can create project"})
 		return
 	}
+
 	var req struct {
 		Title       string    `json:"title" binding:"required"`
 		Description string    `json:"description" binding:"required"`
@@ -86,11 +87,12 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 		return
 	}
 
-	// Lấy userID từ context (giả sử middleware auth đã gán)
+	// Lấy userID & userName từ context (giả sử middleware auth đã gán)
 	userID := c.GetString("userID")
+	userName := c.GetString("name")
 
 	// Gọi service để tạo project
-	project, err := h.projectService.CreateProject(userID, req.Title, req.Description, req.Skills, req.StartTime, req.EndTime, req.MaxMember)
+	project, err := h.projectService.CreateProject(userID, userName, req.Title, req.Description, req.Skills, req.StartTime, req.EndTime, req.MaxMember)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -98,4 +100,106 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 
 	// Trả về project vừa tạo
 	c.JSON(http.StatusCreated, project)
+}
+
+// DeleteProject xử lý endpoint DELETE /api/projects/:id
+// Return: Trả về thông báo xóa thành công hoặc lỗi
+func (h *ProjectHandler) DeleteProject(c *gin.Context) {
+	// Lấy project ID từ parameter
+	projectID := c.Param("id")
+
+	// Lấy userID từ context (giả sử middleware auth đã gán)
+	userID := c.GetString("userID")
+
+	// Kiểm tra quyền xóa project (chỉ người tạo hoặc admin mới được xóa)
+	project, err := h.projectService.GetProjectByID(projectID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Kiểm tra người dùng có phải là người tạo project
+	if project.CreatedByID != userID && c.GetString("role") != "business" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to delete this project"})
+		return
+	}
+
+	// Gọi service để xóa project
+	if err := h.projectService.DeleteProject(projectID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về thông báo xóa thành công
+	c.JSON(http.StatusOK, gin.H{"message": "Project deleted successfully"})
+}
+
+// UpdateProject xử lý endpoint PUT /api/projects/:id
+// Return: Trả về JSON project đã cập nhật hoặc lỗi
+func (h *ProjectHandler) UpdateProject(c *gin.Context) {
+	// Lấy project ID từ parameter
+	projectID := c.Param("id")
+
+	// Lấy userID từ context (giả sử middleware auth đã gán)
+	userID := c.GetString("userID")
+
+	// Kiểm tra quyền cập nhật project (chỉ người tạo mới được cập nhật)
+	project, err := h.projectService.GetProjectByID(projectID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Kiểm tra người dùng có phải là người tạo project
+	if project.CreatedByID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to update this project"})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		Title       string    `json:"title"`
+		Description string    `json:"description"`
+		Skills      []string  `json:"skills"`
+		StartTime   time.Time `json:"start_time"`
+		EndTime     time.Time `json:"end_time"`
+		MaxMember   int       `json:"max_member"`
+		Status      string    `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Validation checks
+	if !req.StartTime.IsZero() && !req.EndTime.IsZero() && req.StartTime.After(req.EndTime) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Start time must be before end time"})
+		return
+	}
+
+	if req.MaxMember > 0 && req.MaxMember < project.CurrentMember {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot reduce max members below current member count"})
+		return
+	}
+
+	// Gọi service để cập nhật project
+	updatedProject, err := h.projectService.UpdateProject(
+		projectID,
+		req.Title,
+		req.Description,
+		req.Skills,
+		req.StartTime,
+		req.EndTime,
+		req.MaxMember,
+		req.Status,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về project đã được cập nhật
+	c.JSON(http.StatusOK, updatedProject)
 }

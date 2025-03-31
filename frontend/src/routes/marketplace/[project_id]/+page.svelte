@@ -3,57 +3,100 @@
 
   let { data }: { data: PageData } = $props();
 
+  const role: string | undefined = data.role;
+
   const project = data.project;
+
+  // Format date function
+  function formatDate(dateString: string): string {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    // Format: "Mar 24, 2025"
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 </script>
 
 <svelte:head>
   <title>Project Detail</title>
 </svelte:head>
 
-<main class="flex-1 ml-64 pl-4 pr-4 pt-4">
-  <div class="flex space-x-4">
+<header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
+  <div class="flex items-center mb-6">
+    <a href="/project">
+      <button class="text-gray-500 hover:text-gray-700 mr-3">
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          ></path>
+        </svg>
+      </button>
+    </a>
+    <div>
+      <h2 class="text-xl font-semibold">{project.title}</h2>
+      <p class="text-sm text-gray-600">Manage your project</p>
+    </div>
+  </div>
+</header>
+
+<main class="flex-1 ml-64 pl-4 pr-4">
+  <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
     <!-- Project Info Card -->
-    <div class="card p-4 w-2/3">
+    <div class="card p-4 w-full md:w-2/3 h-fit">
       <h3 class="text-lg font-semibold mb-3">{project.title}</h3>
       <div class="space-y-3">
         <p class="text-sm">
-          <span class="font-medium">Skills Required:</span>{project.skills}
+          <span class="font-bold">Skills Required:</span>
+          {project.skills}
         </p>
         <p class="text-sm">
           <!-- Change this base on AI matchi system -->
-          <span class="font-medium">Match:</span>
+          <span class="font-bold">Match:</span>
           <span class="accent-color">90%</span>
         </p>
         <p class="text-sm">
-          <span class="font-medium">Timeline:</span>
-          {project.start_time} - {project.end_time}
+          <span class="font-bold">Timeline:</span>
+          {formatDate(project.start_time)} - {formatDate(project.end_time)}
         </p>
         <p class="text-sm">
-          <span class="font-medium">Posted:</span>
-          {project.created_at} by
+          <span class="font-bold">Posted:</span>
+          {formatDate(project.created_at)} by
           <!-- Change this in backend: need to pass the username into the create project handler and store it -->
-          <a href="#" class="text-[#6b48ff] hover:underline"
-            >{project.created_by}</a
+          <a
+            href={"/profile/user/" + project.created_by_id}
+            class="text-[#6b48ff] hover:underline">{project.created_by_name}</a
           >
         </p>
         <p class="text-sm">
-          <span class="font-medium">Description:</span>
+          <span class="font-bold">Description:</span>
           {project.description}
         </p>
-        <!-- What the hell is this shit, is it required? -->
         <p class="text-sm">
-          <span class="font-medium">Deliverables:</span> Frontend UI, Backend API,
+          <span class="font-bold">Deliverables:</span> Frontend UI, Backend API,
           Documentation
         </p>
       </div>
-      <!-- <button class="btn-secondary mt-4"
-        >Chat with Mentor (change this button please we only support group chat
-        chat)</button
-      > -->
     </div>
 
     <!-- Proposal Form -->
-    <div class="card p-6 w-1/3 h-fit">
+    <div class="card p-6 w-full md:w-1/3 h-fit">
       <h3 class="text-base font-semibold mb-4">Apply to Project</h3>
       <form class="space-y-4">
         <div>
@@ -82,10 +125,10 @@
             placeholder="Describe your approach, timeline, and implementation strategy"
             required
           ></textarea>
-          <p class="text-xs text-gray-500 mt-1">
+          <!-- <p class="text-xs text-gray-500 mt-1">
             Supports Markdown formatting. Include sections like "Approach",
             "Timeline", and "Technical Details".
-          </p>
+          </p> -->
         </div>
 
         <div>
@@ -127,8 +170,8 @@
         </div>
       </form>
 
-      <div class="mt-4 bg-purple-50 p-3 rounded-lg">
-        <div class="flex items-center space-x-2">
+      <div class="mt-4 bg-purple-100 p-3 rounded-lg">
+        <div class="flex items-center justify-center space-x-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-5 w-5 text-[#6b48ff]"
@@ -143,10 +186,10 @@
           </svg>
           <h4 class="text-sm font-medium text-gray-700">AI Match Score: 90%</h4>
         </div>
-        <p class="text-xs text-gray-600 mt-1">
+        <!-- <p class="text-xs text-gray-600 mt-1">
           Based on your profile skills and experience, you are highly compatible
           with this project.
-        </p>
+        </p> -->
       </div>
     </div>
   </div>

@@ -11,6 +11,7 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
+	"github.com/iknizzz1807/SkillForge/internal/middleware"
 
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/services"
@@ -67,33 +68,36 @@ func RegisterRoutes(
 	// Todo: chia cái này thành handler riêng để dễ xử lý và code sạch, cân nhắc tên là websocket hanlder
 	r.GET("/ws", websocketHanlder.HandleConnection)
 
+	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
+	r.Use(middleware.AuthMiddleware())
+
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
-	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
-	// r.Use(middleware.AuthMiddleware())
 
 	{
 		// User routes
 		api.GET("/users/:id", userHandler.GetUser)
+		api.GET("/users/name/:id", userHandler.GetUsername)
 		api.PUT("/users/:id", userHandler.UpdateUser)
 
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)
 		api.GET("/projects/:id", projectHandler.GetProject)
 		api.POST("/projects", projectHandler.CreateProject)
+		// // In routes.go, add these routes to the existing project routes section
+		api.PUT("/projects/:id", projectHandler.UpdateProject)
+		api.DELETE("/projects/:id", projectHandler.DeleteProject)
 
 		// Application routes
 		api.POST("/applications", applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
 
-		// Endpoint mới hợp nhất dựa vào role
+		// Appplications routes
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
-
 		// Giữ lại các endpoints cũ để tương thích ngược (có thể xóa sau khi cập nhật tất cả frontend calls)
 		// Đánh dấu deprecated để team biết sẽ loại bỏ trong tương lai
 		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)         // Deprecated
 		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness) // Deprecated
-
 		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
 
 		// Task routes

@@ -39,7 +39,10 @@ type Project struct {
 	CurrentMember int `json:"current_member" bson:"current_member"`
 
 	// CreatedBy là ID của user tạo dự án (doanh nghiệp)
-	CreatedBy string `json:"created_by" bson:"created_by"`
+	CreatedByID string `json:"created_by_id" bson:"created_by_id"`
+
+	// CreatedByName là name của business tạo dự án
+	CreatedByName string `json:"created_by_name" bson:"created_by_name"`
 
 	// Status là trạng thái dự án: "open", "active", "closed"
 	Status string `json:"status" bson:"status"`

@@ -7,7 +7,8 @@ type ProjectDisplay = {
   skills: string[];
   start_time: Date;
   end_time: Date;
-  created_by: string;
+  created_by_id: string;
+  created_by_name: string;
   max_member: number;
   current_member: number;
   status: string;
@@ -66,7 +67,8 @@ export const load = (async ({ fetch, cookies, parent }) => {
       skills: Array.isArray(project.skills) ? project.skills : [],
       start_time: project.start_time || new Date().toISOString(),
       end_time: project.end_time || new Date().toISOString(),
-      created_by: project.created_by || "",
+      created_by_id: project.created_by_id || "",
+      created_by_name: project.created_by_name || "",
       max_member: project.max_member || 0,
       current_member: project.current_member || 0,
       status: project.status || "",

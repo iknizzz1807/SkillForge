@@ -12,8 +12,11 @@ import (
 
 	"time"
 
+	"errors"
+
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -49,15 +52,23 @@ func (r *ProjectRepository) InsertProject(ctx context.Context, project *models.P
 // Input: ctx (context.Context), projectID (string)
 // Return: *models.Project (project), error (nếu có lỗi)
 func (r *ProjectRepository) FindProjectByID(ctx context.Context, projectID string) (*models.Project, error) {
-	// Tạo filter để tìm theo ID
-	filter := bson.M{"_id": projectID}
+	// Check if the ID is in ObjectID format
+	var filter bson.M
+	if isValidObjectID(projectID) {
+		objID, _ := primitive.ObjectIDFromHex(projectID)
+		filter = bson.M{"_id": objID}
+	} else {
+		// If not a valid ObjectID, try using the string directly
+		filter = bson.M{"_id": projectID}
+	}
+
 	var project models.Project
 
 	// Truy vấn database
 	err := r.collection.FindOne(ctx, filter).Decode(&project)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, nil // Không tìm thấy project
+			return nil, errors.New("project not found")
 		}
 		return nil, err
 	}
@@ -92,23 +103,51 @@ func (r *ProjectRepository) FindAllProjects(ctx context.Context) ([]*models.Proj
 	return projects, nil
 }
 
-// UpdateProject cập nhật thông tin project
-// Input: ctx (context.Context), project (*models.Project)
-// Return: error (nếu có lỗi)
-func (r *ProjectRepository) UpdateProject(ctx context.Context, project *models.Project) error {
-	// Tạo filter để tìm project theo ID
-	filter := bson.M{"_id": project.ID}
-	// Tạo update payload
-	update := bson.M{"$set": project}
+// UpdateProject cập nhật thông tin project trong database
+// Input: project (*models.Project) - project với thông tin đã được cập nhật
+// Return:
+//   - *models.Project - thông tin project sau khi cập nhật từ database
+//   - error - lỗi nếu có
+func (r *ProjectRepository) UpdateProject(project *models.Project) (*models.Project, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	// Cập nhật trong database
-	_, err := r.collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		return err
+	// Check if the ID is in ObjectID format
+	var filter bson.M
+	if isValidObjectID(project.ID) {
+		objID, _ := primitive.ObjectIDFromHex(project.ID)
+		filter = bson.M{"_id": objID}
+	} else {
+		// If not a valid ObjectID, use the string directly
+		filter = bson.M{"_id": project.ID}
 	}
 
-	// Trả về nil nếu thành công
-	return nil
+	// Chuẩn bị dữ liệu cập nhật
+	update := bson.M{
+		"$set": bson.M{
+			"title":       project.Title,
+			"description": project.Description,
+			"skills":      project.Skills,
+			"start_time":  project.StartTime,
+			"end_time":    project.EndTime,
+			"max_member":  project.MaxMember,
+			"status":      project.Status,
+		},
+	}
+
+	// Thực hiện cập nhật
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch và trả về project đã cập nhật
+	updatedProject, err := r.FindProjectByID(ctx, project.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedProject, nil
 }
 
 // GetProjectIDsByCreatorID lấy tất cả projectID được tạo bởi một creator (business)
@@ -153,4 +192,40 @@ func (r *ProjectRepository) GetProjectIDsByCreatorID(businessID string) ([]strin
 
 	// Trả về danh sách project ID
 	return projectIDs, nil
+}
+
+// DeleteProject xóa một project từ database
+// Input: projectID (string) - ID của project cần xóa
+// Return: error - lỗi nếu có
+func (r *ProjectRepository) DeleteProject(projectID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Check if the ID is in ObjectID format
+	var filter bson.M
+	if isValidObjectID(projectID) {
+		objID, _ := primitive.ObjectIDFromHex(projectID)
+		filter = bson.M{"_id": objID}
+	} else {
+		// If not a valid ObjectID, try using the string directly
+		filter = bson.M{"_id": projectID}
+	}
+
+	// Thực hiện xóa
+	result, err := r.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return errors.New("no project found with the given ID")
+	}
+
+	return nil
+}
+
+// isValidObjectID kiểm tra xem một chuỗi có phải là ObjectID hợp lệ hay không
+func isValidObjectID(id string) bool {
+	_, err := primitive.ObjectIDFromHex(id)
+	return err == nil
 }

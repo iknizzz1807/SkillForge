@@ -2,7 +2,7 @@ import type { PageServerLoad } from "./$types";
 
 export const load = (async (event) => {
   return {
-    name: event.locals.user?.name,
+    name: event.locals.user?.role,
     email: event.locals.user?.email,
     role: event.locals.user?.role,
   };

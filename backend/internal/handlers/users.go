@@ -41,6 +41,28 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// GetUsernameHanlder xử lý endpoint GET /api/users/name/:id
+// Return: Trả vể tên của user với id tương ứng
+func (h *UserHandler) GetUsername(c *gin.Context) {
+	userID := c.Param("id")
+
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "please provide user id"})
+	}
+
+	// Gọi service để lấy thông tin về name của user dựa vào id
+	user, err := h.userService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	name := user.Name
+
+	// Trả về userName
+	c.JSON(http.StatusOK, name)
+}
+
 // UpdateUser xử lý endpoint PUT /api/users/:id
 // Return: Trả về JSON với thông tin user đã cập nhật hoặc lỗi
 func (h *UserHandler) UpdateUser(c *gin.Context) {

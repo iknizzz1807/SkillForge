@@ -117,11 +117,10 @@
                   project.end_time.toString()
                 )} | By
                 <a
-                  href={"/user/profile/" + project.created_by}
+                  href={"/user/profile/" + project.created_by_id}
                   class="text-xs text-[#6b48ff]"
                 >
-                  <!-- {project.created_by} -->
-                  Com2us
+                  {project.created_by_name}
                 </a>
                 <!-- Change the "created_by" to the name of business and href link to
                 business profile -->
@@ -180,7 +179,7 @@
                 )} | Posted: {formatDate(project.created_at.toString())}
               </p>
               <p class="text-xs text-gray-400 mt-1">
-                By {project.created_by}
+                By {project.created_by_name}
               </p>
             </div>
 
