@@ -83,6 +83,8 @@ func RegisterRoutes(
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)
 		api.GET("/projects/:id", projectHandler.GetProject)
+		// api.GET("/projects/student/:id", projectHandler.GetProjectByStudent) // Với id params là id của student
+		// api.GET("projects/busiess/:id", analyticsHandler.GetProjectByBusiness) // Với id params là id của business
 		api.POST("/projects", projectHandler.CreateProject)
 		// // In routes.go, add these routes to the existing project routes section
 		api.PUT("/projects/:id", projectHandler.UpdateProject)

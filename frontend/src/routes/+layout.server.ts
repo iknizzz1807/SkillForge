@@ -11,6 +11,7 @@ export const load = (async (event) => {
   // Chuẩn bị dữ liệu phản hồi - luôn trả về dữ liệu này
   const userData = {
     role: user?.role,
+    id: user?.id,
     userName: user?.name,
   };
 

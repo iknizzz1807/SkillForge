@@ -63,6 +63,58 @@ func (h *ProjectHandler) GetProject(c *gin.Context) {
 	c.JSON(http.StatusOK, project)
 }
 
+// GetProjectByStudent xử lý endpoint GET /api/projects/student/:id
+// Return: Trả về JSON danh sách project mà student có ID được chỉ định tham gia
+func (h *ProjectHandler) GetProjectByStudent(c *gin.Context) {
+	studentID := c.Param("id")
+
+	if studentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Student ID is required"})
+		return
+	}
+
+	// Gọi service để lấy danh sách project mà student đã tham gia
+	projects, err := h.projectService.GetProjectsByStudentID(studentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Đảm bảo không trả về null cho mảng trống
+	if projects == nil {
+		projects = []*models.Project{} // Trả về mảng trống thay vì nil
+	}
+
+	// Trả về danh sách project
+	c.JSON(http.StatusOK, projects)
+}
+
+// GetProjectByBusiness xử lý endpoint GET /api/projects/business/:id
+// Return: Trả về JSON danh sách project mà business có ID được chỉ định đã tạo
+func (h *ProjectHandler) GetProjectByBusiness(c *gin.Context) {
+	businessID := c.Param("id")
+
+	if businessID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
+		return
+	}
+
+	// Gọi service để lấy danh sách project thuộc về business
+	projects, err := h.projectService.GetProjectsByBusinessID(businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Đảm bảo không trả về null cho mảng trống
+	if projects == nil {
+		projects = []*models.Project{} // Trả về mảng trống thay vì nil
+	}
+
+	// Trả về danh sách project
+	c.JSON(http.StatusOK, projects)
+}
+
 // CreateProject xử lý endpoint POST /api/projects
 // Return: Trả về JSON project vừa tạo hoặc lỗi
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
