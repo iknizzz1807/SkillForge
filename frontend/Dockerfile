@@ -7,9 +7,6 @@ WORKDIR /app
 # Copy package.json trước
 COPY package.json ./
 
-# Xóa package-lock.json nếu có (điều này giúp tránh xung đột)
-RUN if [ -f package-lock.json ]; then rm package-lock.json; fi
-
 # Cài đặt dependencies với các flag đặc biệt
 RUN npm install --force
 

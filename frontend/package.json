@@ -25,6 +25,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"chart.js": "^4.4.8"
+		"chart.js": "^4.4.8",
+		"lucide-svelte": "^0.486.0"
 	}
 }
