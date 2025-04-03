@@ -9,6 +9,7 @@ package app
 // - Là "bản đồ" của API, giúp developer dễ dàng tra cứu các route.
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
 	"github.com/iknizzz1807/SkillForge/internal/middleware"
@@ -16,17 +17,6 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
-
-// // WebSocket upgrader cấu hình
-// var upgrader = websocket.Upgrader{
-// 	ReadBufferSize:  1024,
-// 	WriteBufferSize: 1024,
-// 	// Cho phép tất cả các origin để dễ phát triển
-// 	// Trong production nên giới hạn origin cụ thể
-// 	CheckOrigin: func(r *http.Request) bool {
-// 		return true
-// 	},
-// }
 
 func RegisterRoutes(
 	r *gin.Engine,
@@ -71,6 +61,14 @@ func RegisterRoutes(
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
 	r.Use(middleware.AuthMiddleware())
 
+	// CORS type shit
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.site"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
+
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
 
@@ -83,10 +81,9 @@ func RegisterRoutes(
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)
 		api.GET("/projects/:id", projectHandler.GetProject)
-		// api.GET("/projects/student/:id", projectHandler.GetProjectByStudent) // Với id params là id của student
-		// api.GET("projects/busiess/:id", analyticsHandler.GetProjectByBusiness) // Với id params là id của business
+		// api.GET("/projects/student/:id", projectHandler.GetProjectByStudejnt) // Với id params là id của student
+		// api.GET("projects/busiess/:id", projectHandler.GetProjectByBusiness) // Với id params là id của business
 		api.POST("/projects", projectHandler.CreateProject)
-		// // In routes.go, add these routes to the existing project routes section
 		api.PUT("/projects/:id", projectHandler.UpdateProject)
 		api.DELETE("/projects/:id", projectHandler.DeleteProject)
 

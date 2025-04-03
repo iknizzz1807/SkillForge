@@ -1,6 +1,4 @@
 <script lang="ts">
-  let { header, detail }: { header: string; detail: string } = $props();
-
   let isOpen = $state(true);
   let isLoading: boolean = $state(false);
 

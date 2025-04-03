@@ -63,6 +63,10 @@
       <h3 class="text-lg font-semibold mb-3">{project.title}</h3>
       <div class="space-y-3">
         <p class="text-sm">
+          <span class="font-bold">Members:</span>
+          {project.current_member}/{project.max_member}
+        </p>
+        <p class="text-sm">
           <span class="font-bold">Skills Required:</span>
           {project.skills}
         </p>

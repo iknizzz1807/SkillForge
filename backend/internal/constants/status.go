@@ -9,8 +9,7 @@ const (
 
 	// Trạng thái dự án
 	ProjectStatusOpen   = "open"
-	ProjectStatusActive = "active"
-	ProjectStatusClosed = "closed"
+	ProjectStatusClosed = "close"
 
 	// Trạng thái ứng tuyển
 	ApplicationStatusPending  = "pending"

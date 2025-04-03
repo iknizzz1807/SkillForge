@@ -197,8 +197,8 @@ func (s *ProjectService) UpdateProject(
 	}
 	if status != "" {
 		// Kiểm tra status hợp lệ
-		if status != "open" && status != "active" && status != "closed" {
-			return nil, fmt.Errorf("invalid project status: must be 'open', 'active', or 'closed'")
+		if status != "open" && status != "close" {
+			return nil, fmt.Errorf("invalid project status: must be 'open' or 'close'")
 		}
 		project.Status = status
 	}

@@ -1,15 +1,6 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { type Cookies, fail } from "@sveltejs/kit";
 
-// type ProjectInput = {
-//   title: string;
-//   description: string;
-//   skills: string[];
-//   timeline: string;
-// };
-
-const role = "";
-
 type ProjectDisplay = {
   id: string;
   title: string;
@@ -109,6 +100,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
       role: role,
       projects,
       error: null,
+      token: token,
     };
   } catch (error) {
     console.error("Error loading projects:", error);

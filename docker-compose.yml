@@ -24,8 +24,8 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      # Loại trừ rõ ràng node_modules từ mount để tránh xung đột
       - /app/node_modules
+      # Loại trừ rõ ràng node_modules từ mount để tránh xung đột
     depends_on:
       - backend
     networks:

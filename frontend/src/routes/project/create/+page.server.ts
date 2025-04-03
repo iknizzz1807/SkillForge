@@ -21,9 +21,13 @@ import { type Cookies, fail } from "@sveltejs/kit";
 //   created_at: string;
 // };
 
-export const load = (async ({ parent }) => {
+export const load = (async ({ parent, cookies }) => {
   const parentData = await parent();
+  const token = cookies.get("auth_token");
   if (parentData.role !== "business") throw redirect(302, "/project");
+  return {
+    token: token,
+  };
 }) satisfies PageServerLoad;
 
 export const actions = {
@@ -105,10 +109,10 @@ export const actions = {
       const createdProject = await response.json();
 
       // Success
-      return {
-        success: true,
-        project: createdProject,
-      };
+      // return {
+      //   success: true,
+      //   project: createdProject,
+      // };
     } catch (error) {
       console.error("Error creating project:", error);
       return fail(500, {
@@ -116,5 +120,6 @@ export const actions = {
         error: "An unexpected error occurred",
       });
     }
+    throw redirect(303, "/project");
   },
 } satisfies Actions;

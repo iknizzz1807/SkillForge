@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json ./
 
 # Cài đặt dependencies với các flag đặc biệt
-RUN npm install --force
+RUN npm install
 
 # Copy toàn bộ source code
 COPY . .

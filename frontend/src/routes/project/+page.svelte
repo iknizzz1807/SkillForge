@@ -18,11 +18,12 @@
     created_at: string;
   };
 
+  const token = data.token;
+
   let projectsDisplay: ProjectDisplay[] = $state(data.projects);
   let errorLoadingProjects: string | null = $state(data.error);
 
   let filterState: string = $state("all");
-  let projectsDisplayCopy = [...projectsDisplay];
 
   // Modal states
   let showEditModal: boolean = $state(false);
@@ -53,7 +54,7 @@
   // Edit form state
   let editTitle: string = $state("");
   let editDescription: string = $state("");
-  let editSkills: string = $state("");
+  let editSkills: string[] = $state([]);
   let editStartDate: string = $state("");
   let editEndDate: string = $state("");
   let editMaxMember: number = $state(0);
@@ -63,7 +64,7 @@
     if (currentProject && showEditModal) {
       editTitle = currentProject.title;
       editDescription = currentProject.description;
-      editSkills = currentProject.skills.join(", ");
+      editSkills = currentProject.skills;
       editStartDate = new Date(currentProject.start_time)
         .toISOString()
         .split("T")[0];
@@ -74,10 +75,6 @@
       editStatus = currentProject.status;
     }
   });
-
-  // Thêm các biến mới để xử lý markdown
-  let markdownContent: string = $state("");
-  let previewMode: boolean = $state(false);
 
   // Format date function
   function formatDate(dateString: string): string {
@@ -95,6 +92,77 @@
       year: "numeric",
     });
   }
+
+  // Updated to use our server routes
+  const deleteProject = async () => {
+    try {
+      if (!currentProject) return;
+
+      const response = await fetch(`/api/projects/${currentProject.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete project");
+      }
+
+      // Remove the deleted project from the display list
+      projectsDisplay = projectsDisplay.filter(
+        (p) => p.id !== currentProject?.id
+      );
+
+      // Close the modal after successful deletion
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project: " + error);
+    }
+  };
+
+  // Updated to use our server routes
+  const updateProject = async () => {
+    try {
+      if (!currentProject) return;
+
+      const response = await fetch(`/api/projects/${currentProject.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          skills: editSkills,
+          start_time: new Date(editStartDate),
+          end_time: new Date(editEndDate),
+          max_member: editMaxMember,
+          status: editStatus,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update project");
+      }
+
+      // Update the local state with the edited project
+      const updatedProject = await response.json();
+      projectsDisplay = projectsDisplay.map((p) =>
+        p.id === currentProject?.id ? updatedProject : p
+      );
+
+      // Close the modal after successful update
+      closeEditModal();
+    } catch (error) {
+      console.error("Error updating project:", error);
+      alert("Failed to update project: " + error);
+    }
+  };
 </script>
 
 <header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
@@ -278,7 +346,9 @@
               </button>
               <button
                 class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                onclick={() => openDeleteModal(ProjectDisplay)}
+                onclick={() => {
+                  openDeleteModal(ProjectDisplay);
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -531,8 +601,7 @@
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="open">Open</option>
-                <option value="active">Active</option>
-                <option value="closed">Closed</option>
+                <option value="close">Closed</option>
               </select>
             </div>
           </div>
@@ -548,6 +617,7 @@
             <button
               type="button"
               class="px-4 py-2 bg-[#6b48ff] text-white rounded-md hover:bg-[#5a3dd3]"
+              onclick={updateProject}
             >
               Save Changes
             </button>
@@ -595,6 +665,7 @@
             </button>
             <button
               class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              onclick={deleteProject}
             >
               Delete
             </button>
