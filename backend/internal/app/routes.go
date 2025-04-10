@@ -30,6 +30,7 @@ func RegisterRoutes(
 	analyticsService *services.AnalyticsService,
 	authService *services.AuthService,
 	notificationService *services.NotificationService,
+	badgeService *services.BadgeService,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -45,6 +46,7 @@ func RegisterRoutes(
 	messageHandler := handlers.NewMessageHandler(messageService)
 	portfolioHandler := handlers.NewPortfolioHandler(portfolioService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
+	badgeHandler := handlers.NewBadgeHandler(badgeService)
 	websocketHanlder := handlers.NewWebSocketHandler(realtimeClient, messageService, notificationService,
 		taskService,
 		projectService)
@@ -121,6 +123,10 @@ func RegisterRoutes(
 		// Analytics routes
 		api.GET("/analytics/skills/:userID", analyticsHandler.GetSkillAnalytics)
 		api.GET("/analytics/projects/:projectID", analyticsHandler.GetProjectAnalytics)
+
+		// Badges routes
+		api.GET("/badges/:userID", badgeHandler.GetUserBadges)
+		// More routes if needed here...
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {
