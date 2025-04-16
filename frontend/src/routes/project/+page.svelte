@@ -76,6 +76,23 @@
     }
   });
 
+  let projectsDisplayCopy = projectsDisplay;
+
+  // Thêm một computed state để lọc projects dựa trên filterState
+  $effect(() => {
+    if (filterState === "all") {
+      projectsDisplay = projectsDisplayCopy;
+    } else if (filterState === "open") {
+      projectsDisplay = projectsDisplayCopy.filter(
+        (project) => project.status.toLowerCase() === "open"
+      );
+    } else if (filterState === "close") {
+      projectsDisplay = projectsDisplayCopy.filter(
+        (project) => project.status.toLowerCase() === "close"
+      );
+    }
+  });
+
   // Format date function
   function formatDate(dateString: string): string {
     if (!dateString) return "N/A";

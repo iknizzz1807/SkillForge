@@ -439,7 +439,7 @@
         <div class="card p-4">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-base font-semibold">Skills & Expertise</h3>
-            <button class="text-xs text-[#6b48ff]">+ Add Skill</button>
+            <!-- <button class="text-xs text-[#6b48ff]">+ Add Skill</button> -->
           </div>
 
           <div class="space-y-4">

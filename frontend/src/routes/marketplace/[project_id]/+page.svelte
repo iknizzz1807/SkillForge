@@ -5,7 +5,76 @@
 
   const role: string | undefined = data.role;
 
+  const token = data.token;
+
   const project = data.project;
+
+  let motivationInput: string = $state("");
+  let proposalInput: string = $state("");
+
+  // Thêm state để kiểm soát việc hiển thị modal xác nhận
+  let showConfirmModal: boolean = $state(false);
+  let isSubmitting: boolean = $state(false);
+  let errorMessage: string | null = $state(null);
+  let successMessage: string | null = $state(null);
+
+  // Functions to control modal
+  function openConfirmModal() {
+    if (!motivationInput.trim() || !proposalInput.trim()) {
+      errorMessage = "Please fill out all required fields.";
+      return;
+    }
+
+    // Remove error message if form is valid
+    errorMessage = null;
+    showConfirmModal = true;
+  }
+
+  function closeConfirmModal() {
+    showConfirmModal = false;
+  }
+
+  // Complete the submitForm function
+  const submitForm = async () => {
+    try {
+      isSubmitting = true;
+
+      const response = await fetch(`/api/projects/${project.id}/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          motivation: motivationInput,
+          proposal: proposalInput,
+          project_id: project.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit application");
+      }
+
+      // Handle success
+      successMessage = "Your application has been submitted successfully!";
+      motivationInput = "";
+      proposalInput = "";
+
+      // Close the modal
+      closeConfirmModal();
+
+      // You could redirect the user or show success message
+      // window.location.href = "/project";
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      errorMessage = "Failed to submit application";
+      closeConfirmModal();
+    } finally {
+      isSubmitting = false;
+    }
+  };
 
   // Format date function
   function formatDate(dateString: string): string {
@@ -114,6 +183,7 @@
             rows="3"
             placeholder="Why are you interested in this project? (100-300 characters)"
             required
+            bind:value={motivationInput}
           ></textarea>
         </div>
 
@@ -128,6 +198,7 @@
             rows="6"
             placeholder="Describe your approach, timeline, and implementation strategy"
             required
+            bind:value={proposalInput}
           ></textarea>
           <!-- <p class="text-xs text-gray-500 mt-1">
             Supports Markdown formatting. Include sections like "Approach",
@@ -170,7 +241,9 @@
             </svg>
             <span>AI Suggest</span>
           </button>
-          <button type="submit" class="btn w-1/2">Submit Application</button>
+          <button type="button" class="btn w-1/2" onclick={openConfirmModal}
+            >Submit Application</button
+          >
         </div>
       </form>
 
@@ -198,3 +271,75 @@
     </div>
   </div>
 </main>
+
+<!-- Confirmation Modal -->
+{#if showConfirmModal}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
+  >
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <div class="text-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-12 w-12 mx-auto text-blue-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+
+        <h2 class="text-xl font-semibold mt-4">Confirm Application</h2>
+
+        <p class="mt-2 text-gray-600">
+          Are you sure you want to apply to the project "{project.title}"?
+        </p>
+
+        <div class="flex justify-center space-x-3 mt-6">
+          <button
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            onclick={closeConfirmModal}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-[#6b48ff] text-white rounded-md hover:bg-[#5a3dd3]"
+            onclick={submitForm}
+            disabled={isSubmitting}
+          >
+            {#if isSubmitting}
+              <span>Submitting...</span>
+            {:else}
+              <span>Submit</span>
+            {/if}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Error/Success Messages -->
+{#if errorMessage}
+  <div
+    class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4"
+    role="alert"
+  >
+    <span class="block sm:inline">{errorMessage}</span>
+  </div>
+{/if}
+
+{#if successMessage}
+  <div
+    class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mt-4"
+    role="alert"
+  >
+    <span class="block sm:inline">{successMessage}</span>
+  </div>
+{/if}
