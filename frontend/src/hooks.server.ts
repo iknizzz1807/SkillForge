@@ -90,7 +90,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     // Handle auth failure from API responses
     if (response.status === 401 || response.status === 403) {
-      cookies.delete("auth_token", { path: "/" });
+      // cookies.delete("auth_token", { path: "/" });
 
       const contentType = response.headers.get("content-type") || "";
       if (contentType.includes("text/html")) {

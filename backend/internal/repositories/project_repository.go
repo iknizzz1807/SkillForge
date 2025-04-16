@@ -159,7 +159,7 @@ func (r *ProjectRepository) GetProjectIDsByCreatorID(businessID string) ([]strin
 	defer cancel()
 
 	// Tạo filter tìm theo creator_id
-	filter := bson.M{"creator_id": businessID}
+	filter := bson.M{"created_by_id": businessID}
 
 	// Chỉ lấy trường _id từ các documents
 	projection := bson.M{"_id": 1}

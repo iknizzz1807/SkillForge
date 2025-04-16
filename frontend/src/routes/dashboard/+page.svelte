@@ -12,164 +12,194 @@
   let applicantsChartCanvas: HTMLCanvasElement | null = $state(null);
   let projectsChartCanvas: HTMLCanvasElement | null = $state(null);
 
+  // Chart instances to destroy when recreating
+  let progressChart: Chart | null = $state(null);
+  let skillsChart: Chart | null = $state(null);
+  let applicantsChart: Chart | null = $state(null);
+  let projectsChart: Chart | null = $state(null);
+
   // Toggle function to switch roles
   function toggleRole() {
     role = role === "student" ? "business" : "student";
+    // Re-render charts on next tick after DOM updates
+    setTimeout(() => {
+      initCharts();
+    }, 0);
+  }
+
+  // Function to initialize all charts
+  function initCharts() {
+    if (!browser) return;
+
+    // Destroy existing charts before recreating
+    if (progressChart) progressChart.destroy();
+    if (skillsChart) skillsChart.destroy();
+    if (applicantsChart) applicantsChart.destroy();
+    if (projectsChart) projectsChart.destroy();
+
+    // Student charts
+    if (progressChartCanvas) {
+      const ctx = progressChartCanvas.getContext("2d");
+      if (ctx) {
+        progressChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: ["10/03", "12/03", "14/03", "16/03", "18/03"],
+            datasets: [
+              {
+                label: "Completion (%)",
+                data: [20, 35, 50, 70, 85],
+                borderColor: "#6b48ff",
+                backgroundColor: "rgba(107, 72, 255, 0.1)",
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true, max: 100 },
+            },
+          },
+        });
+      }
+    }
+
+    if (skillsChartCanvas) {
+      const ctx = skillsChartCanvas.getContext("2d");
+      if (ctx) {
+        skillsChart = new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels: [
+              "JavaScript",
+              "React",
+              "Node.js",
+              "MongoDB",
+              "UI/UX",
+              "Testing",
+            ],
+            datasets: [
+              {
+                label: "Your Skills",
+                data: [85, 70, 65, 60, 75, 50],
+                backgroundColor: "rgba(107, 72, 255, 0.2)",
+                borderColor: "#6b48ff",
+                pointBackgroundColor: "#6b48ff",
+              },
+              {
+                label: "Industry Benchmark",
+                data: [75, 80, 70, 65, 60, 75],
+                backgroundColor: "rgba(99, 194, 222, 0.2)",
+                borderColor: "rgb(99, 194, 222)",
+                pointBackgroundColor: "rgb(99, 194, 222)",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              r: {
+                min: 0,
+                max: 100,
+                ticks: {
+                  stepSize: 20,
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+
+    // Business charts
+    if (applicantsChartCanvas) {
+      const ctx = applicantsChartCanvas.getContext("2d");
+      if (ctx) {
+        applicantsChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: [
+              "Web App",
+              "Mobile App",
+              "API Integration",
+              "UI Design",
+              "Database Migration",
+            ],
+            datasets: [
+              {
+                label: "Applications",
+                data: [12, 8, 15, 5, 7],
+                backgroundColor: "#6b48ff",
+              },
+              {
+                label: "Accepted",
+                data: [5, 3, 6, 2, 3],
+                backgroundColor: "#48c78e",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Number of Students",
+                },
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: "Project Type",
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+
+    if (projectsChartCanvas) {
+      const ctx = projectsChartCanvas.getContext("2d");
+      if (ctx) {
+        projectsChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Completed", "In Progress", "Not Started", "Delayed"],
+            datasets: [
+              {
+                data: [35, 40, 15, 10],
+                backgroundColor: ["#48c78e", "#6b48ff", "#f0f0f0", "#ff6b6b"],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "right",
+              },
+            },
+          },
+        });
+      }
+    }
   }
 
   onMount(() => {
-    if (browser) {
-      // Student charts
-      if (progressChartCanvas) {
-        const ctx = progressChartCanvas.getContext("2d");
-        if (ctx) {
-          new Chart(ctx, {
-            type: "line",
-            data: {
-              labels: ["10/03", "12/03", "14/03", "16/03", "18/03"],
-              datasets: [
-                {
-                  label: "Completion (%)",
-                  data: [20, 35, 50, 70, 85],
-                  borderColor: "#6b48ff",
-                  backgroundColor: "rgba(107, 72, 255, 0.1)",
-                  fill: true,
-                  tension: 0.4,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              scales: {
-                y: { beginAtZero: true, max: 100 },
-              },
-            },
-          });
-        }
-      }
+    // Initialize charts on component mount
+    initCharts();
+  });
 
-      if (skillsChartCanvas) {
-        const ctx = skillsChartCanvas.getContext("2d");
-        if (ctx) {
-          new Chart(ctx, {
-            type: "radar",
-            data: {
-              labels: [
-                "JavaScript",
-                "React",
-                "Node.js",
-                "MongoDB",
-                "UI/UX",
-                "Testing",
-              ],
-              datasets: [
-                {
-                  label: "Your Skills",
-                  data: [85, 70, 65, 60, 75, 50],
-                  backgroundColor: "rgba(107, 72, 255, 0.2)",
-                  borderColor: "#6b48ff",
-                  pointBackgroundColor: "#6b48ff",
-                },
-                {
-                  label: "Industry Benchmark",
-                  data: [75, 80, 70, 65, 60, 75],
-                  backgroundColor: "rgba(99, 194, 222, 0.2)",
-                  borderColor: "rgb(99, 194, 222)",
-                  pointBackgroundColor: "rgb(99, 194, 222)",
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              scales: {
-                r: {
-                  min: 0,
-                  max: 100,
-                  ticks: {
-                    stepSize: 20,
-                  },
-                },
-              },
-            },
-          });
-        }
-      }
-
-      // Business charts
-      if (applicantsChartCanvas) {
-        const ctx = applicantsChartCanvas.getContext("2d");
-        if (ctx) {
-          new Chart(ctx, {
-            type: "bar",
-            data: {
-              labels: [
-                "Web App",
-                "Mobile App",
-                "API Integration",
-                "UI Design",
-                "Database Migration",
-              ],
-              datasets: [
-                {
-                  label: "Applications",
-                  data: [12, 8, 15, 5, 7],
-                  backgroundColor: "#6b48ff",
-                },
-                {
-                  label: "Accepted",
-                  data: [5, 3, 6, 2, 3],
-                  backgroundColor: "#48c78e",
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: "Number of Students",
-                  },
-                },
-                x: {
-                  title: {
-                    display: true,
-                    text: "Project Type",
-                  },
-                },
-              },
-            },
-          });
-        }
-      }
-
-      if (projectsChartCanvas) {
-        const ctx = projectsChartCanvas.getContext("2d");
-        if (ctx) {
-          new Chart(ctx, {
-            type: "doughnut",
-            data: {
-              labels: ["Completed", "In Progress", "Not Started", "Delayed"],
-              datasets: [
-                {
-                  data: [35, 40, 15, 10],
-                  backgroundColor: ["#48c78e", "#6b48ff", "#f0f0f0", "#ff6b6b"],
-                  borderWidth: 1,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: "right",
-                },
-              },
-            },
-          });
-        }
-      }
+  // Use $effect to monitor canvas references
+  $effect(() => {
+    // If canvas references change and role is student, reinitialize
+    if (role === "student" && progressChartCanvas && skillsChartCanvas) {
+      initCharts();
     }
   });
 </script>

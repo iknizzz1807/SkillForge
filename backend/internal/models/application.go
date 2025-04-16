@@ -20,16 +20,17 @@ type Application struct {
 	// ProjectID là ID của dự án được ứng tuyển
 	ProjectID string `json:"project_id" bson:"project_id"`
 
-	// --- CHANGE START ---
-	// Proposal là nội dung đề xuất ứng tuyển (đã bị thay thế)
-	// Proposal string `json:"proposal" bson:"proposal"`
+	// ProjectName là trường tên của dự án để có thể hiển thị ở phần application ở phía frontend
+	ProjectName string `json:"project_name" bson:"project_name"`
+
+	// UserName là trường tên của người dùng apply vào dự án dùng để hiển thị trên frontend
+	UserName string `json:"user_name" bson:"user_name"`
 
 	// Motivation giải thích lý do sinh viên muốn tham gia dự án
 	Motivation string `json:"motivation" bson:"motivation"`
 
 	// DetailedProposal mô tả chi tiết kế hoạch hoặc cách tiếp cận của sinh viên cho dự án
 	DetailedProposal string `json:"detailed_proposal" bson:"detailed_proposal"`
-	// --- CHANGE END ---
 
 	// Status là trạng thái ứng tuyển: "pending", "approved", "rejected"
 	Status string `json:"status" bson:"status"`

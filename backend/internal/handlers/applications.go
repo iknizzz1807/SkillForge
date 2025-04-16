@@ -59,19 +59,10 @@ func (h *ApplicationHandler) ApplyProject(c *gin.Context) {
 		return
 	}
 
-	// --- CHANGE START ---
-	// Gọi service để ứng tuyển với các trường mới
 	application, err := h.applicationService.ApplyProject(userID, req.ProjectID, req.Motivation, req.DetailedProposal)
-	// application, err := h.applicationService.ApplyProject(userID, req.ProjectID, req.Proposal) // Gọi hàm cũ
-	// --- CHANGE END ---
 
 	if err != nil {
-		// Phân loại lỗi để trả về status code phù hợp hơn (ví dụ)
-		// if err.Error() == "project not found" { // Giả sử service trả về lỗi cụ thể
-		// 	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		// } else {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// }
 		return
 	}
 
@@ -130,9 +121,9 @@ func (h *ApplicationHandler) GetApplicationsByCurrentUser(c *gin.Context) {
 
 	// Dựa vào role để gọi service phù hợp
 	switch role {
-	case "student": // Sử dụng constant
+	case "student":
 		applications, err = h.applicationService.GetApplicationsByUserID(userID)
-	case "business": // Sử dụng constant
+	case "business":
 		// Cần đảm bảo businessID được lấy đúng từ context nếu cần
 		// businessID := userID // Giả định userID của business là businessID
 		applications, err = h.applicationService.GetApplicationsByBusinessID(userID) // Truyền businessID vào đây
@@ -184,18 +175,6 @@ func (h *ApplicationHandler) UpdateApplicationStatus(c *gin.Context) {
 		return
 	}
 
-	// (Quan trọng): Thêm kiểm tra quyền: Business này có quyền cập nhật Application này không?
-	// Cần lấy thông tin application, kiểm tra projectID, rồi kiểm tra xem businessID có phải là creator của project đó không.
-	// Ví dụ logic (cần gọi service để lấy thông tin):
-	// app, err := h.applicationService.GetApplicationByID(applicationID)
-	// if err != nil { ... }
-	// project, err := h.projectService.GetProjectByID(app.ProjectID) // Giả sử có projectService inject vào handler
-	// if err != nil { ... }
-	// if project.CreatedByID != businessID {
-	// 	c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to update this application"})
-	// 	return
-	// }
-
 	// Gọi service để cập nhật status (có thể truyền businessID vào để kiểm tra quyền trong service)
 	application, err := h.applicationService.UpdateApplicationStatus(applicationID, req.Status /*, businessID (optional)*/)
 	if err != nil {
@@ -237,24 +216,3 @@ func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, applications)
 }
-
-// GetApplicationsByBusiness xử lý endpoint GET /api/applications/business (Deprecated)
-// @Deprecated: Use GET /api/applications/me instead
-func (h *ApplicationHandler) GetApplicationsByBusiness(c *gin.Context) {
-	businessID := c.GetString("userID") // Giả định business ID lấy từ token
-
-	if businessID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Business ID not found in token"})
-		return
-	}
-
-	applications, err := h.applicationService.GetApplicationsByBusinessID(businessID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, applications)
-}
-
-// --- END DEPRECATED FUNCTIONS ---

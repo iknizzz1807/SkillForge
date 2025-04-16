@@ -97,8 +97,6 @@ func RegisterRoutes(
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
 		// Giữ lại các endpoints cũ để tương thích ngược (có thể xóa sau khi cập nhật tất cả frontend calls)
 		// Đánh dấu deprecated để team biết sẽ loại bỏ trong tương lai
-		api.GET("/applications/user", applicationHandler.GetApplicationsByUser)         // Deprecated
-		api.GET("/applications/business", applicationHandler.GetApplicationsByBusiness) // Deprecated
 		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
 
 		// Task routes

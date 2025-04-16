@@ -34,21 +34,20 @@
     showConfirmModal = false;
   }
 
-  // Complete the submitForm function
   const submitForm = async () => {
     try {
       isSubmitting = true;
 
-      const response = await fetch(`/api/projects/${project.id}/applications`, {
+      // Call the SvelteKit API endpoint instead of backend directly
+      const response = await fetch(`/api/applications`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          motivation: motivationInput,
-          proposal: proposalInput,
           project_id: project.id,
+          motivation: motivationInput,
+          detailed_proposal: proposalInput,
         }),
       });
 
@@ -64,12 +63,10 @@
 
       // Close the modal
       closeConfirmModal();
-
-      // You could redirect the user or show success message
-      // window.location.href = "/project";
     } catch (error) {
       console.error("Error submitting application:", error);
-      errorMessage = "Failed to submit application";
+      errorMessage =
+        error instanceof Error ? error.message : "Failed to submit application";
       closeConfirmModal();
     } finally {
       isSubmitting = false;
@@ -325,21 +322,94 @@
   </div>
 {/if}
 
-<!-- Error/Success Messages -->
+<!-- Error Modal -->
 {#if errorMessage}
   <div
-    class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4"
-    role="alert"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
   >
-    <span class="block sm:inline">{errorMessage}</span>
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <div class="text-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-12 w-12 mx-auto text-red-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+
+        <h2 class="text-xl font-semibold mt-4">Application Error</h2>
+
+        <p class="mt-2 text-gray-600">
+          {errorMessage}
+        </p>
+
+        <div class="flex justify-center mt-6">
+          <button
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            onclick={() => (errorMessage = null)}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 {/if}
 
+<!-- Success Modal -->
 {#if successMessage}
   <div
-    class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mt-4"
-    role="alert"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
   >
-    <span class="block sm:inline">{successMessage}</span>
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <div class="text-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-12 w-12 mx-auto text-green-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+
+        <h2 class="text-xl font-semibold mt-4">Success!</h2>
+
+        <p class="mt-2 text-gray-600">
+          {successMessage}
+        </p>
+
+        <div class="flex justify-center space-x-3 mt-6">
+          <button
+            class="px-4 py-2 bg-[#6b48ff] text-white rounded-md hover:bg-[#5a3dd3]"
+            onclick={() => {
+              successMessage = null;
+              // Optional: Redirect to applications page
+              window.location.href = "/project/application";
+            }}
+          >
+            View My Applications
+          </button>
+          <button
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            onclick={() => (successMessage = null)}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 {/if}
