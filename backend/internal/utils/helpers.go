@@ -9,7 +9,7 @@ package utils
 import (
 	"strings"
 	"time"
-
+	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -85,4 +85,15 @@ func VerifyPassword(hashedPassword, password string) bool {
 
 	// Return true if the comparison is successful (no error)
 	return err == nil
+}
+
+func RemoveDuplicates(strList []string) []string {
+    list := []string{}
+    for _, item := range strList {
+        fmt.Println(item)
+		if !Contains(list, item) {
+            list = append(list, item)
+        }
+    }
+    return list
 }
