@@ -167,50 +167,78 @@ func (r *ApplicationRepository) UpdateStatus(id string, status string) (*models.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": id}
-	update := bson.M{
-		"$set": bson.M{
-			"status":     status,
-			"updated_at": time.Now(), // Luôn cập nhật updated_at khi status thay đổi
-		},
-	}
-
-	// Sử dụng FindOneAndUpdate để cập nhật và trả về document mới
-	options := options.FindOneAndUpdate().SetReturnDocument(options.After) // Trả về document sau khi update
-
-	var updatedApplication models.Application
-	err := r.collection.FindOneAndUpdate(ctx, filter, update, options).Decode(&updatedApplication)
-
+	// First get the current application to preserve name fields
+	var currentApp models.Application
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&currentApp)
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) { // Lỗi nếu không tìm thấy application để update
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, errors.New("application not found for update")
 		}
-		// utils.GetLogger().Errorf("Error updating application status for ID %s: %v", id, err)
 		return nil, err
 	}
 
-	return &updatedApplication, nil // Trả về application đã được cập nhật
+	filter := bson.M{"_id": id}
+	update := bson.M{
+		"$set": bson.M{
+			"status":       status,
+			"updated_at":   time.Now(),
+			"project_name": currentApp.ProjectName,
+			"user_name":    currentApp.UserName,
+		},
+	}
+
+	options := options.FindOneAndUpdate().SetReturnDocument(options.After)
+
+	var updatedApplication models.Application
+	err = r.collection.FindOneAndUpdate(ctx, filter, update, options).Decode(&updatedApplication)
+
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("application not found for update")
+		}
+		return nil, err
+	}
+
+	return &updatedApplication, nil
 }
 
 // Delete xóa một application theo ID
-// Input: id (string)
-// Return: error
-func (r *ApplicationRepository) Delete(id string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+// Input: ctx (context.Context), applicationID (string)
+// Return: error (nếu có lỗi)
+func (r *ApplicationRepository) Delete(ctx context.Context, applicationID string) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
-	filter := bson.M{"_id": id}
+	filter := bson.M{"_id": applicationID}
+
 	result, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
-		// utils.GetLogger().Errorf("Error deleting application with ID %s: %v", id, err)
 		return err
 	}
 
-	// Kiểm tra xem có document nào thực sự bị xóa không
 	if result.DeletedCount == 0 {
-		// utils.GetLogger().Warnf("Attempted to delete non-existent application with ID %s", id)
-		return errors.New("application not found for deletion") // Trả lỗi rõ ràng hơn
+		return errors.New("application not found for deletion")
 	}
 
 	return nil
+}
+
+// DeleteApplicationsByProjectID xóa tất cả applications cho một project
+// Cái này chủ yếu được dùng khi có một project bị xoá thì delete tất cả các applications mà liên quan tới nó
+// Input: ctx (context.Context), projectID (string)
+// Return: int (số lượng applications đã xóa), error (nếu có lỗi)
+func (r *ApplicationRepository) DeleteApplicationsByProjectID(ctx context.Context, projectID string) (int64, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	filter := bson.M{"project_id": projectID}
+
+	result, err := r.collection.DeleteMany(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.DeletedCount, nil
 }

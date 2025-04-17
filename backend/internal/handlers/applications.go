@@ -124,9 +124,7 @@ func (h *ApplicationHandler) GetApplicationsByCurrentUser(c *gin.Context) {
 	case "student":
 		applications, err = h.applicationService.GetApplicationsByUserID(userID)
 	case "business":
-		// Cần đảm bảo businessID được lấy đúng từ context nếu cần
-		// businessID := userID // Giả định userID của business là businessID
-		applications, err = h.applicationService.GetApplicationsByBusinessID(userID) // Truyền businessID vào đây
+		applications, err = h.applicationService.GetApplicationsByBusinessID(userID)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user role"})
 		return
@@ -215,4 +213,34 @@ func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, applications)
+}
+
+// DeleteApplication xử lý endpoint DELETE /api/applications/:id
+// Return: Trả về thông báo xóa thành công hoặc lỗi
+func (h *ApplicationHandler) DeleteApplication(c *gin.Context) {
+	applicationID := c.Param("id")
+	userID := c.GetString("userID")
+
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
+		return
+	}
+
+	err := h.applicationService.DeleteApplication(applicationID, userID)
+	if err != nil {
+		// Handle specific error types
+		switch err.Error() {
+		case "application not found":
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case "you don't have permission to delete this application":
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Application deleted successfully",
+	})
 }

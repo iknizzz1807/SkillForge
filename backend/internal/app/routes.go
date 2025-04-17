@@ -57,7 +57,6 @@ func RegisterRoutes(
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
 
 	// Route để server web socket client
-	// Todo: chia cái này thành handler riêng để dễ xử lý và code sạch, cân nhắc tên là websocket hanlder
 	r.GET("/ws", websocketHanlder.HandleConnection)
 
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
@@ -83,21 +82,20 @@ func RegisterRoutes(
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)
 		api.GET("/projects/:id", projectHandler.GetProject)
-		// api.GET("/projects/student/:id", projectHandler.GetProjectByStudejnt) // Với id params là id của student
-		// api.GET("projects/busiess/:id", projectHandler.GetProjectByBusiness) // Với id params là id của business
+		api.GET("/projects/busiess/:id", projectHandler.GetProjectByBusiness) // Với id params là id của business
 		api.POST("/projects", projectHandler.CreateProject)
 		api.PUT("/projects/:id", projectHandler.UpdateProject)
 		api.DELETE("/projects/:id", projectHandler.DeleteProject)
+		// Change this route because it looks like ass bruh
+		api.DELETE("/projects/:id/students/:studentID", projectHandler.RemoveStudentFromProject)
 
 		// Application routes
 		api.POST("/applications", applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
-
-		// Appplications routes
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
-		// Giữ lại các endpoints cũ để tương thích ngược (có thể xóa sau khi cập nhật tất cả frontend calls)
-		// Đánh dấu deprecated để team biết sẽ loại bỏ trong tương lai
+		// This update for status is used for accept or reject an application, if accept add the student to the project
 		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
+		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
 
 		// Task routes
 		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID

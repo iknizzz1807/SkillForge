@@ -177,7 +177,8 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	}
 
 	// Gọi service để xóa project
-	if err := h.projectService.DeleteProject(projectID); err != nil {
+	// userID để thể hiện ai xoá project để xem họ có quyền xoá hay không
+	if err := h.projectService.DeleteProject(projectID, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -254,4 +255,40 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 
 	// Trả về project đã được cập nhật
 	c.JSON(http.StatusOK, updatedProject)
+}
+
+// RemoveStudentFromProject xử lý endpoint DELETE /api/projects/:id/students/:studentID
+// Return: Trả về thông báo xóa thành công hoặc lỗi
+func (h *ProjectHandler) RemoveStudentFromProject(c *gin.Context) {
+	projectID := c.Param("id")
+	studentID := c.Param("studentID")
+	userID := c.GetString("userID")
+	role := c.GetString("role")
+
+	// Kiểm tra quyền xóa student (chỉ business sở hữu project hoặc student tự xóa chính mình)
+	project, err := h.projectService.GetProjectByID(projectID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Kiểm tra quyền: business sở hữu project hoặc student tự rời project
+	if project.CreatedByID != userID && (role != "student" || studentID != userID) {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You don't have permission to remove this student from the project",
+		})
+		return
+	}
+
+	// Gọi service để xóa student khỏi project
+	err = h.projectService.RemoveStudentFromProject(projectID, studentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về thông báo thành công
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Student removed from project successfully",
+	})
 }

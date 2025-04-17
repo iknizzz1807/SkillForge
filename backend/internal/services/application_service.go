@@ -50,46 +50,48 @@ func NewApplicationService(db *mongo.Database, notificationService *Notification
 // --- CHANGE START ---
 // Thay đổi signature hàm
 func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detailedProposal string) (*models.Application, error) {
-	// func (s *ApplicationService) ApplyProject(userID, projectID, proposal string) (*models.Application, error) { // Signature cũ
-
 	// Kiểm tra input hợp lệ
 	if userID == "" || projectID == "" || motivation == "" || detailedProposal == "" {
-		// if userID == "" || projectID == "" || proposal == "" { // Check cũ
 		return nil, errors.New("invalid application data: user ID, project ID, motivation, and detailed proposal are required")
 	}
-	// --- CHANGE END ---
 
 	ctx := context.Background() // Tạo context
 
-	// 1. Kiểm tra xem project có tồn tại và đang mở không?
+	// Kiểm tra xem project có tồn tại và đang mở không?
 	project, err := s.projectRepo.FindProjectByID(ctx, projectID)
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) || err.Error() == "project not found" { // Xử lý lỗi cụ thể từ repo
+		if errors.Is(err, mongo.ErrNoDocuments) || err.Error() == "project not found" {
 			return nil, errors.New("project not found")
 		}
-		return nil, errors.New("failed to check project existence: " + err.Error()) // Lỗi khác
+		return nil, errors.New("failed to check project existence: " + err.Error())
 	}
-	if project.Status != "open" { // Sử dụng constant
+	if project.Status != "open" {
 		return nil, errors.New("project is not open for applications")
 	}
 
-	// --- CHANGE START ---
-	// Tạo ứng tuyển mới với các trường mới
+	// Fetch user information to get the user name
+	userRepo := repositories.NewUserRepository(s.db)
+	user, err := userRepo.FindUserByID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("failed to fetch user information: " + err.Error())
+	}
+
+	// Create application with project name and user name
 	application := &models.Application{
 		ID:               utils.GenerateUUID(),
 		UserID:           userID,
+		UserName:         user.Name, // Added user name for frontend to display
 		ProjectID:        projectID,
-		Motivation:       motivation,       // Lưu motivation
-		DetailedProposal: detailedProposal, // Lưu detailed proposal
-		Status:           "pending",        // Sử dụng constant
+		ProjectName:      project.Title, // Added project name for frontend to display
+		Motivation:       motivation,
+		DetailedProposal: detailedProposal,
+		Status:           "pending",
 		CreatedAt:        time.Now(),
 	}
-	// --- CHANGE END ---
 
 	// Lưu ứng tuyển vào database
 	err = s.applicationRepo.InsertApplication(ctx, application)
 	if err != nil {
-		// Có thể kiểm tra lỗi duplicate key nếu có index unique
 		return nil, errors.New("failed to save application: " + err.Error())
 	}
 
@@ -106,7 +108,6 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 		}()
 	}
 
-	// Trả về ứng tuyển
 	return application, nil
 }
 
@@ -137,14 +138,28 @@ func (s *ApplicationService) GetApplicationsByUserID(userID string) ([]models.Ap
 	if userID == "" {
 		return nil, errors.New("user ID cannot be empty")
 	}
+
 	applications, err := s.applicationRepo.FindByUserID(userID)
 	if err != nil {
 		return nil, errors.New("failed to get user applications: " + err.Error())
 	}
-	// Đảm bảo trả về slice rỗng thay vì nil
+
+	// Ensure we have a slice rather than nil
 	if applications == nil {
 		return []models.Application{}, nil
 	}
+
+	// // For each application that doesn't have project name, fetch it from the project repository
+	// Can remove this shit if made sure every application has a project name
+	// for i := range applications {
+	// 	if applications[i].ProjectName == "" {
+	// 		project, err := s.projectRepo.FindProjectByID(context.Background(), applications[i].ProjectID)
+	// 		if err == nil && project != nil {
+	// 			applications[i].ProjectName = project.Title
+	// 		}
+	// 	}
+	// }
+
 	return applications, nil
 }
 
@@ -256,4 +271,64 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 	}
 
 	return updatedApplication, nil
+}
+
+// DeleteApplication xóa một application theo ID
+// Input: applicationID (string), userID (string) - người thực hiện xóa
+// Return: error (nếu có lỗi)
+func (s *ApplicationService) DeleteApplication(applicationID string, userID string) error {
+	if applicationID == "" {
+		return errors.New("application ID cannot be empty")
+	}
+
+	ctx := context.Background()
+
+	// 1. Lấy application để kiểm tra quyền
+	application, err := s.applicationRepo.FindApplicationByID(ctx, applicationID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return errors.New("application not found")
+		}
+		return errors.New("failed to get application: " + err.Error())
+	}
+
+	// 2. Kiểm tra người xóa có phải là người nộp đơn hoặc chủ dự án
+	project, err := s.projectRepo.FindProjectByID(ctx, application.ProjectID)
+	if err != nil {
+		return errors.New("failed to get project: " + err.Error())
+	}
+
+	// Chỉ cho phép student đã nộp đơn hoặc business sở hữu project được xóa
+	if application.UserID != userID && project.CreatedByID != userID {
+		return errors.New("you don't have permission to delete this application")
+	}
+
+	// 3. Xóa application
+	err = s.applicationRepo.Delete(ctx, applicationID)
+	if err != nil {
+		return errors.New("failed to delete application: " + err.Error())
+	}
+
+	return nil
+}
+
+// NOTE: cái này có thể được bỏ qua do không cần handler để gọi tới service này mà hành động
+// này sẽ được thực thi bằng việc gọi thẳng tới tầng repository
+// DeleteApplicationsByProjectID xóa tất cả applications của một project
+// Input: projectID (string)
+// Return: int (số lượng applications đã xóa), error (nếu có lỗi)
+func (s *ApplicationService) DeleteApplicationsByProjectID(projectID string) (int64, error) {
+	if projectID == "" {
+		return 0, errors.New("project ID cannot be empty")
+	}
+
+	ctx := context.Background()
+
+	// Xóa tất cả applications liên quan đến project
+	deletedCount, err := s.applicationRepo.DeleteApplicationsByProjectID(ctx, projectID)
+	if err != nil {
+		return 0, errors.New("failed to delete project applications: " + err.Error())
+	}
+
+	return deletedCount, nil
 }

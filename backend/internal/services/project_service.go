@@ -123,25 +123,77 @@ func (s *ProjectService) CreateProject(userID, userName, title, description stri
 	return project, nil
 }
 
-// DeleteProject xóa một project theo ID
-// Input: projectID (string) - ID của project cần xóa
-// Return: error - lỗi nếu có
-func (s *ProjectService) DeleteProject(projectID string) error {
-	// Kiểm tra xem project có tồn tại không
-	_, err := s.GetProjectByID(projectID)
-	if err != nil {
-		return err
+// DeleteProject xóa project và tất cả dữ liệu liên quan
+// Input: projectID (string), userID (string) - userID để kiểm tra quyền
+// Return: error (nếu có lỗi)
+func (s *ProjectService) DeleteProject(projectID string, userID string) error {
+	if projectID == "" {
+		return errors.New("project ID cannot be empty")
 	}
 
-	// Xóa project từ database
+	ctx := context.Background()
+
 	projectRepo := repositories.NewProjectRepository(s.db)
+
+	// 1. Kiểm tra project có tồn tại không và userID có quyền xóa không
+	project, err := projectRepo.FindProjectByID(ctx, projectID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) || err.Error() == "project not found" {
+			return errors.New("project not found")
+		}
+		return errors.New("failed to check project existence: " + err.Error())
+	}
+
+	// Chỉ chủ dự án mới được phép xóa
+	if project.CreatedByID != userID {
+		return errors.New("you don't have permission to delete this project")
+	}
+
+	// 2. Khởi tạo các repositories cần thiết
+	applicationService := NewApplicationService(s.db, s.notificationService)
+	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+
+	// 3. Xóa tất cả applications liên quan đến project
+	_, err = applicationService.DeleteApplicationsByProjectID(projectID)
+	if err != nil {
+		return errors.New("failed to delete project applications: " + err.Error())
+	}
+
+	// 4. Lấy danh sách sinh viên tham gia project
+	studentIDs, err := projectStudentRepo.FindStudentsByProjectID(ctx, projectID)
+	if err != nil {
+		// Log error but continue
+		// utils.GetLogger().Warnf("Failed to get students for project %s: %v", projectID, err)
+	}
+
+	// 5. Xóa tất cả quan hệ giữa project và student
+	for _, studentID := range studentIDs {
+		err := projectStudentRepo.DeleteProjectStudent(ctx, projectID, studentID)
+		if err != nil {
+			// Log error but continue
+			// utils.GetLogger().Warnf("Failed to delete project-student relation for project %s and student %s: %v", projectID, studentID, err)
+		}
+	}
+
+	// 6. Xóa project
 	err = projectRepo.DeleteProject(projectID)
 	if err != nil {
-		return err
+		return errors.New("failed to delete project: " + err.Error())
 	}
 
-	// Có thể thêm logic để xóa các dữ liệu liên quan như tasks, applications
-	// và gửi thông báo cho các thành viên trong project
+	// 7. Gửi thông báo cho các sinh viên về việc dự án đã bị xóa
+	for _, studentID := range studentIDs {
+		if s.notificationService != nil {
+			go func(id string) {
+				// s.notificationService.SendNotification(
+				//    id,
+				//    "Project Removed",
+				//    fmt.Sprintf("The project '%s' you were participating in has been deleted.", project.Title),
+				//    true
+				// )
+			}(studentID)
+		}
+	}
 
 	return nil
 }

@@ -125,13 +125,14 @@ func (r *ProjectRepository) UpdateProject(project *models.Project) (*models.Proj
 	// Chuẩn bị dữ liệu cập nhật
 	update := bson.M{
 		"$set": bson.M{
-			"title":       project.Title,
-			"description": project.Description,
-			"skills":      project.Skills,
-			"start_time":  project.StartTime,
-			"end_time":    project.EndTime,
-			"max_member":  project.MaxMember,
-			"status":      project.Status,
+			"title":          project.Title,
+			"description":    project.Description,
+			"skills":         project.Skills,
+			"start_time":     project.StartTime,
+			"end_time":       project.EndTime,
+			"current_member": project.CurrentMember,
+			"max_member":     project.MaxMember,
+			"status":         project.Status,
 		},
 	}
 
