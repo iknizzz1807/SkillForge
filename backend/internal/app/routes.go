@@ -31,6 +31,7 @@ func RegisterRoutes(
 	authService *services.AuthService,
 	notificationService *services.NotificationService,
 	badgeService *services.BadgeService,
+	talentPoolService *services.TalentPoolService,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -47,6 +48,7 @@ func RegisterRoutes(
 	portfolioHandler := handlers.NewPortfolioHandler(portfolioService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	badgeHandler := handlers.NewBadgeHandler(badgeService)
+	talentPoolHandler := handlers.NewTalentPoolHandler(talentPoolService)
 	websocketHanlder := handlers.NewWebSocketHandler(realtimeClient, messageService, notificationService,
 		taskService,
 		projectService)
@@ -115,6 +117,12 @@ func RegisterRoutes(
 
 		// Portfolio routes
 		api.GET("/portfolios/:userID", portfolioHandler.GetPortfolio)
+
+		// TalentPool route
+		// id là id của user, còn id của business thì được nhận vào bằng context
+		api.GET("/talenpool", talentPoolHandler.GetTalentPool)
+		api.POST("/talentpool:id", talentPoolHandler.AddStudentToTalentPool)
+		api.DELETE("/talentpool/:id", talentPoolHandler.RemoveFromTalentPool)
 
 		// Analytics routes
 		api.GET("/analytics/skills/:userID", analyticsHandler.GetSkillAnalytics)

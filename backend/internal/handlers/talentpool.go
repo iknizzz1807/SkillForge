@@ -15,29 +15,67 @@ func NewTalentPoolHandler(talentPoolService *services.TalentPoolService) *Talent
 	return &TalentPoolHandler{talentPoolService}
 }
 
-// Fix the service of this handler
+// GetTalentPool handles GET /api/talentpool
+// Returns the list of students in the business's talent pool
 func (h *TalentPoolHandler) GetTalentPool(c *gin.Context) {
-	businessID := c.Param("id")
+	// Get business ID from token
+	businessID := c.GetString("userID")
 
-	StudentInfos, err := h.talentPoolService.GetTalentPoolByBusinessID(businessID)
+	// Check if user is a business
+	if c.GetString("role") != "business" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only business accounts can access talent pool"})
+		return
+	}
 
+	studentInfos, err := h.talentPoolService.GetTalentPoolByBusinessID(businessID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, StudentInfos)
+
+	c.JSON(http.StatusOK, studentInfos)
 }
 
-// Dùng để serve POST request cho endpoint /api/talentpool/:id với id là id của student
-// Return StudentInfo với các trường id name và skills là danh sách của các string
+// AddStudentToTalentPool handles POST /api/talentpool/:id
+// Adds a student to the business's talent pool
 func (h *TalentPoolHandler) AddStudentToTalentPool(c *gin.Context) {
-	studentId := c.Param("id")
-	businessId := c.GetString("userID")
+	studentID := c.Param("id")
+	businessID := c.GetString("userID")
 
-	// Call function from talent pool service to deal with this request
-	StudentInfo, err := h.talentPoolService.AddStudentToTalentPool(studentId, businessId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot add student to talent pool"})
+	// Check if user is a business
+	if c.GetString("role") != "business" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only business accounts can add to talent pool"})
+		return
 	}
-	c.JSON(http.StatusCreated, StudentInfo)
+
+	// Call function from talent pool service to handle request
+	studentInfo, err := h.talentPoolService.AddStudentToTalentPool(studentID, businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, studentInfo)
+}
+
+// RemoveFromTalentPool handles DELETE /api/talentpool/:id
+// Removes a student from the business's talent pool
+func (h *TalentPoolHandler) RemoveFromTalentPool(c *gin.Context) {
+	studentID := c.Param("id")
+	businessID := c.GetString("userID")
+
+	// Check if user is a business
+	if c.GetString("role") != "business" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only business accounts can remove from talent pool"})
+		return
+	}
+
+	// Call service to remove student from talent pool
+	err := h.talentPoolService.RemoveFromTalentPool(studentID, businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Student removed from talent pool successfully"})
 }
