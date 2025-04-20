@@ -18,6 +18,7 @@ export const actions = {
     const password = data.get("password");
     const confirmPassword = data.get("confirmPassword");
     const name = data.get("name");
+    const website = data.get("website");
     const role = data.get("role");
 
     // Validate form data
@@ -28,6 +29,7 @@ export const actions = {
         formData: {
           email,
           name,
+          website,
         },
       });
     }
@@ -39,6 +41,7 @@ export const actions = {
         formData: {
           email,
           name,
+          website,
         },
       });
     }
@@ -61,6 +64,7 @@ export const actions = {
           formData: {
             email,
             name,
+            website,
           },
         });
       }
@@ -80,6 +84,7 @@ export const actions = {
         formData: {
           email,
           name,
+          website,
         },
       });
     }

@@ -97,7 +97,7 @@
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-6">
-    <a href="/project">
+    <a href="/marketplace">
       <button class="text-gray-500 hover:text-gray-700 mr-3">
         <svg
           class="w-5 h-5"
