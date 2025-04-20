@@ -8,11 +8,16 @@ export const load = (async (event) => {
   // Lấy đường dẫn hiện tại
   const path = event.url.pathname;
 
+  // Tạo base URL dựa trên origin của request
+  const origin = event.url.origin;
+
   // Chuẩn bị dữ liệu phản hồi - luôn trả về dữ liệu này
   const userData = {
     role: user?.role,
     id: user?.id,
     userName: user?.name,
+    // Now using the SvelteKit API endpoint instead of direct backend URL
+    avatarUrl: user?.id ? `${origin}/api/avatars/${user.id}` : null,
   };
 
   // Chỉ chuyển hướng nếu đáp ứng điều kiện cụ thể
@@ -26,25 +31,6 @@ export const load = (async (event) => {
       // },
     };
   }
-
-  // Hoặc kiểm tra role để điều hướng đến dashboard tương ứng
-  // if (user?.role === 'admin' && path === '/') {
-  //   return {
-  //     ...userData,
-  //     redirect: {
-  //       status: 302,
-  //       location: "/admin/dashboard"
-  //     }
-  //   };
-  // } else if (user?.role === 'user' && path === '/') {
-  //   return {
-  //     ...userData,
-  //     redirect: {
-  //       status: 302,
-  //       location: "/user/dashboard"
-  //     }
-  //   };
-  // }
 
   // Trả về dữ liệu người dùng mà không chuyển hướng
   return userData;

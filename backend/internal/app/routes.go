@@ -72,6 +72,8 @@ func RegisterRoutes(
 		AllowCredentials: true,
 	}))
 
+	r.Static("/storage", "./storage")
+
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
 
@@ -131,6 +133,10 @@ func RegisterRoutes(
 		// Badges routes
 		api.GET("/badges/:userID", badgeHandler.GetUserBadges)
 		// More routes if needed here...
+
+		// === Route phục vụ file avatar ===
+		// GET /avatars/some_user_id.png
+		r.GET("/avatars/:id", handlers.ServeAvatarHandler)
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {

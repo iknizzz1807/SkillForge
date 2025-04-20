@@ -9,6 +9,9 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	// "errors"
 
 	"github.com/iknizzz1807/SkillForge/internal/models"
@@ -101,5 +104,28 @@ func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) erro
 	}
 
 	// Trả về nil nếu thành công
+	return nil
+}
+
+// UpdateUserAvatarURL cập nhật đường dẫn avatar cho user (Đơn giản hóa)
+// Input: ctx (context.Context), userID (string), avatarFilename (string) - tên file bao gồm extension
+// Return: error (nếu có lỗi)
+func (r *UserRepository) UpdateUserAvatarURL(ctx context.Context, userID string, avatarFilename string) error {
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$set": bson.M{
+			// Lưu trực tiếp tên file (ví dụ: "userID.png") vào trường avatar_url
+			"avatar_url": avatarFilename,
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err // Trả về lỗi trực tiếp
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found for avatar update")
+	}
 	return nil
 }

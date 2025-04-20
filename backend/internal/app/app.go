@@ -57,7 +57,7 @@ func Run() {
 	messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
 	portfolioService := services.NewPortfolioService(db)
 	analyticsService := services.NewAnalyticsService(db)
-	authService := services.NewAuthService(repositories.NewUserRepository(db))
+	authService := services.NewAuthService(repositories.NewUserRepository(db), services.NewFileService())
 	badgeService := services.NewBadgeService(repositories.NewBadgeRepository(db))
 	talentPoolService := services.NewTalentPoolService(db)
 

@@ -4,16 +4,36 @@
   import { goto } from "$app/navigation";
 
   let { form, data }: { form: ActionData; data: PageData } = $props();
-  const role = data.role;
-  let selectedRole = $state(role);
+  let selectedRole = $state("student"); // Default to student
   let avatarFile: File | null = $state(null);
   let avatarPreview: string | null = $state(null);
+  let avatarError: string | null = $state(null);
 
-  // Handle file selection
+  // Allowed file extensions (matching backend validation)
+  const allowedImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+
+  // Handle file selection with validation
   function handleFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
+    avatarError = null; // Clear previous errors
+
     if (input.files && input.files[0]) {
-      avatarFile = input.files[0];
+      const file = input.files[0];
+      const fileName = file.name.toLowerCase();
+      const fileExt = fileName.substring(fileName.lastIndexOf("."));
+
+      // Validate file extension
+      if (!allowedImageTypes.includes(fileExt)) {
+        avatarError =
+          "Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.";
+        input.value = ""; // Clear the file input
+        avatarFile = null;
+        avatarPreview = null;
+        return;
+      }
+
+      // If valid format, proceed with preview
+      avatarFile = file;
 
       // Create a preview URL
       const reader = new FileReader();
@@ -32,7 +52,7 @@
 
   $effect(() => {
     if (form?.success) {
-      // Wait 1s then redirect
+      // Wait 1.5s then redirect
       setTimeout(() => {
         goto("/login");
       }, 1500);
@@ -116,13 +136,18 @@
               <input
                 type="file"
                 name="avatar"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/gif"
                 class="sr-only"
                 onchange={handleFileChange}
               />
             </label>
           </div>
           <span class="text-sm text-gray-500">Upload profile picture</span>
+
+          <!-- Display avatar error if any -->
+          {#if avatarError}
+            <p class="text-red-500 text-xs mt-1">{avatarError}</p>
+          {/if}
         </div>
 
         <div>
@@ -275,7 +300,9 @@
           </div>
         {/if}
 
-        <button type="submit" class="btn w-full">Register</button>
+        <button type="submit" class="btn w-full" disabled={!!avatarError}
+          >Register</button
+        >
       </form>
 
       <p class="text-sm text-center mt-4">

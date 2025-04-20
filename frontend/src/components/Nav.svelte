@@ -4,11 +4,13 @@
     url,
     role,
     name,
+    avatarUrl,
     children,
   }: {
     url: string;
     role: string;
     name: string;
+    avatarUrl: string;
     children: Snippet;
   } = $props();
 
@@ -220,7 +222,7 @@
         <div class="flex items-center space-x-3">
           <img
             class="w-10 h-10 rounded-full border-2 border-white"
-            src="https://avatars.githubusercontent.com/u/123456?v=4"
+            src={avatarUrl}
             alt="User Avatar"
           />
           <div>

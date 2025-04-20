@@ -1,10 +1,15 @@
 import type { PageServerLoad } from "./$types";
 
 export const load = (async (event) => {
+  const user = event.locals.user;
+  const origin = event.url.origin;
+
   return {
-    id: event.locals.user?.id,
-    name: event.locals.user?.name,
-    email: event.locals.user?.email,
-    role: event.locals.user?.role,
+    id: user?.id,
+    name: user?.name,
+    email: user?.email,
+    role: user?.role,
+    // Add the avatar URL using the same pattern as in layout
+    avatarUrl: user?.id ? `${origin}/api/avatars/${user.id}` : null,
   };
 }) satisfies PageServerLoad;

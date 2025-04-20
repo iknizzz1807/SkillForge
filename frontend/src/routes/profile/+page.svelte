@@ -162,7 +162,7 @@
             >
             <div class="flex items-center space-x-4">
               <img
-                src="https://avatars.githubusercontent.com/u/123456?v=4"
+                src={data.avatarUrl}
                 alt="Current avatar"
                 class="w-16 h-16 rounded-full"
               />
@@ -388,7 +388,7 @@
         <div class="flex items-center space-x-4">
           <img
             class="w-16 h-16 rounded-full"
-            src="https://avatars.githubusercontent.com/u/123456?v=4"
+            src={data.avatarUrl}
             alt="User Avatar"
           />
           <div class="flex-1">

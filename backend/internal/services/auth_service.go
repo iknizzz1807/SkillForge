@@ -1,94 +1,125 @@
+// internal/services/auth_service.go
 package services
 
-// Nhiệm vụ: Xử lý logic xác thực (đăng ký, đăng nhập) và tạo token JWT
-// Liên kết:
-// - Dùng internal/repositories/user_repository.go để lưu/lấy user
-// - Dùng internal/utils/jwt.go để tạo token
-// Vai trò trong flow:
-// - Được gọi từ handlers/auth.go để đăng ký hoặc đăng nhập người dùng
-// - Tạo token JWT để xác thực các request sau này
-
 import (
-	"errors"
-	"time"
-
 	"context"
+	"errors"
+	"fmt"            // Thêm fmt để log lỗi nhỏ
+	"mime/multipart" // Thêm multipart
 	"strings"
+	"time"
 
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/repositories"
-	"github.com/iknizzz1807/SkillForge/internal/utils"
+	"github.com/iknizzz1807/SkillForge/internal/utils" // Giữ lại utils cho GenerateJWT và HashPassword
 )
 
 type AuthService struct {
-	// userRepo để tương tác với collection users trong MongoDB
-	userRepo *repositories.UserRepository
+	userRepo    *repositories.UserRepository
+	fileService *FileService // Thêm FileService
 }
 
-// NewAuthService khởi tạo AuthService với dependency userRepo
-// Input: userRepo (*repositories.UserRepository)
-// Return: *AuthService - con trỏ đến AuthService
-func NewAuthService(userRepo *repositories.UserRepository) *AuthService {
-	return &AuthService{userRepo}
+// NewAuthService khởi tạo AuthService (cập nhật để nhận FileService)
+func NewAuthService(userRepo *repositories.UserRepository, fileService *FileService) *AuthService {
+	return &AuthService{
+		userRepo:    userRepo,
+		fileService: fileService, // Khởi tạo fileService
+	}
 }
 
-// Register đăng ký người dùng mới
-// Input: email (string), password (string), role (string)
-// Return: *models.User (user vừa tạo), string (token JWT), error (nếu có lỗi)
-func (s *AuthService) Register(email, name, password, role string) (*models.User, string, error) {
-	// Kiểm tra email đã tồn tại chưa
-	existingUser, _ := s.userRepo.FindUserByEmail(context.Background(), email)
+// Register đăng ký người dùng mới, bao gồm cả xử lý avatar (nếu có)
+// Input: email, name, password, role (string), file (multipart.File), header (*multipart.FileHeader) - file và header có thể nil
+// Return: *models.User (user vừa tạo, có thể có AvatarURL), string (token JWT), error
+func (s *AuthService) Register(email, name, password, role, website string, file multipart.File, header *multipart.FileHeader) (*models.User, string, error) {
+	ctx := context.Background()
+
+	// 1. Kiểm tra email tồn tại
+	existingUser, _ := s.userRepo.FindUserByEmail(ctx, email)
 	if existingUser != nil {
 		return nil, "", errors.New("email already exists")
 	}
 
-	// Tạo user mới
+	// 2. Tạo user mới (chưa có AvatarURL)
 	user := &models.User{
 		ID:        utils.GenerateUUID(), // Tạo ID duy nhất
 		Email:     email,
 		Name:      name,
-		Password:  utils.HashPassword(password), // Hash password trước khi lưu
+		Password:  utils.HashPassword(password),
 		Role:      strings.ToLower(role),
+		Website:   website,
 		CreatedAt: time.Now(),
+		// AvatarURL sẽ được cập nhật sau nếu có file
 	}
 
-	// Lưu user vào database
-	err := s.userRepo.InsertUser(context.Background(), user)
+	// 3. Lưu user vào database
+	err := s.userRepo.InsertUser(ctx, user)
 	if err != nil {
-		return nil, "", err
+		fmt.Printf("Error inserting user %s: %v\n", user.Email, err)
+		return nil, "", fmt.Errorf("could not register user: %w", err)
+	}
+	fmt.Printf("Successfully inserted user %s with ID %s\n", user.Email, user.ID)
+
+	// 4. Xử lý upload avatar NẾU có file được cung cấp
+	var avatarFilename string = "" // Khởi tạo rỗng
+	if file != nil && header != nil {
+		fmt.Printf("Attempting to save avatar for user %s\n", user.ID)
+		// Gọi FileService để lưu avatar, sử dụng user.ID vừa tạo
+		savedFilename, err := s.fileService.SaveAvatar(user.ID, file, header)
+		if err != nil {
+			// Nếu lưu avatar lỗi, không làm hỏng cả quá trình đăng ký
+			// Chỉ log lỗi và tiếp tục mà không cập nhật AvatarURL
+			fmt.Printf("Warning: Failed to save avatar for user %s during registration: %v\n", user.ID, err)
+			// Không return lỗi ở đây
+		} else {
+			fmt.Printf("Avatar saved for user %s with filename %s\n", user.ID, savedFilename)
+			avatarFilename = savedFilename // Lưu lại tên file để cập nhật DB
+
+			// --- Cập nhật lại record user trong DB với avatar_url ---
+			errUpdate := s.userRepo.UpdateUserAvatarURL(ctx, user.ID, avatarFilename)
+			if errUpdate != nil {
+				// Log lỗi nếu cập nhật DB thất bại, nhưng vẫn coi đăng ký là thành công
+				fmt.Printf("Warning: Failed to update AvatarURL in DB for user %s after saving file %s: %v\n", user.ID, avatarFilename, errUpdate)
+				// Không return lỗi ở đây, user đã được tạo, token vẫn sẽ được tạo
+			} else {
+				fmt.Printf("Successfully updated AvatarURL for user %s\n", user.ID)
+				// Cập nhật lại user model để trả về cho client
+				user.AvatarURL = avatarFilename
+				user.UpdatedAt = time.Now() // Cập nhật thời gian luôn
+			}
+			// ----------------------------------------------------------
+		}
+	} else {
+		fmt.Printf("No avatar file provided for user %s during registration.\n", user.ID)
 	}
 
-	// Tạo JWT token
+	// 5. Tạo JWT token (luôn tạo kể cả khi avatar lỗi)
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name, user.Role)
 	if err != nil {
-		return nil, "", err
+		// Lỗi này nghiêm trọng hơn, vì user không thể đăng nhập
+		fmt.Printf("Error generating JWT for user %s: %v\n", user.ID, err)
+		// Có thể xem xét xóa user vừa tạo ở đây nếu muốn roll back hoàn toàn
+		return nil, "", fmt.Errorf("could not generate authentication token: %w", err)
 	}
 
-	// Trả về user và token
+	// 6. Trả về user (đã có thể cập nhật AvatarURL) và token
 	return user, token, nil
 }
 
-// Login đăng nhập người dùng
-// Input: email (string), password (string)
-// Return: string (token JWT), error (nếu có lỗi)
+// Login (Giữ nguyên không đổi)
 func (s *AuthService) Login(email, password string) (string, error) {
-	// Tìm user theo email
-	user, err := s.userRepo.FindUserByEmail(context.Background(), email)
+	ctx := context.Background()
+	user, err := s.userRepo.FindUserByEmail(ctx, email)
 	if err != nil || user == nil {
 		return "", errors.New("invalid credentials")
 	}
 
-	// Kiểm tra password
 	if !utils.VerifyPassword(user.Password, password) {
 		return "", errors.New("invalid credentials")
 	}
 
-	// Tạo JWT token
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name, user.Role)
 	if err != nil {
 		return "", err
 	}
-
-	// Trả về token
 	return token, nil
 }

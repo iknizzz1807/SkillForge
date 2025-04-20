@@ -32,6 +32,12 @@ type User struct {
 	// CreatedAt là thời gian tạo user
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 
+	// AvatarUrl là địa chỉ url của avatar user để frontend có thể get request
+	AvatarURL string `json:"avatar_url" bson:"avatar_url"`
+
+	// Website là string thể hiện địa chỉ web của doanh nghiệp để tăng độ uy tín và cung cấp thông tin để user tìm hiểu về doanh nghiệp đó
+	Website string `json:"website" bson:"website"`
+
 	// UpdatedAt là thời gian cập nhật user (nếu có)
 	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }

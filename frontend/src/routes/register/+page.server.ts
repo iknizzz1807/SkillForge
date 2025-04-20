@@ -1,36 +1,23 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
 
-export const load = (async ({ url, cookies }) => {
-  // Check if user is already logged in
-  const token = cookies.get("auth_token");
-  if (token) {
-    throw redirect(303, "/dashboard");
-  }
-
-  return {};
-}) satisfies PageServerLoad;
-
 export const actions = {
   default: async ({ request }) => {
-    const data = await request.formData();
-    const email = data.get("email");
-    const password = data.get("password");
-    const confirmPassword = data.get("confirmPassword");
-    const name = data.get("name");
-    const website = data.get("website");
-    const role = data.get("role");
+    const formData = await request.formData();
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    const name = formData.get("name") as string;
+    const role = formData.get("role") as string;
+    const website = (formData.get("website") as string) || "";
+    const avatar = formData.get("avatar") as File | null;
 
     // Validate form data
-    if (!email || !password || !confirmPassword || !name) {
+    if (!email || !password || !confirmPassword || !name || !role) {
       return fail(400, {
         error: true,
         message: "All fields are required",
-        formData: {
-          email,
-          name,
-          website,
-        },
+        formData: { email, name, website, role },
       });
     }
 
@@ -38,22 +25,34 @@ export const actions = {
       return fail(400, {
         error: true,
         message: "Passwords do not match",
-        formData: {
-          email,
-          name,
-          website,
-        },
+        formData: { email, name, website, role },
       });
     }
 
     try {
-      //   Call the registration endpoint
+      // Create a new FormData to send to the backend
+      const apiFormData = new FormData();
+
+      // Add all the text fields
+      apiFormData.append("email", email);
+      apiFormData.append("password", password);
+      apiFormData.append("name", name);
+      apiFormData.append("role", role);
+
+      // Add website field if it's a business account
+      if (role === "business" && website) {
+        apiFormData.append("website", website);
+      }
+
+      // Add avatar if it exists
+      if (avatar && avatar.size > 0) {
+        apiFormData.append("avatar", avatar);
+      }
+
+      // Call the registration endpoint with FormData
       const response = await fetch("http://backend:8080/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, name, role }),
+        body: apiFormData, // No content-type header - browser sets it automatically with boundary
       });
 
       if (!response.ok) {
@@ -61,19 +60,11 @@ export const actions = {
         return fail(response.status, {
           error: true,
           message: errorData.error || "Registration failed",
-          formData: {
-            email,
-            name,
-            website,
-          },
+          formData: { email, name, website, role },
         });
       }
 
-      //   // Registration successful, redirect to login page
-      //   //   throw redirect(303, "/login?registered=true");
-      return {
-        success: true,
-      };
+      return { success: true };
     } catch (err) {
       if (err instanceof Response) throw err; // Rethrow redirect
 
@@ -81,11 +72,7 @@ export const actions = {
       return fail(500, {
         error: true,
         message: "An error occurred during registration",
-        formData: {
-          email,
-          name,
-          website,
-        },
+        formData: { email, name, website, role },
       });
     }
   },
