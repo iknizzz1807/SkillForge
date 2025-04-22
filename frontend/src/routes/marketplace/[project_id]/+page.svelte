@@ -3,7 +3,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const role: string | undefined = data.role;
+  // const role: string | undefined = data.role;
 
   const token = data.token;
 

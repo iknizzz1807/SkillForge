@@ -4,18 +4,68 @@
   let { data }: { data: PageData } = $props();
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
-  let addJobModalOpen: boolean = $state(false);
+
+  // Form data state
+  let name: string = $state(data.name || "");
+  let email: string = $state(data.email || "");
+  let title: string = $state(data.title || "");
+  let selectedFile: File | null = $state(null);
+  let previewUrl: string | null = $state(null);
+  let isSubmitting: boolean = $state(false);
+  let updateSuccess: boolean = $state(false);
+  let errorMessage: string | null = $state(null);
+
+  let isSubmittingBusinessInfo: boolean = $state(false);
+  let businessInfoUpdateSuccess: boolean = $state(false);
+  let businessInfoErrorMessage: string | null = $state(null);
+
+  // States for business info
+  // Consider change the default init states to empty or something to announce business that they need to update their info
+  let editBusinessInfoModalOpen: boolean = $state(false);
+  let companyType: string = $state(data.businessInfo.companyType);
+  let founded: string = $state(data.businessInfo.founded);
+  let companySize: string = $state(data.businessInfo.companySize);
+  let website: string = $state(data.businessInfo.website);
+  let aboutUs: string = $state(data.businessInfo.aboutUs);
 
   // Toggle this to switch between student and business profiles
-  let role: "student" | "business" = $state("student");
-
+  let role: string | undefined = $state(data.role);
   let porfolioType: string = $state("");
 
   const toggleRole = () => {
     role = role === "student" ? "business" : "student";
   };
 
+  // Add alongside other toggle functions
+  const toggleEditBusinessInfoModal = () => {
+    // Reset form state when opening modal
+    if (!editBusinessInfoModalOpen) {
+      // Reset to current values
+      companyType = data.businessInfo.companyType;
+      founded = data.businessInfo.founded;
+      companySize = data.businessInfo.companySize;
+      website = data.businessInfo.website;
+      aboutUs = data.businessInfo.aboutUs;
+
+      // Reset status states
+      isSubmittingBusinessInfo = false;
+      businessInfoUpdateSuccess = false;
+      businessInfoErrorMessage = null;
+    }
+    editBusinessInfoModalOpen = !editBusinessInfoModalOpen;
+  };
+
   const toggleEditProfileModal = () => {
+    // Reset form state when opening modal
+    if (!editProfileModalOpen) {
+      name = data.name || "";
+      email = data.email || "";
+      title = data.title || "";
+      selectedFile = null;
+      previewUrl = null;
+      updateSuccess = false;
+      errorMessage = null;
+    }
     editProfileModalOpen = !editProfileModalOpen;
   };
 
@@ -23,8 +73,114 @@
     generatePortfolioModalOpen = !generatePortfolioModalOpen;
   };
 
-  const toggleAddJobModal = () => {
-    addJobModalOpen = !addJobModalOpen;
+  // Handle file selection for avatar
+  const handleFileChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      selectedFile = input.files[0];
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewUrl = e.target?.result as string;
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  // Handle profile update submission
+  const handleSubmit = async () => {
+    isSubmitting = true;
+    errorMessage = null;
+    updateSuccess = false;
+
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("title", title);
+
+      if (selectedFile) {
+        formData.append("avatar", selectedFile);
+      }
+
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update profile");
+      }
+
+      const result = await response.json();
+
+      // Update local data
+      data.name = result.name;
+      data.email = result.email;
+      if (result.avatar_name) {
+        data.avatarUrl = "/api/avatars";
+      }
+
+      updateSuccess = true;
+      setTimeout(() => {
+        // Close modal after successful update
+        if (updateSuccess) {
+          // toggleEditProfileModal();
+          // invalidateAll();
+          window.location.reload();
+        }
+      }, 1500);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+    } finally {
+      isSubmitting = false;
+    }
+  };
+
+  const handleSaveBusinessInfo = async () => {
+    isSubmittingBusinessInfo = true;
+    businessInfoErrorMessage = null;
+    businessInfoUpdateSuccess = false;
+
+    const formData = new FormData();
+    formData.append("companyType", companyType);
+    formData.append("founded", founded);
+    formData.append("companySize", companySize);
+    formData.append("website", website);
+    formData.append("aboutUs", aboutUs);
+
+    try {
+      const response = await fetch("/api/business-info", {
+        method: "PUT",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Cập nhật state thành công
+        businessInfoUpdateSuccess = true;
+        // Đợi một khoảng thời gian rồi reload trang
+        setTimeout(() => {
+          if (businessInfoUpdateSuccess) {
+            window.location.reload();
+          }
+        }, 1000);
+      } else {
+        // Xử lý lỗi
+        businessInfoErrorMessage =
+          result.error || "Failed to update business information";
+      }
+    } catch (error) {
+      console.error("Failed to submit form:", error);
+      businessInfoErrorMessage = "An unexpected error occurred";
+    } finally {
+      isSubmittingBusinessInfo = false;
+    }
   };
 
   // Badges data for gamification
@@ -73,49 +229,244 @@
   const xpProgress = ((studentXP % 300) / 300) * 100;
 </script>
 
-{#if editProfileModalOpen}
-  <div id="editProfileModal" class="modal">
-    <div class="bg-white rounded-lg w-1/2 max-w-2xl shadow-lg">
-      <div class="p-4 border-b">
-        <h3 class="text-lg font-semibold">Edit Profile</h3>
+{#if editBusinessInfoModalOpen}
+  <div id="editBusinessInfoModal" class="modal">
+    <div
+      class="bg-white rounded-lg w-full max-w-3xl shadow-xl mx-4"
+      style="max-height: 80vh;"
+    >
+      <div
+        class="p-4 sticky top-0 bg-white z-10 flex justify-between items-center rounded-t-lg"
+      >
+        <h3 class="text-lg font-semibold">Edit Company Information</h3>
+        <button
+          onclick={toggleEditBusinessInfoModal}
+          class="text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
       </div>
-      <div class="p-4">
+
+      <div class="overflow-y-auto p-5" style="max-height: calc(80vh - 132px);">
         <form>
-          <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1" for="companyType"
+              >Company Type</label
+            >
+            <input
+              type="text"
+              id="companyType"
+              bind:value={companyType}
+              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-sm font-medium mb-1" for="firstName"
-                >First Name</label
+              <label class="block text-sm font-medium mb-1" for="founded"
+                >Founded</label
               >
               <input
                 type="text"
-                id="firstName"
-                value="John"
-                class="w-full p-2 border border-gray-300 rounded"
+                id="founded"
+                bind:value={founded}
+                class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1" for="lastName"
-                >Last Name</label
+              <label class="block text-sm font-medium mb-1" for="companySize"
+                >Company Size</label
               >
               <input
                 type="text"
-                id="lastName"
-                value="Doe"
-                class="w-full p-2 border border-gray-300 rounded"
+                id="companySize"
+                bind:value={companySize}
+                class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
               />
             </div>
           </div>
 
           <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="email"
-              >Email</label
+            <label class="block text-sm font-medium mb-1" for="website"
+              >Website</label
             >
             <input
-              type="email"
-              id="email"
-              value="john.doe@example.com"
-              class="w-full p-2 border border-gray-300 rounded"
+              type="text"
+              id="website"
+              bind:value={website}
+              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
             />
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1" for="aboutUs"
+              >About Us</label
+            >
+            <textarea
+              id="aboutUs"
+              bind:value={aboutUs}
+              rows="4"
+              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- In your business info modal, update the Save Changes button -->
+      <div
+        class="p-4 border-t sticky bottom-0 bg-white z-10 flex justify-end space-x-3 rounded-b-lg"
+      >
+        {#if businessInfoUpdateSuccess}
+          <div class="flex-1 text-green-600 flex items-center">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+            Business information updated successfully! Reloading the page...
+          </div>
+        {/if}
+
+        {#if businessInfoErrorMessage}
+          <div class="flex-1 text-red-600 flex items-center">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            {businessInfoErrorMessage}
+          </div>
+        {/if}
+
+        <button
+          class="btn-secondary px-4"
+          onclick={toggleEditBusinessInfoModal}
+          disabled={isSubmittingBusinessInfo}
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn px-4"
+          onclick={handleSaveBusinessInfo}
+          disabled={isSubmittingBusinessInfo}
+        >
+          {#if isSubmittingBusinessInfo}
+            <div class="flex items-center">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Saving...
+            </div>
+          {:else}
+            Save Changes
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if editProfileModalOpen}
+  <div id="editProfileModal" class="modal">
+    <div
+      class="bg-white rounded-lg w-full max-w-3xl shadow-xl mx-4"
+      style="max-height: 80vh;"
+    >
+      <div
+        class="p-4 sticky top-0 bg-white z-10 flex justify-between items-center rounded-t-lg"
+      >
+        <h3 class="text-lg font-semibold">Edit Profile</h3>
+        <button
+          onclick={toggleEditProfileModal}
+          class="text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto p-5" style="max-height: calc(80vh - 132px);">
+        <form>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium mb-1" for="name"
+                >Name</label
+              >
+              <input
+                type="text"
+                id="name"
+                bind:value={name}
+                class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" for="email"
+                >Email</label
+              >
+              <input
+                type="email"
+                id="email"
+                bind:value={email}
+                class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
+              />
+            </div>
           </div>
 
           <div class="mb-4">
@@ -125,61 +476,126 @@
             <input
               type="text"
               id="title"
-              value={role === "student"
-                ? "Student | Web Developer"
-                : "Business | Tech Solutions Inc."}
-              class="w-full p-2 border border-gray-300 rounded"
+              name="title"
+              bind:value={title}
+              placeholder={role === "student"
+                ? "E.g., Full Stack Developer, ML Engineer, UI/UX Designer"
+                : "E.g., IT Consulting Firm, Software Development Agency, Tech Startup"}
+              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
             />
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="bio">Bio</label>
-            <textarea
-              id="bio"
-              rows="3"
-              class="w-full p-2 border border-gray-300 rounded"
-            >
+            <p class="text-xs text-gray-500 mt-1">
               {role === "student"
-                ? "Passionate web developer with experience in modern JavaScript frameworks."
-                : "Innovative tech company focused on creating cutting-edge web and mobile applications for businesses."}</textarea
-            >
+                ? "Add your professional title or areas of expertise"
+                : "Enter your company's primary business description"}
+            </p>
           </div>
 
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="location"
-              >Location</label
-            >
-            <input
-              type="text"
-              id="location"
-              value="San Francisco, CA"
-              class="w-full p-2 border border-gray-300 rounded"
-            />
-          </div>
-
+          <!-- In the edit profile modal form, update the profile picture section -->
           <div class="mb-4">
             <label class="block text-sm font-medium mb-1">Profile Picture</label
             >
             <div class="flex items-center space-x-4">
               <img
-                src={data.avatarUrl}
+                src={previewUrl || data.avatarUrl}
                 alt="Current avatar"
-                class="w-16 h-16 rounded-full"
+                class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
               />
-              <button type="button" class="btn-secondary text-sm">
-                Change Photo
-              </button>
+              <div class="flex flex-col space-y-2 items-center">
+                <label class="btn-secondary text-sm py-1 px-3 cursor-pointer">
+                  Change Photo
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    class="hidden"
+                    onchange={handleFileChange}
+                  />
+                </label>
+                <p class="text-xs text-gray-500">Recommended: 400x400px</p>
+              </div>
             </div>
           </div>
         </form>
       </div>
-      <div class="p-4 border-t flex justify-end space-x-2">
+
+      <div
+        class="p-4 border-t sticky bottom-0 bg-white z-10 flex justify-end space-x-3 rounded-b-lg"
+      >
+        {#if updateSuccess}
+          <div class="flex-1 text-green-600 flex items-center">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+            Profile updated successfully! Reloading the page...
+          </div>
+        {/if}
+
+        {#if errorMessage}
+          <div class="flex-1 text-red-600 flex items-center">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            {errorMessage}
+          </div>
+        {/if}
+
         <button
-          id="cancelEditBtn"
-          class="btn-secondary"
-          onclick={toggleEditProfileModal}>Cancel</button
+          class="btn-secondary px-4"
+          onclick={toggleEditProfileModal}
+          disabled={isSubmitting}
         >
-        <button class="btn">Save Changes</button>
+          Cancel
+        </button>
+        <button class="btn px-4" onclick={handleSubmit} disabled={isSubmitting}>
+          {#if isSubmitting}
+            <div class="flex items-center">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Saving...
+            </div>
+          {:else}
+            Save Changes
+          {/if}
+        </button>
       </div>
     </div>
   </div>
@@ -242,125 +658,6 @@
   </div>
 {/if}
 
-{#if addJobModalOpen}
-  <!-- Add Job Modal -->
-  <div id="addJobModal" class="modal">
-    <div class="bg-white rounded-lg w-1/2 max-w-2xl shadow-lg">
-      <div class="p-4 border-b">
-        <h3 class="text-lg font-semibold">Add New Project</h3>
-      </div>
-      <div class="p-4">
-        <form>
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="projectTitle"
-              >Project Title</label
-            >
-            <input
-              type="text"
-              id="projectTitle"
-              placeholder="e.g. E-commerce Website Redesign"
-              class="w-full p-2 border border-gray-300 rounded"
-            />
-          </div>
-
-          <div class="mb-4">
-            <label
-              class="block text-sm font-medium mb-1"
-              for="projectDescription">Project Description</label
-            >
-            <textarea
-              id="projectDescription"
-              rows="3"
-              placeholder="Describe what students will work on and what they'll learn"
-              class="w-full p-2 border border-gray-300 rounded"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium mb-1" for="startDate"
-                >Start Date</label
-              >
-              <input
-                type="date"
-                id="startDate"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1" for="endDate"
-                >End Date</label
-              >
-              <input
-                type="date"
-                id="endDate"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium mb-1" for="maxStudents"
-                >Max Students</label
-              >
-              <input
-                type="number"
-                id="maxStudents"
-                value="4"
-                min="1"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-1" for="projectBudget"
-                >Budget (optional)</label
-              >
-              <input
-                type="number"
-                id="projectBudget"
-                placeholder="500"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="requiredSkills"
-              >Required Skills</label
-            >
-            <select
-              id="requiredSkills"
-              multiple
-              class="w-full p-2 border border-gray-300 rounded"
-            >
-              <option>JavaScript</option>
-              <option>React</option>
-              <option>Node.js</option>
-              <option>MongoDB</option>
-              <option>UI/UX Design</option>
-              <option>HTML/CSS</option>
-              <option>Python</option>
-              <option>Django</option>
-            </select>
-            <p class="text-xs text-gray-500 mt-1">
-              Hold Ctrl/Cmd to select multiple skills
-            </p>
-          </div>
-        </form>
-      </div>
-      <div class="p-4 border-t flex justify-end space-x-2">
-        <button
-          id="cancelAddJobBtn"
-          class="btn-secondary"
-          onclick={toggleAddJobModal}>Cancel</button
-        >
-        <button class="btn">Create Project</button>
-      </div>
-    </div>
-  </div>
-{/if}
-
 <main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <!-- Header with role toggle -->
   <div class="mb-4 flex justify-between items-center">
@@ -395,9 +692,9 @@
             <h3 class="text-lg font-semibold">{data.name}</h3>
             <p class="text-sm text-gray-500">
               {#if role === "student"}
-                {data.role} | Web Developer
+                Student {" | " + data.title}
               {:else}
-                Business | Tech Solutions Inc.
+                Business {" | " + data.title}
               {/if}
             </p>
             <p class="text-sm">Email: {data.email}</p>
@@ -576,54 +873,54 @@
         <div class="card p-4">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-base font-semibold">Company Information</h3>
-            <button class="text-xs text-[#6b48ff]">Edit Info</button>
+            <button
+              class="text-xs text-[#6b48ff]"
+              onclick={toggleEditBusinessInfoModal}
+            >
+              Edit Info
+            </button>
           </div>
 
           <div class="space-y-3">
             <div>
               <p class="text-sm font-medium">Company Type</p>
-              <p class="text-sm text-gray-600">Technology Solutions</p>
+              <p class="text-sm text-gray-600">
+                {companyType || "Not provided"}
+              </p>
             </div>
             <div>
               <p class="text-sm font-medium">Founded</p>
-              <p class="text-sm text-gray-600">2018</p>
+              <p class="text-sm text-gray-600">{founded || "Not provided"}</p>
             </div>
             <div>
               <p class="text-sm font-medium">Size</p>
-              <p class="text-sm text-gray-600">15-50 employees</p>
+              <p class="text-sm text-gray-600">
+                {companySize || "Not provided"}
+              </p>
             </div>
             <div>
               <p class="text-sm font-medium">Website</p>
-              <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-                >www.techsolutions.com</a
-              >
+              {#if website}
+                <a
+                  href={website.startsWith("http")
+                    ? website
+                    : `https://${website}`}
+                  target="_blank"
+                  class="text-sm text-[#6b48ff] hover:underline"
+                >
+                  {website}
+                </a>
+              {:else}
+                <p class="text-sm text-gray-600">Not provided</p>
+              {/if}
             </div>
             <div>
               <p class="text-sm font-medium">About Us</p>
               <p class="text-sm text-gray-600">
-                Tech Solutions Inc. is a forward-thinking technology company
-                specializing in developing innovative web and mobile
-                applications. We work with businesses of all sizes to create
-                custom software solutions that drive growth and efficiency.
+                {aboutUs || "Not provided"}
               </p>
             </div>
           </div>
-        </div>
-
-        <!-- Business Post New Project -->
-        <div class="card p-4">
-          <h3 class="text-base font-semibold mb-3">Post a New Project</h3>
-          <p class="text-sm text-gray-600 mb-3">
-            Create a new project to find talented students to help bring your
-            ideas to life.
-          </p>
-          <button
-            id="addJobBtn"
-            class="btn w-full text-sm"
-            onclick={toggleAddJobModal}
-          >
-            Create New Project
-          </button>
         </div>
 
         <!-- Business Engagement Stats -->

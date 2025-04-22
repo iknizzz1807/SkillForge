@@ -1,8 +1,7 @@
-// internal/services/file_service.go
-// File này chịu trách nhiệm lưu file vào trong thư mục, không chịu trách nhiệm thao tác trên cơ sở dữ liệu
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,17 +14,20 @@ import (
 )
 
 // Định nghĩa đường dẫn lưu avatar ở đây hoặc trong config
-// Thêm đường dẫn ví dụ dành cho file trong messange hoặc file đính kèm trong project describtion chẳng hạn
 const AvatarStoragePath = "./storage/avatars"
 
 type FileService struct {
-	fileRepo *repositories.FileRepository
+	// fileRepo *repositories.FileRepository
+	userRepo *repositories.UserRepository
 	// Có thể thêm các dependencies khác nếu cần (ví dụ: config)
 }
 
-// NewFileService khởi tạo FileService
-func NewFileService() *FileService {
-	return &FileService{}
+// NewFileService khởi tạo FileService với dependencies
+func NewFileService(userRepo *repositories.UserRepository) *FileService {
+	return &FileService{
+		// fileRepo: fileRepo,
+		userRepo: userRepo,
+	}
 }
 
 // SaveAvatar lưu file avatar, xóa file cũ và trả về tên file mới
@@ -93,7 +95,7 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	return newFilename, nil
 }
 
-// GetAvatarFilePath (Optional) - Trả về đường dẫn đầy đủ tới file avatar
+// GetAvatarFilePath trả về đường dẫn đầy đủ tới file avatar
 // Input: filename string (ví dụ: "userID.png")
 // Return: string (đường dẫn tuyệt đối), error
 func (s *FileService) GetAvatarFilePath(filename string) (string, error) {
@@ -101,7 +103,7 @@ func (s *FileService) GetAvatarFilePath(filename string) (string, error) {
 		return "", errors.New("filename is required")
 	}
 	// Security check đơn giản
-	if strings.Contains(filename, "..") || strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
+	if strings.Contains(filename, "..") || strings.ContainsAny(filename, "/\\") {
 		return "", errors.New("invalid filename")
 	}
 
@@ -116,6 +118,44 @@ func (s *FileService) GetAvatarFilePath(filename string) (string, error) {
 	}
 
 	return filePath, nil
+}
+
+// FindAvatarByUserID tìm file avatar dựa trên ID người dùng
+// - Chuyển từ handler sang service để đảm bảo separation of concerns
+func (s *FileService) FindAvatarByUserID(userID string) (string, error) {
+	if userID == "" {
+		return "", errors.New("user ID is required")
+	}
+
+	// Security check
+	if strings.Contains(userID, "..") || strings.ContainsAny(userID, "/\\") {
+		return "", errors.New("invalid user ID")
+	}
+
+	// 1. Tìm thông tin user từ database thông qua UserRepository
+	user, err := s.userRepo.FindUserByID(context.Background(), userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to find user: %w", err)
+	}
+
+	// 2. Kiểm tra xem user có avatar hay không
+	if user.AvatarName == "" {
+		// Nếu không có avatar name trong DB, trả về default avatar hoặc error
+		return "", fmt.Errorf("user has no avatar")
+	}
+
+	// 3. Tạo đường dẫn đầy đủ từ tên file avatar đã lưu trong DB
+	avatarPath := filepath.Join(AvatarStoragePath, user.AvatarName)
+
+	// 4. Kiểm tra file có tồn tại không
+	if _, err := os.Stat(avatarPath); os.IsNotExist(err) {
+		return "", fmt.Errorf("avatar file does not exist: %s", user.AvatarName)
+	} else if err != nil {
+		return "", fmt.Errorf("error accessing avatar file: %w", err)
+	}
+
+	// 5. Trả về đường dẫn đầy đủ
+	return avatarPath, nil
 }
 
 // func (f *FileService) UploadFile(ctx context.Context, FileName string, FolderName string, UploadedByID string) (*models.File, error) {

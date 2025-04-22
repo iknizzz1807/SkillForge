@@ -1,15 +1,52 @@
 import type { PageServerLoad } from "./$types";
 
-export const load = (async (event) => {
-  const user = event.locals.user;
-  const origin = event.url.origin;
+export const load = (async ({ locals, fetch, url }) => {
+  const user = locals.user;
+  const origin = url.origin;
+  const token = locals.token;
+
+  // Initialize businessInfo with default empty values
+  let businessInfo = {
+    companyType: "",
+    founded: "",
+    companySize: "",
+    website: "",
+    aboutUs: "",
+  };
+
+  // Only fetch business info if user is logged in
+  if (token) {
+    try {
+      const response = await fetch("/api/business-info", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Get the business info directly from response
+        const data = await response.json();
+
+        businessInfo = {
+          companyType: data.company_type || "",
+          founded: data.founded || "",
+          companySize: data.company_size || "",
+          website: data.website || "",
+          aboutUs: data.about_us || "",
+        };
+      }
+    } catch (error) {
+      console.error("Failed to fetch business info:", error);
+    }
+  }
 
   return {
     id: user?.id,
     name: user?.name,
     email: user?.email,
     role: user?.role,
-    // Add the avatar URL using the same pattern as in layout
-    avatarUrl: user?.id ? `${origin}/api/avatars/${user.id}` : null,
+    avatarUrl: `${origin}/api/avatars` || null,
+    businessInfo,
   };
 }) satisfies PageServerLoad;

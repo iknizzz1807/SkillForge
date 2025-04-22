@@ -861,7 +861,7 @@
         <h3 class="text-base font-semibold mb-3">Quick Actions</h3>
         <div class="flex space-x-3">
           <a
-            href="/projects/create"
+            href="/project/create"
             class="flex flex-col items-center w-1/4 p-3 bg-gray-100 rounded hover:bg-gray-200"
           >
             <svg

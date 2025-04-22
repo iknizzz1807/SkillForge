@@ -1,36 +1,35 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
-// Định nghĩa đường dẫn lưu trữ ở đây hoặc đọc từ config/const chung
-const AvatarStoragePathForServing = "./storage/avatars"
+// AvatarHandler xử lý các request liên quan đến avatar
+type AvatarHandler struct {
+	fileService *services.FileService
+}
 
-// ServeAvatarHandler phục vụ file avatar tĩnh dựa trên ID, không yêu cầu đuôi mở rộng
-// Được gọi bởi route GET /avatars/:id
-func ServeAvatarHandler(c *gin.Context) {
-	userID := c.Param("id")
+// NewAvatarHandler khởi tạo một handler mới
+func NewAvatarHandler(fileService *services.FileService) *AvatarHandler {
+	return &AvatarHandler{
+		fileService: fileService,
+	}
+}
+
+// ServeAvatar phục vụ file avatar tĩnh dựa trên ID
+// Được gọi bởi route GET /avatars
+func (h *AvatarHandler) ServeAvatar(c *gin.Context) {
+	userID := c.GetString("userID")
 	if userID == "" {
 		c.String(http.StatusBadRequest, "User ID is required")
 		return
 	}
 
-	// Security check: chống path traversal
-	// Đảm bảo userID không chứa các ký tự nguy hiểm
-	if strings.Contains(userID, "..") || strings.ContainsAny(userID, "/\\") {
-		c.String(http.StatusBadRequest, "Invalid user ID")
-		return
-	}
-
-	// Tìm file avatar dựa trên ID, không cần biết đuôi mở rộng là gì
-	avatarPath, err := findAvatarByUserID(userID)
+	// Sử dụng service để tìm avatar, không thực hiện logic tìm file trong handler
+	avatarPath, err := h.fileService.FindAvatarByUserID(userID)
 	if err != nil {
 		c.String(http.StatusNotFound, "Avatar not found")
 		return
@@ -40,23 +39,33 @@ func ServeAvatarHandler(c *gin.Context) {
 	c.File(avatarPath)
 }
 
-// findAvatarByUserID tìm file avatar dựa trên ID người dùng
-// Hàm này sẽ tìm kiếm trong thư mục avatars các file có tên bắt đầu bằng userID
-func findAvatarByUserID(userID string) (string, error) {
-	// Đọc tất cả các file trong thư mục avatars
-	entries, err := os.ReadDir(AvatarStoragePathForServing)
+// UploadAvatar xử lý upload avatar
+func (h *AvatarHandler) UploadAvatar(c *gin.Context) {
+	// Lấy userID từ context đã được authentication middleware thiết lập
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	file, header, err := c.Request.FormFile("avatar")
 	if err != nil {
-		return "", fmt.Errorf("failed to read avatar directory: %w", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
+	}
+	defer file.Close()
+
+	// Sử dụng file service để lưu avatar
+	filename, err := h.fileService.SaveAvatar(userID, file, header)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	// Tìm file có tên bắt đầu bằng userID
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasPrefix(entry.Name(), userID) {
-			return filepath.Join(AvatarStoragePathForServing, entry.Name()), nil
-		}
-	}
-
-	return "", fmt.Errorf("avatar not found for user: %s", userID)
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Avatar uploaded successfully",
+		"filename": filename,
+	})
 }
 
 // type FileHandler struct {

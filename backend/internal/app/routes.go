@@ -32,6 +32,8 @@ func RegisterRoutes(
 	notificationService *services.NotificationService,
 	badgeService *services.BadgeService,
 	talentPoolService *services.TalentPoolService,
+	fileService *services.FileService,
+	businessInfoService *services.BusinessInfoService,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -49,6 +51,8 @@ func RegisterRoutes(
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	badgeHandler := handlers.NewBadgeHandler(badgeService)
 	talentPoolHandler := handlers.NewTalentPoolHandler(talentPoolService)
+	avatarHandler := handlers.NewAvatarHandler(fileService)
+	businessInfoHandler := handlers.NewBusinessInfoHandler(businessInfoService)
 	websocketHanlder := handlers.NewWebSocketHandler(realtimeClient, messageService, notificationService,
 		taskService,
 		projectService)
@@ -79,9 +83,8 @@ func RegisterRoutes(
 
 	{
 		// User routes
-		api.GET("/users/:id", userHandler.GetUser)
-		api.GET("/users/name/:id", userHandler.GetUsername)
-		api.PUT("/users/:id", userHandler.UpdateUser)
+		api.GET("/user", userHandler.GetCurrentUser)
+		api.PUT("/user", userHandler.UpdateCurrentUser)
 
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)
@@ -135,8 +138,11 @@ func RegisterRoutes(
 		// More routes if needed here...
 
 		// === Route phục vụ file avatar ===
-		// GET /avatars/some_user_id.png
-		r.GET("/avatars/:id", handlers.ServeAvatarHandler)
+		r.GET("/avatars", avatarHandler.ServeAvatar)
+
+		// === Route phục vụ business info
+		api.GET("/business-info", businessInfoHandler.GetBusinessInfo)
+		api.PUT("/business-info", businessInfoHandler.UpdateBusinessInfo)
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {

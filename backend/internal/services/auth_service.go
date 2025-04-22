@@ -83,10 +83,9 @@ func (s *AuthService) Register(email, name, password, role, website string, file
 			} else {
 				fmt.Printf("Successfully updated AvatarURL for user %s\n", user.ID)
 				// Cập nhật lại user model để trả về cho client
-				user.AvatarURL = avatarFilename
+				user.AvatarName = avatarFilename
 				user.UpdatedAt = time.Now() // Cập nhật thời gian luôn
 			}
-			// ----------------------------------------------------------
 		}
 	} else {
 		fmt.Printf("No avatar file provided for user %s during registration.\n", user.ID)

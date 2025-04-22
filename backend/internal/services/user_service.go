@@ -52,7 +52,7 @@ func (s *UserService) GetUserByID(userID string) (*models.User, error) {
 // UpdateUser cập nhật thông tin user
 // Input: userID (string), skills ([]string)
 // Return: *models.User (user đã cập nhật), error (nếu có lỗi)
-func (s *UserService) UpdateUser(userID string, skills []string) (*models.User, error) {
+func (s *UserService) UpdateUser(userID, name, email, title string) (*models.User, error) {
 	// Kiểm tra userID hợp lệ
 	if userID == "" {
 		return nil, errors.New("user ID cannot be empty")
@@ -65,8 +65,9 @@ func (s *UserService) UpdateUser(userID string, skills []string) (*models.User, 
 		return nil, errors.New("user not found")
 	}
 
-	// Cập nhật skills và thời gian
-	user.Skills = skills
+	user.Name = name
+	user.Email = email
+	user.Title = title
 	user.UpdatedAt = time.Now()
 
 	// Lưu thay đổi vào database
@@ -77,4 +78,43 @@ func (s *UserService) UpdateUser(userID string, skills []string) (*models.User, 
 
 	// Trả về user đã cập nhật
 	return user, nil
+}
+
+// UpdateUserWithAvatar cập nhật thông tin user bao gồm avatar
+// Input: userID (string), name (string), email (string), avatarFilename (string)
+// Return: *models.User (user đã cập nhật), error (nếu có lỗi)
+func (s *UserService) UpdateUserWithAvatar(userID, name, email, title, avatarFilename string) (*models.User, error) {
+	// Kiểm tra userID hợp lệ
+	if userID == "" {
+		return nil, errors.New("user ID cannot be empty")
+	}
+
+	// Tạo repository và tìm user
+	userRepo := repositories.NewUserRepository(s.db)
+	user, err := userRepo.FindUserByID(context.Background(), userID)
+	if err != nil || user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Cập nhật thông tin user
+	user.Name = name
+	user.Email = email
+	user.Title = title
+	user.AvatarName = avatarFilename
+	user.UpdatedAt = time.Now()
+
+	// Lưu thay đổi vào database
+	err = userRepo.UpdateUser(context.Background(), user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Trả về user đã cập nhật
+	return user, nil
+}
+
+// GetUserRepository returns the user repository instance
+// This is a helper to allow FileService to access the user repository
+func (s *UserService) GetUserRepository() *repositories.UserRepository {
+	return repositories.NewUserRepository(s.db)
 }

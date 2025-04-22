@@ -1,13 +1,7 @@
-import { error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ params, fetch, locals }) => {
-  const id = params.id;
+export const GET: RequestHandler = async ({ fetch, locals }) => {
   const token = locals.token; // Get auth token from locals
-
-  if (!id) {
-    throw error(400, "Avatar ID is required");
-  }
 
   try {
     // Add Authorization header with token if available
@@ -16,7 +10,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals }) => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`http://backend:8080/avatars/${id}`, {
+    const response = await fetch(`http://backend:8080/avatars`, {
       headers,
     });
 
@@ -37,7 +31,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals }) => {
     return new Response(imageData, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "no-cache",
       },
     });
   } catch (err) {

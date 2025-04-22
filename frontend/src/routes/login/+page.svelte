@@ -57,9 +57,8 @@
             <input type="checkbox" class="mr-2" />
             Remember me
           </label>
-          <a
-            href="/forgot-password"
-            class="text-sm text-[#6b48ff] hover:underline">Forgot Password?</a
+          <a href="/login" class="text-sm text-[#6b48ff] hover:underline"
+            >Forgot Password?</a
           >
         </div>
         {#if form?.error}
@@ -69,7 +68,7 @@
       </form>
 
       <!-- OAuth Buttons -->
-      <div class="mt-6 space-y-3">
+      <!-- <div class="mt-6 space-y-3">
         <button class="btn-secondary w-full flex items-center justify-center">
           <svg
             class="w-5 h-5 mr-2"
@@ -96,7 +95,7 @@
           </svg>
           Login with LinkedIn
         </button>
-      </div>
+      </div> -->
 
       <!-- Signup Link -->
       <p class="text-sm text-center mt-4">

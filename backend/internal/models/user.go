@@ -29,11 +29,17 @@ type User struct {
 	// Skills là danh sách kỹ năng của user (chủ yếu cho student)
 	Skills []string `json:"skills" bson:"skills"`
 
+	// Title là trường string thể hiện mô tả ngắn gọn về công ty hoặc về bản thân student, ví dụ "Web developer",
+	// IT consultant company,...
+	// Và trường title này chỉ có thể được thêm vào thông qua việc cập nhật hồ sơ của user chứ không phải là trong
+	// quá trình tạo tài khoản
+	Title string `json:"title" bson:"title"`
+
 	// CreatedAt là thời gian tạo user
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 
 	// AvatarUrl là địa chỉ url của avatar user để frontend có thể get request
-	AvatarURL string `json:"avatar_url" bson:"avatar_url"`
+	AvatarName string `json:"avatar_name" bson:"avatar_name"`
 
 	// Website là string thể hiện địa chỉ web của doanh nghiệp để tăng độ uy tín và cung cấp thông tin để user tìm hiểu về doanh nghiệp đó
 	Website string `json:"website" bson:"website"`
