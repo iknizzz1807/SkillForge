@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -60,17 +61,17 @@ func NewWebSocketHandler(
 func (h *WebSocketHandler) HandleConnection(c *gin.Context) {
 	// Cái này là đang test, uncommnent nếu dùng thực sự trong app
 	// Xác định userID - có thể từ token auth hoặc query param
-	// userID := c.Query("userId")
-	// if userID == "" {
-	// 	// Fallback lấy userID từ JWT token
-	// 	userID = c.GetString("userID")
-	// 	if userID == "" {
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user identification"})
-	// 		return
-	// 	}
-	// }
+	userID := c.Query("userId")
+	if userID == "" {
+		// Fallback lấy userID từ JWT token
+		userID = c.GetString("userID")
+		if userID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user identification"})
+			return
+		}
+	}
 
-	userID := "Thong dep trai 123"
+	// userID := "Thong dep trai 123"
 
 	// Nâng cấp connection HTTP lên WebSocket
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -151,6 +152,47 @@ func (h *WebSocketHandler) handleTaskUpdate(conn *websocket.Conn, message WebSoc
 	// TODO: Xử lý cập nhật task
 	// 1. Cập nhật task trong database
 	// 2. Thông báo cho các client khác về thay đổi
+
+	// Cái này để test 
+	// tasks, err := h.taskService.CreateTasks("cd2f9d1c-c084-4b2d-88ee-52ebb18260e5", []models.TaskInput{
+	// 	{
+	// 		Title:       "Task 1",
+	// 		Description: "Description 1",
+	// 		Note:        "Note 1",
+	// 		AssignedTo:  "iknizzz1807",
+	// 	}})
+	// tasks, err := h.taskService.GetTasksByProjectID("cd2f9d1c-c084-4b2d-88ee-52ebb18260e5")
+	// for _, task := range tasks {
+	// 	log.Printf("Task ID: %s, Title: %s, Description: %s", task.ID, task.Title, task.Description)
+	// }
+	// log.Printf("Error: %v", err)
+	// if err != nil {
+	// 	log.Printf("Error creating task: %v", err)
+	// 	sendErrorMessage(conn, "Failed to create task")
+	// 	return
+	// }
+
+	var req *models.TaskUpdate
+	if err := json.Unmarshal(message.Content, &req); err != nil {
+		log.Printf("Error parsing task update message: %v", err)
+		sendErrorMessage(conn, "Invalid task update format")
+		return
+	}
+
+	task, err := h.taskService.UpdateTask(req.TaskID, req)
+	if err != nil {
+		log.Printf("Error updating task: %v", err)
+		sendErrorMessage(conn, "Failed to update task")
+		return
+	}
+
+	response := map[string]interface{}{
+		"type":    "task_update",
+		"task":    task,
+		"message": "Task updated successfully",
+	}
+	respBytes, _ := json.Marshal(response)
+	conn.WriteMessage(websocket.TextMessage, respBytes)
 }
 
 func (h *WebSocketHandler) handleBoardUpdate(conn *websocket.Conn, message WebSocketMessage) {

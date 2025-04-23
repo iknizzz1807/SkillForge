@@ -53,3 +53,13 @@ type TaskInput struct {
 	Note        string `json:"note"`
 	AssignedTo  string `json:"assigned_to"`
 }
+
+type TaskUpdate struct {
+	TaskID      string `json:"taskId" binding:"required"`
+	Status      string `json:"status"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Note        string `json:"note"`
+	Review      string `json:"review"`
+	Assigned_to string `json:"assigned_to"`
+}

@@ -144,18 +144,18 @@ func (h *TaskHandler) FinishTask(c *gin.Context) {
 // Return: Trả về JSON task đã cập nhật hoặc lỗi
 func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	taskID := c.Param("id")
-	var req struct {
-		Status string `json:"status" binding:"required"`
-	}
+
+	// TaskRequest định nghĩa cấu trúc yêu cầu từ client
+	var req *models.TaskUpdate
 
 	// Parse và validate request body
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid inputs"})
 		return
 	}
 
 	// Gọi service để cập nhật task
-	task, err := h.taskService.UpdateTask(taskID, req.Status)
+	task, err := h.taskService.UpdateTask(taskID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

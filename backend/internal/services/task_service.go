@@ -189,13 +189,15 @@ func (s *TaskService) FinishTask(taskID string, userID string) (*models.Task, er
 	return task, nil
 }
 
+
+
 // UpdateTask cập nhật trạng thái task
 // Input: taskID (string), status (string)
 // Return: *models.Task (task đã cập nhật), error (nếu có lỗi)
-func (s *TaskService) UpdateTask(taskID, status string) (*models.Task, error) {
+func (s *TaskService) UpdateTask(taskID string, taskUpdate *models.TaskUpdate) (*models.Task, error) {
 	// Kiểm tra input hợp lệ
-	if taskID == "" || status == "" {
-		return nil, errors.New("invalid task data")
+	if taskID == "" || taskUpdate == nil {
+		return nil, errors.New("invalid inputs")
 	}
 
 	// Tạo repository và tìm task
@@ -206,7 +208,12 @@ func (s *TaskService) UpdateTask(taskID, status string) (*models.Task, error) {
 	}
 
 	// Cập nhật trạng thái và thời gian
-	task.Status = status
+	task.Status = taskUpdate.Status
+	task.Title = taskUpdate.Title
+	task.Description = taskUpdate.Description
+	task.Note = taskUpdate.Note
+	task.Review = taskUpdate.Review
+	task.Assigned_to = taskUpdate.Assigned_to
 	task.UpdatedAt = time.Now()
 
 	// Lưu thay đổi
