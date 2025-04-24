@@ -122,17 +122,17 @@ func (r *ProjectRepository) UpdateProject(project *models.Project) (*models.Proj
 		filter = bson.M{"_id": project.ID}
 	}
 
-	// Chuẩn bị dữ liệu cập nhật
+	// Chuẩn bị dữ liệu cập nhật - loại bỏ currentMember khỏi quá trình cập nhật
 	update := bson.M{
 		"$set": bson.M{
-			"title":          project.Title,
-			"description":    project.Description,
-			"skills":         project.Skills,
-			"start_time":     project.StartTime,
-			"end_time":       project.EndTime,
-			"current_member": project.CurrentMember,
-			"max_member":     project.MaxMember,
-			"status":         project.Status,
+			"title":       project.Title,
+			"description": project.Description,
+			"skills":      project.Skills,
+			"start_time":  project.StartTime,
+			"end_time":    project.EndTime,
+			"max_member":  project.MaxMember,
+			"status":      project.Status,
+			// "current_member" đã bị loại bỏ để không cho phép cập nhật trực tiếp
 		},
 	}
 
@@ -229,4 +229,30 @@ func (r *ProjectRepository) DeleteProject(projectID string) error {
 func isValidObjectID(id string) bool {
 	_, err := primitive.ObjectIDFromHex(id)
 	return err == nil
+}
+
+// UpdateProjectMemberCount cập nhật số lượng thành viên của project dựa trên dữ liệu thực tế
+// Input: ctx (context.Context), projectID (string), memberCount (int)
+// Return: error (nếu có lỗi)
+func (r *ProjectRepository) UpdateProjectMemberCount(ctx context.Context, projectID string, memberCount int) error {
+	// Check if the ID is in ObjectID format
+	var filter bson.M
+	if isValidObjectID(projectID) {
+		objID, _ := primitive.ObjectIDFromHex(projectID)
+		filter = bson.M{"_id": objID}
+	} else {
+		// If not a valid ObjectID, use the string directly
+		filter = bson.M{"_id": projectID}
+	}
+
+	// Cập nhật chỉ trường current_member
+	update := bson.M{
+		"$set": bson.M{
+			"current_member": memberCount,
+		},
+	}
+
+	// Thực hiện cập nhật
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	return err
 }

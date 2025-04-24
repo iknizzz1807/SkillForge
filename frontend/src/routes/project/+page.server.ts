@@ -31,7 +31,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
     if (role === "business") {
       // Make get request to the business API
       // Make API request with proper URL and headers
-      response = await fetch("http://backend:8080/api/projects", {
+      response = await fetch("http://backend:8080/api/projects/business", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
@@ -40,7 +40,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
     } else if (role === "student") {
       // Make get request to the student API
       // Make API request with proper URL and headers
-      response = await fetch("http://backend:8080/api/projects", {
+      response = await fetch("http://backend:8080/api/projects/student", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",

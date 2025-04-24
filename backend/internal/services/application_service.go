@@ -193,12 +193,12 @@ func (s *ApplicationService) GetApplicationsByBusinessID(businessID string) ([]m
 
 // UpdateApplicationStatus cập nhật trạng thái application
 // (Optional: Thêm businessID để kiểm tra quyền trong service)
-func (s *ApplicationService) UpdateApplicationStatus(applicationID string, status string /*, businessID string*/) (*models.Application, error) {
+func (s *ApplicationService) UpdateApplicationStatus(applicationID string, status string, businessID string) (*models.Application, error) {
 	if applicationID == "" || status == "" {
 		return nil, errors.New("application ID and status cannot be empty")
 	}
 
-	// Kiểm tra status hợp lệ (sử dụng constants)
+	// Kiểm tra status hợp lệ bằng việc map các string theo true là những giá trị hợp lệ
 	validStatuses := map[string]bool{
 		"pending":  true,
 		"approved": true,
@@ -219,12 +219,13 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 		return nil, errors.New("failed to get application for update: " + err.Error())
 	}
 
-	// (Optional: Kiểm tra quyền của business nếu businessID được truyền vào)
-	// project, err := s.projectRepo.FindProjectByID(ctx, application.ProjectID)
-	// if err != nil { ... }
-	// if project.CreatedByID != businessID {
-	// 	return nil, errors.New("permission denied to update this application")
-	// }
+	project, err := s.projectRepo.FindProjectByID(ctx, application.ProjectID)
+	if err != nil {
+		return nil, errors.New("invalid project")
+	}
+	if project.CreatedByID != businessID {
+		return nil, errors.New("permission denied to update this application")
+	}
 
 	// 2. Kiểm tra logic chuyển đổi trạng thái (ví dụ: không thể approve lại application đã rejected)
 	if application.Status == "approved" && status != "approved" {

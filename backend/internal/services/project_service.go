@@ -17,6 +17,7 @@ import (
 
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/repositories"
@@ -79,9 +80,9 @@ func (s *ProjectService) GetProjectByID(projectID string) (*models.Project, erro
 // CreateProject tạo dự án mới
 // Input: userID (string), title (string), description (string), skills ([]string), timeline (string)
 // Return: *models.Project (project vừa tạo), error (nếu có lỗi)
-func (s *ProjectService) CreateProject(userID, userName, title, description string, skills []string, startTime time.Time, endTime time.Time, maxMember int) (*models.Project, error) {
+func (s *ProjectService) CreateProject(creatorID, userName, title, description string, skills []string, startTime time.Time, endTime time.Time, maxMember int) (*models.Project, error) {
 	// Kiểm tra input hợp lệ
-	if userID == "" || title == "" || description == "" || len(skills) == 0 {
+	if creatorID == "" || title == "" || description == "" || len(skills) == 0 {
 		return nil, errors.New("invalid project data")
 	}
 
@@ -95,7 +96,7 @@ func (s *ProjectService) CreateProject(userID, userName, title, description stri
 		EndTime:       endTime,
 		MaxMember:     maxMember,
 		CurrentMember: 0,
-		CreatedByID:   userID,
+		CreatedByID:   creatorID,
 		CreatedByName: userName,
 		// Trường status này chỉ dùng để hiển thị và tìm kiếm
 		Status:    "open",
@@ -117,7 +118,7 @@ func (s *ProjectService) CreateProject(userID, userName, title, description stri
 	// }
 
 	// Gửi thông báo đến user
-	s.notificationService.SendEmail(userID, "Project Created", "Your project "+title+" has been created.")
+	// s.notificationService.SendEmail(creatorID, "Project Created", "Your project "+title+" has been created.")
 
 	// Trả về project vừa tạo
 	return project, nil
@@ -345,89 +346,101 @@ func (s *ProjectService) GetProjectsByBusinessID(businessID string) ([]*models.P
 // AddStudentToProject thêm student vào project
 // Input: projectID (string), studentID (string)
 // Return: error (nếu có lỗi)
-func (s *ProjectService) AddStudentToProject(projectID string, studentID string) error {
-	// Kiểm tra project tồn tại
+func (s *ProjectService) AddStudentToProject(projectID, studentID string) error {
+	ctx := context.Background()
+
+	// Kiểm tra project và capacity
 	project, err := s.GetProjectByID(projectID)
 	if err != nil {
 		return err
 	}
 
-	// Kiểm tra số lượng thành viên hiện tại
-	if project.CurrentMember >= project.MaxMember {
-		return errors.New("project has reached maximum number of members")
+	// Kiểm tra số lượng thành viên
+	projectStudentRepository := repositories.NewProjectStudentRepository(s.db)
+	studentIDs, err := projectStudentRepository.FindStudentsByProjectID(ctx, projectID)
+	if err != nil {
+		return err
 	}
 
-	// Kiểm tra status của project
-	if project.Status != "open" && project.Status != "active" {
-		return errors.New("cannot join closed project")
+	if len(studentIDs) >= project.MaxMember {
+		return errors.New("project has reached maximum capacity")
 	}
 
-	ctx := context.Background()
-
-	// Tạo quan hệ project-student mới
+	// Tạo bản ghi project_student mới
 	projectStudent := &models.Project_student{
-		ID:         utils.GenerateUUID(),
+		ID:         uuid.New().String(), // hoặc cách tạo ID của bạn
 		Project_id: projectID,
 		Student_id: studentID,
 		CreatedAt:  time.Now(),
 	}
 
-	// Lưu quan hệ vào database
-	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
-	err = projectStudentRepo.InsertProjectStudent(ctx, projectStudent)
+	// Thêm vào database
+	err = projectStudentRepository.InsertProjectStudent(ctx, projectStudent)
 	if err != nil {
 		return err
 	}
 
-	// Cập nhật số lượng thành viên hiện tại của project
-	project.CurrentMember++
-	projectRepo := repositories.NewProjectRepository(s.db)
-	_, err = projectRepo.UpdateProject(project)
-	if err != nil {
-		// Nếu cập nhật project thất bại, xóa quan hệ vừa tạo
-		projectStudentRepo.DeleteProjectStudent(ctx, projectID, studentID)
-		return err
-	}
-
-	// // Gửi thông báo cho cả student và business
-	// s.notificationService.SendNotification(studentID, "Project Joined", "You have successfully joined project: "+project.Title)
-	// s.notificationService.SendNotification(project.CreatedByID, "New Member", "A new student has joined your project: "+project.Title)
-
-	return nil
+	// Cập nhật số lượng thành viên
+	return s.UpdateProjectMemberCount(projectID)
 }
 
 // RemoveStudentFromProject xóa student khỏi project
 // Input: projectID (string), studentID (string)
 // Return: error (nếu có lỗi)
-func (s *ProjectService) RemoveStudentFromProject(projectID string, studentID string) error {
-	// Kiểm tra project tồn tại
-	project, err := s.GetProjectByID(projectID)
-	if err != nil {
-		return err
-	}
-
+func (s *ProjectService) RemoveStudentFromProject(projectID, studentID string) error {
 	ctx := context.Background()
 
-	// Xóa quan hệ project-student
-	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
-	err = projectStudentRepo.DeleteProjectStudent(ctx, projectID, studentID)
+	projectStudentRepository := repositories.NewProjectStudentRepository(s.db)
+	// Xóa bản ghi từ database
+	err := projectStudentRepository.DeleteProjectStudent(ctx, projectID, studentID)
 	if err != nil {
 		return err
 	}
 
-	// Cập nhật số lượng thành viên hiện tại của project
-	if project.CurrentMember > 0 {
-		project.CurrentMember--
-		projectRepo := repositories.NewProjectRepository(s.db)
-		_, err = projectRepo.UpdateProject(project)
+	// Cập nhật số lượng thành viên
+	return s.UpdateProjectMemberCount(projectID)
+}
+
+// UpdateProjectMemberCount đếm và cập nhật số lượng thành viên dự án
+// Input: projectID (string)
+// Return: error (nếu có lỗi)
+func (s *ProjectService) UpdateProjectMemberCount(projectID string) error {
+	ctx := context.Background()
+
+	projectStudentRepository := repositories.NewProjectStudentRepository(s.db)
+	// Lấy danh sách sinh viên trong dự án
+	studentIDs, err := projectStudentRepository.FindStudentsByProjectID(ctx, projectID)
+	if err != nil {
+		return err
+	}
+
+	// Đếm số lượng sinh viên
+	memberCount := len(studentIDs)
+
+	projectRepository := repositories.NewProjectRepository(s.db)
+	// Cập nhật trường currentMember
+	return projectRepository.UpdateProjectMemberCount(ctx, projectID, memberCount)
+}
+
+// SyncAllProjectMemberCounts đồng bộ hóa số lượng thành viên cho tất cả các dự án
+// Return: error (nếu có lỗi)
+func (s *ProjectService) SyncAllProjectMemberCounts() error {
+	ctx := context.Background()
+
+	// Lấy tất cả project
+	projectRepository := repositories.NewProjectRepository(s.db)
+	projects, err := projectRepository.FindAllProjects(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Cập nhật số lượng thành viên cho từng project
+	for _, project := range projects {
+		err := s.UpdateProjectMemberCount(project.ID)
 		if err != nil {
 			return err
 		}
 	}
-
-	// // Gửi thông báo cho cả student và business
-	// s.notificationService.SendNotification(studentID, "Project Left", "You have left project: "+project.Title)
-	// s.notificationService.SendNotification(project.CreatedByID, "Member Left", "A student has left your project: "+project.Title)
 
 	return nil
 }

@@ -87,21 +87,32 @@ func RegisterRoutes(
 		api.PUT("/user", userHandler.UpdateCurrentUser)
 
 		// Project routes
-		api.GET("/projects", projectHandler.GetProjects)
+		api.GET("/projects", projectHandler.GetProjects) // này là route dành cho marketplace để get tất cả các dự án trên thị trường
 		api.GET("/projects/:id", projectHandler.GetProject)
-		api.GET("/projects/busiess/:id", projectHandler.GetProjectByBusiness) // Với id params là id của business
+		api.GET("/projects/business", projectHandler.GetProjectByBusiness) // id của business được truyền qua context
+		api.GET("/projects/student", projectHandler.GetProjectByStudent)   // id của student được truyền qua context
 		api.POST("/projects", projectHandler.CreateProject)
 		api.PUT("/projects/:id", projectHandler.UpdateProject)
 		api.DELETE("/projects/:id", projectHandler.DeleteProject)
-		// Change this route because it looks like ass bruh
-		api.DELETE("/projects/:id/students/:studentID", projectHandler.RemoveStudentFromProject)
+
+		// Cần thêm một nhóm route để get, delete students trong project cụ thể nào đó
+		// Route này để get tất cả các students trong một dự án để có thể dẫn tới profile của họ
+		// hoặc hiển thị về các thông tin các hoặc delete nếu muốn
+		// api.GET("/projects/students/:id") với id là id của project
+		// Hàm RemoveStudentFromProject nhận vào projectID và studentID, business thực hiện thao tác thì được truyền qua context
+		// đã được truyền qua context nên cần truyền ở đây là bao gồm studentID và projectID
+		api.DELETE("/projects/students/:studentID/:projectID", projectHandler.RemoveStudentFromProject)
 
 		// Application routes
 		api.POST("/applications", applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
+
+		// Cái route này dùng để:
+		// - Với business: xem những students nào apply vào dự án của mình
+		// - Với student: xem mình đã apply vào những project nào cùng với status của các dự án đó
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
 		// This update for status is used for accept or reject an application, if accept add the student to the project
-		api.PUT("/applications/:id/status", applicationHandler.UpdateApplicationStatus) // Change this because the route looking ass bro
+		api.PUT("/applications/status/:id", applicationHandler.UpdateApplicationStatus)
 		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
 
 		// Task routes

@@ -151,10 +151,12 @@ func (h *ApplicationHandler) GetApplicationsByCurrentUser(c *gin.Context) {
 
 // UpdateApplicationStatus xử lý endpoint PUT /api/applications/:id/status
 // Cập nhật trạng thái của application
+// Route này được dùng để approve hoặc reject student vào trong dự án
 // Return: Trả về JSON application đã cập nhật hoặc lỗi
 func (h *ApplicationHandler) UpdateApplicationStatus(c *gin.Context) {
 	// Chỉ business mới được cập nhật status application của project họ quản lý
 	role := c.GetString("role")
+	businessID := c.GetString("userID")
 	if role != "business" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only businesses can update application status"})
 		return
@@ -174,7 +176,7 @@ func (h *ApplicationHandler) UpdateApplicationStatus(c *gin.Context) {
 	}
 
 	// Gọi service để cập nhật status (có thể truyền businessID vào để kiểm tra quyền trong service)
-	application, err := h.applicationService.UpdateApplicationStatus(applicationID, req.Status /*, businessID (optional)*/)
+	application, err := h.applicationService.UpdateApplicationStatus(applicationID, req.Status, businessID)
 	if err != nil {
 		if err.Error() == "invalid status" { // Giả sử service trả lỗi cụ thể
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -191,28 +193,6 @@ func (h *ApplicationHandler) UpdateApplicationStatus(c *gin.Context) {
 		"message":     "Application status updated successfully",
 		"application": application,
 	})
-}
-
-// --- DEPRECATED FUNCTIONS ---
-// Giữ lại các functions cũ để tương thích ngược (bạn có thể xóa sau khi cập nhật tất cả frontend calls)
-
-// GetApplicationsByUser xử lý endpoint GET /api/applications/user (Deprecated)
-// @Deprecated: Use GET /api/applications/me instead
-func (h *ApplicationHandler) GetApplicationsByUser(c *gin.Context) {
-	userID := c.GetString("userID")
-
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
-		return
-	}
-
-	applications, err := h.applicationService.GetApplicationsByUserID(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, applications)
 }
 
 // DeleteApplication xử lý endpoint DELETE /api/applications/:id

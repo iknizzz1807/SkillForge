@@ -36,6 +36,7 @@ type Project struct {
 
 	MaxMember int `json:"max_member" bson:"max_member"`
 
+	// CurrentMember là số lượng sinh viên tham gia dự án (chỉ đọc, được tính toán tự động)
 	CurrentMember int `json:"current_member" bson:"current_member"`
 
 	// CreatedBy là ID của user tạo dự án (doanh nghiệp)

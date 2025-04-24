@@ -73,6 +73,29 @@
     }
   };
 
+  // Logout client side
+  // const logout = () => {
+  //   // Client-side logout
+  //   if (browser) {
+  //     // 1. Xóa cookie auth_token
+  //     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+  //     // 2. Nếu bạn đang sử dụng nhiều domain, xóa cookie trên tất cả domain có thể
+  //     const domains = ["localhost", "skillforge.ikniz.site", ".skillforge.ikniz.site"];
+
+  //     domains.forEach(domain => {
+  //       document.cookie = `auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
+  //     });
+
+  //     // 3. Xóa bất kỳ dữ liệu local nào (localStorage, sessionStorage)
+  //     localStorage.removeItem("user");
+  //     sessionStorage.clear();
+
+  //     // 4. Chuyển hướng đến trang đăng nhập
+  //     goto("/login", { replaceState: true });
+  //   }
+  // };
+
   const toggleAccountForm = () => {
     //
   };

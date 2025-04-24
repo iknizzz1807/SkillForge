@@ -63,10 +63,10 @@ func (h *ProjectHandler) GetProject(c *gin.Context) {
 	c.JSON(http.StatusOK, project)
 }
 
-// GetProjectByStudent xử lý endpoint GET /api/projects/student/:id
+// GetProjectByStudent xử lý endpoint GET /api/projects/student
 // Return: Trả về JSON danh sách project mà student có ID được chỉ định tham gia
 func (h *ProjectHandler) GetProjectByStudent(c *gin.Context) {
-	studentID := c.Param("id")
+	studentID := c.GetString("userID")
 
 	if studentID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Student ID is required"})
@@ -89,10 +89,10 @@ func (h *ProjectHandler) GetProjectByStudent(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
-// GetProjectByBusiness xử lý endpoint GET /api/projects/business/:id
+// GetProjectByBusiness xử lý endpoint GET /api/projects/business
 // Return: Trả về JSON danh sách project mà business có ID được chỉ định đã tạo
 func (h *ProjectHandler) GetProjectByBusiness(c *gin.Context) {
-	businessID := c.Param("id")
+	businessID := c.GetString("userID")
 
 	if businessID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
@@ -260,9 +260,9 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 // RemoveStudentFromProject xử lý endpoint DELETE /api/projects/:id/students/:studentID
 // Return: Trả về thông báo xóa thành công hoặc lỗi
 func (h *ProjectHandler) RemoveStudentFromProject(c *gin.Context) {
-	projectID := c.Param("id")
+	projectID := c.Param("projectID")
 	studentID := c.Param("studentID")
-	userID := c.GetString("userID")
+	businessID := c.GetString("userID")
 	role := c.GetString("role")
 
 	// Kiểm tra quyền xóa student (chỉ business sở hữu project hoặc student tự xóa chính mình)
@@ -273,7 +273,7 @@ func (h *ProjectHandler) RemoveStudentFromProject(c *gin.Context) {
 	}
 
 	// Kiểm tra quyền: business sở hữu project hoặc student tự rời project
-	if project.CreatedByID != userID && (role != "student" || studentID != userID) {
+	if project.CreatedByID != businessID && (role != "student" || studentID != businessID) {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error": "You don't have permission to remove this student from the project",
 		})

@@ -30,6 +30,74 @@
   let showDeleteModal: boolean = $state(false);
   let currentProject: ProjectDisplay | null = $state(null);
 
+  // Thêm state cho modal sinh viên đang apply
+  let showApplicantsModal: boolean = $state(false);
+  let currentApplicants: any[] = $state([]);
+
+  // Mock data cho sinh viên đang apply
+  const mockApplicants = [
+    {
+      id: "user123",
+      name: "John Doe",
+      skills: ["JavaScript", "React"],
+      avatar: "https://avatars.githubusercontent.com/u/123456?v=4",
+      appliedDate: "2025-04-15",
+    },
+    {
+      id: "user456",
+      name: "Jane Smith",
+      skills: ["Python", "Data Science"],
+      avatar: "https://avatars.githubusercontent.com/u/234567?v=4",
+      appliedDate: "2025-04-18",
+    },
+    {
+      id: "user789",
+      name: "Robert Chen",
+      skills: ["Java", "Spring Boot"],
+      avatar: "https://avatars.githubusercontent.com/u/345678?v=4",
+      appliedDate: "2025-04-20",
+    },
+  ];
+
+  // Hàm mở modal các sinh viên đang apply
+  function openApplicantsModal(projectId: string) {
+    // TODO: Thực tế cần fetch danh sách sinh viên đang apply từ API
+    // const fetchApplicants = async (projectId) => {
+    //   try {
+    //     const response = await fetch(`/api/projects/${projectId}/applicants`, {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`
+    //       }
+    //     });
+    //     if (!response.ok) throw new Error('Failed to fetch applicants');
+    //     const applicants = await response.json();
+    //     return applicants;
+    //   } catch (error) {
+    //     console.error('Error fetching applicants:', error);
+    //     return [];
+    //   }
+    // };
+
+    // Hiện tại dùng mock data
+    currentApplicants = mockApplicants;
+    showApplicantsModal = true;
+  }
+
+  function closeApplicantsModal() {
+    showApplicantsModal = false;
+    currentApplicants = [];
+  }
+
+  // Hàm format ngày apply
+  function formatApplyDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
   // Modal functions
   function openEditModal(project: ProjectDisplay) {
     currentProject = { ...project };
@@ -361,6 +429,31 @@
                   />
                 </svg>
               </button>
+
+              <!-- Nút mới - Quản lý ứng viên -->
+              <button
+                class="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
+                onclick={(e) => {
+                  e.preventDefault(); // Ngăn chặn chuyển hướng từ thẻ a
+                  openApplicantsModal(ProjectDisplay.id);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+              </button>
+
               <button
                 class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
                 onclick={() => {
@@ -493,6 +586,92 @@
     {/if}
   </div>
 
+  {#if showApplicantsModal}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Project Applicants</h2>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeApplicantsModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {#if currentApplicants.length > 0}
+          <div class="space-y-4">
+            {#each currentApplicants as applicant}
+              <div
+                class="border rounded-lg p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div class="flex items-center space-x-4">
+                  <img
+                    src={applicant.avatar}
+                    alt={applicant.name}
+                    class="w-12 h-12 rounded-full object-cover border-2 border-purple-200"
+                  />
+                  <div>
+                    <h3 class="font-medium">{applicant.name}</h3>
+                    <p class="text-sm text-gray-500">
+                      Skills: {applicant.skills.join(", ")}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      Applied: {formatApplyDate(applicant.appliedDate)}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex space-x-2">
+                  <!-- Nút xem hồ sơ sinh viên -->
+                  <a
+                    href={`/profile/${applicant.id}`}
+                    class="px-3 py-1.5 bg-[#6b48ff] text-white text-sm rounded hover:bg-[#5a3dd3]"
+                  >
+                    View Profile
+                  </a>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <div class="text-center py-8">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-12 w-12 mx-auto text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+            <p class="mt-4 text-gray-600">No applicants yet</p>
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
   <!-- Edit Project Modal -->
   {#if showEditModal && currentProject}
     <div
