@@ -1,6 +1,4 @@
 <script lang="ts">
-  // Lưu ý component này có các javascript rất thú vị,
-  //  xem thêm ở phần /design để implement trong tương lai.
 </script>
 
 <main class="flex-1 flex flex-col ml-64 pr-4 pl-4 h-[calc(100vh-20px)] pt-4">
@@ -9,22 +7,7 @@
     <div class="card p-3 w-64 flex flex-col">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-base font-semibold">Rooms</h3>
-        <button class="text-[#6b48ff] hover:text-[#5a3de6]">
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            ></path>
-          </svg>
-        </button>
+        <button class="text-[#6b48ff] hover:text-[#5a3de6]"> </button>
       </div>
 
       <!-- Search Box -->
@@ -54,7 +37,9 @@
       <div class="flex-1 overflow-y-auto">
         <div class="space-y-1">
           <!-- Active Chat Room -->
-          <div class="chat-room active p-2 rounded">
+          <div
+            class="chat-room active p-2 rounded cursor-pointer hover:bg-gray-100"
+          >
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
@@ -67,13 +52,16 @@
           </div>
 
           <!-- Chat Room with Unread Messages -->
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                 <span class="text-sm font-medium">E-commerce Dashboard</span>
               </div>
-              <span class="unread-badge">3</span>
+              <span
+                class="unread-badge flex items-center justify-center bg-red-500 text-white text-xs rounded-full h-5 w-5 font-medium"
+                >3</span
+              >
             </div>
             <p class="text-xs text-gray-500 mt-1 truncate">
               Alex: Can we discuss the UI design?
@@ -81,7 +69,7 @@
           </div>
 
           <!-- Inactive Chat Room -->
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
@@ -94,7 +82,7 @@
           </div>
 
           <!-- More Chat Rooms -->
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
@@ -106,20 +94,23 @@
             </p>
           </div>
 
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                 <span class="text-sm font-medium">AI Research Team</span>
               </div>
-              <span class="unread-badge">1</span>
+              <span
+                class="unread-badge flex items-center justify-center bg-red-500 text-white text-xs rounded-full h-5 w-5 font-medium"
+                >1</span
+              >
             </div>
             <p class="text-xs text-gray-500 mt-1 truncate">
               Emma: Check out this new paper I found
             </p>
           </div>
 
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
@@ -131,7 +122,7 @@
             </p>
           </div>
 
-          <div class="chat-room p-2 rounded">
+          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
                 <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
@@ -147,9 +138,7 @@
     </div>
 
     <!-- Chat Window -->
-    <!-- <div class="card p-4 flex-1"> -->
     <div class="card p-4 flex-1 flex flex-col">
-      <!-- <div class="h-96 overflow-y-auto bg-gray-100 p-3 rounded mb-4"> -->
       <div class="flex-1 overflow-y-auto bg-gray-100 p-3 rounded mb-4">
         <!-- Message Bubbles -->
         <div class="flex items-start mb-3">
@@ -210,7 +199,7 @@
         <button class="btn">Send</button>
         <label class="btn-secondary flex items-center cursor-pointer">
           <svg
-            class="w-5 h-5 mr-1"
+            class="w-5 h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -220,7 +209,7 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M4 16v4h4l12-12-4-4L4 16zm12-8l-4-4"
+              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
             ></path>
           </svg>
           <input type="file" class="hidden" accept="image/*" />
@@ -240,7 +229,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M15 10l4.5-4.5M9 10l-4.5-4.5M12 3v3m0 12v3m-9-9h3m12 0h3"
+            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
           ></path>
         </svg>
         Start Video Call
@@ -346,3 +335,53 @@
     </div>
   </div>
 </main>
+
+<style>
+  .chat-room.active {
+    background-color: rgba(107, 72, 255, 0.1);
+    border-left: 3px solid #6b48ff;
+  }
+
+  .chat-room.active:hover {
+    background-color: rgba(107, 72, 255, 0.15);
+  }
+
+  .btn {
+    background-color: #6b48ff;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn:hover {
+    background-color: #5a3cd9;
+  }
+
+  .btn-secondary {
+    background-color: white;
+    color: #4b5563;
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-secondary:hover {
+    background-color: #f3f4f6;
+  }
+
+  .card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+</style>
