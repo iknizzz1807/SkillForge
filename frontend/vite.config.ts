@@ -8,7 +8,7 @@ export default defineConfig({
     // ...existing code...
     allowedHosts: [
       // ...existing allowed hosts...
-      'skillforge.ikniz.site'
-    ]
+      "skillforge.ikniz.id.vn",
+    ],
   },
 });

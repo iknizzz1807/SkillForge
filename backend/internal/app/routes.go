@@ -70,7 +70,7 @@ func RegisterRoutes(
 
 	// CORS type shit
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.site"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.id.vn"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -87,10 +87,11 @@ func RegisterRoutes(
 		api.PUT("/user", userHandler.UpdateCurrentUser)
 
 		// Project routes
-		api.GET("/projects", projectHandler.GetProjects) // này là route dành cho marketplace để get tất cả các dự án trên thị trường
-		api.GET("/projects/:id", projectHandler.GetProject)
-		api.GET("/projects/business", projectHandler.GetProjectByBusiness) // id của business được truyền qua context
-		api.GET("/projects/student", projectHandler.GetProjectByStudent)   // id của student được truyền qua context
+		api.GET("/projects", projectHandler.GetProjects)                       // này là route dành cho marketplace để get tất cả các dự án trên thị trường
+		api.GET("/projects/:id", projectHandler.GetProjectMarketplace)         // dùng vào việc xem chi tiết một project nào đó trong marketplace
+		api.GET("/projects/students/:id", projectHandler.GetStudentsByProject) // dùng để get các thành viên tham gia dự án hiện tại, id là projectID
+		api.GET("/projects/business", projectHandler.GetProjectByBusiness)     // id của business được truyền qua context
+		api.GET("/projects/student", projectHandler.GetProjectByStudent)       // id của student được truyền qua context
 		api.POST("/projects", projectHandler.CreateProject)
 		api.PUT("/projects/:id", projectHandler.UpdateProject)
 		api.DELETE("/projects/:id", projectHandler.DeleteProject)

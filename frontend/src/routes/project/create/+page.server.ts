@@ -1,25 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
-import { type Cookies, fail } from "@sveltejs/kit";
-
-// type ProjectInput = {
-//   title: string;
-//   description: string;
-//   skills: string[];
-//   timeline: string;
-// };
-
-// type ProjectDisplay = {
-//   id: string;
-//   title: string;
-//   description: string;
-//   skills: string[];
-//   timeline: string;
-//   created_by: string;
-//   status: string;
-//   repo_url: string;
-//   created_at: string;
-// };
+// import { type Cookies, fail } from "@sveltejs/kit";
 
 export const load = (async ({ parent, cookies }) => {
   const parentData = await parent();
@@ -30,96 +11,96 @@ export const load = (async ({ parent, cookies }) => {
   };
 }) satisfies PageServerLoad;
 
-export const actions = {
-  default: async ({
-    request,
-    cookies,
-  }: {
-    request: Request;
-    cookies: Cookies;
-  }) => {
-    try {
-      const data = await request.formData();
+// export const actions = {
+//   default: async ({
+//     request,
+//     cookies,
+//   }: {
+//     request: Request;
+//     cookies: Cookies;
+//   }) => {
+//     try {
+//       const data = await request.formData();
 
-      const title = data.get("title")?.toString();
-      const description = data.get("description")?.toString();
-      const skills = data.getAll("skills").map((skill) => skill.toString());
-      const max_member = parseInt(
-        data.get("max-member")?.toString() || "0",
-        10
-      ); // Convert to number
-      const start_time = data.get("start-time")?.toString();
-      const end_time = data.get("end-time")?.toString();
+//       const title = data.get("title")?.toString();
+//       const description = data.get("description")?.toString();
+//       const skills = data.getAll("skills").map((skill) => skill.toString());
+//       const max_member = parseInt(
+//         data.get("max-member")?.toString() || "0",
+//         10
+//       ); // Convert to number
+//       const start_time = data.get("start-time")?.toString();
+//       const end_time = data.get("end-time")?.toString();
 
-      const token = cookies.get("auth_token");
-      if (!token) {
-        return fail(401, {
-          success: false,
-          error: "Authentication required",
-        });
-      }
+//       const token = cookies.get("auth_token");
+//       if (!token) {
+//         return fail(401, {
+//           success: false,
+//           error: "Authentication required",
+//         });
+//       }
 
-      if (
-        !title ||
-        !description ||
-        !start_time ||
-        skills.length === 0 ||
-        !end_time ||
-        !max_member
-      ) {
-        return fail(400, {
-          success: false,
-          error: "All fields are required",
-        });
-      }
+//       if (
+//         !title ||
+//         !description ||
+//         !start_time ||
+//         skills.length === 0 ||
+//         !end_time ||
+//         !max_member
+//       ) {
+//         return fail(400, {
+//           success: false,
+//           error: "All fields are required",
+//         });
+//       }
 
-      // Send data to API
-      const response = await fetch("http://backend:8080/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          skills,
-          max_member,
-          start_time: new Date(start_time).toISOString(), // Đảm bảo gửi đúng định dạng ISO
-          end_time: new Date(end_time).toISOString(), // Đảm bảo gửi đúng định dạng ISO
-        }),
-      });
+//       // Send data to API
+//       const response = await fetch("http://backend:8080/api/projects", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${token}`,
+//         },
+//         body: JSON.stringify({
+//           title,
+//           description,
+//           skills,
+//           max_member,
+//           start_time: new Date(start_time).toISOString(), // Đảm bảo gửi đúng định dạng ISO
+//           end_time: new Date(end_time).toISOString(), // Đảm bảo gửi đúng định dạng ISO
+//         }),
+//       });
 
-      if (!response.ok) {
-        let errorMessage = "Failed to create project";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          //
-        }
+//       if (!response.ok) {
+//         let errorMessage = "Failed to create project";
+//         try {
+//           const errorData = await response.json();
+//           errorMessage = errorData.error || errorMessage;
+//         } catch (e) {
+//           //
+//         }
 
-        return fail(response.status, {
-          success: false,
-          error: errorMessage,
-        });
-      }
+//         return fail(response.status, {
+//           success: false,
+//           error: errorMessage,
+//         });
+//       }
 
-      // Parse the created project
-      const createdProject = await response.json();
+//       // Parse the created project
+//       const createdProject = await response.json();
 
-      // Success
-      // return {
-      //   success: true,
-      //   project: createdProject,
-      // };
-    } catch (error) {
-      console.error("Error creating project:", error);
-      return fail(500, {
-        success: false,
-        error: "An unexpected error occurred",
-      });
-    }
-    throw redirect(303, "/project");
-  },
-} satisfies Actions;
+//       // Success
+//       // return {
+//       //   success: true,
+//       //   project: createdProject,
+//       // };
+//     } catch (error) {
+//       console.error("Error creating project:", error);
+//       return fail(500, {
+//         success: false,
+//         error: "An unexpected error occurred",
+//       });
+//     }
+//     throw redirect(303, "/project");
+//   },
+// } satisfies Actions;

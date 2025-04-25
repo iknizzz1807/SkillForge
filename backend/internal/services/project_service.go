@@ -444,3 +444,97 @@ func (s *ProjectService) SyncAllProjectMemberCounts() error {
 
 	return nil
 }
+
+// GetProjectWithUserStatus lấy chi tiết project và thông tin tham gia của user
+// Input: projectID (string), userID (string)
+// Return: *models.Project (project), bool (đã tham gia), bool (đã apply), error (nếu có lỗi)
+func (s *ProjectService) GetProjectWithUserStatus(projectID, userID string) (*models.Project, bool, bool, error) {
+	// Kiểm tra projectID hợp lệ
+	if projectID == "" {
+		return nil, false, false, errors.New("project ID cannot be empty")
+	}
+
+	// Lấy thông tin project từ database
+	projectRepo := repositories.NewProjectRepository(s.db)
+	project, err := projectRepo.FindProjectByID(context.Background(), projectID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, false, false, errors.New("project not found")
+		}
+		return nil, false, false, errors.New("failed to get project: " + err.Error())
+	}
+
+	// Nếu không có userID (user chưa đăng nhập), trả về project mà không có status
+	if userID == "" {
+		return project, false, false, nil
+	}
+
+	// Kiểm tra xem user đã tham gia project chưa bằng ProjectStudentRepository
+	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+	hasJoined := false
+
+	// Kiểm tra nếu student_id tồn tại trong collection project_student với project_id tương ứng
+	ctx := context.Background()
+	studentIDs, err := projectStudentRepo.FindStudentsByProjectID(ctx, projectID)
+	if err == nil {
+		for _, studentID := range studentIDs {
+			if studentID == userID {
+				hasJoined = true
+				break
+			}
+		}
+	}
+
+	// Kiểm tra xem user đã apply vào project này chưa
+	hasApplied := false
+	if !hasJoined { // Chỉ kiểm tra nếu chưa tham gia
+		// Sử dụng application repository để kiểm tra
+		applicationRepo := repositories.NewApplicationRepository(s.db)
+		application, err := applicationRepo.FindByUserAndProject(ctx, userID, projectID)
+
+		// Nếu không có lỗi và tìm thấy application, đánh dấu là đã apply
+		if err == nil && application != nil {
+			hasApplied = true
+		}
+	}
+
+	return project, hasJoined, hasApplied, nil
+}
+
+// GetStudentsByProjectID lấy danh sách thông tin sinh viên tham gia project
+// Input: projectID (string)
+// Return: []models.User (danh sách user), error (nếu có lỗi)
+func (s *ProjectService) GetStudentsByProjectID(projectID string) ([]models.User, error) {
+	if projectID == "" {
+		return nil, errors.New("project ID cannot be empty")
+	}
+
+	ctx := context.Background()
+
+	// Lấy danh sách student ID từ project_student repository
+	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+	studentIDs, err := projectStudentRepo.FindStudentsByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, errors.New("failed to get student IDs: " + err.Error())
+	}
+
+	// Nếu không có student nào, trả về mảng rỗng
+	if len(studentIDs) == 0 {
+		return []models.User{}, nil
+	}
+
+	// Lấy thông tin chi tiết từng student
+	userRepo := repositories.NewUserRepository(s.db)
+	var students []models.User
+
+	for _, studentID := range studentIDs {
+		student, err := userRepo.FindUserByID(ctx, studentID)
+		if err == nil && student != nil {
+			// Loại bỏ các thông tin nhạy cảm trước khi trả về
+			student.Password = ""
+			students = append(students, *student)
+		}
+	}
+
+	return students, nil
+}

@@ -49,18 +49,23 @@ func (h *ProjectHandler) GetProjects(c *gin.Context) {
 
 // GetProject xử lý endpoint GET /api/projects/:id
 // Return: Trả về JSON chi tiết project hoặc lỗi
-func (h *ProjectHandler) GetProject(c *gin.Context) {
+func (h *ProjectHandler) GetProjectMarketplace(c *gin.Context) {
 	projectID := c.Param("id")
+	userID := c.GetString("userID")
 
-	// Gọi service để lấy chi tiết project
-	project, err := h.projectService.GetProjectByID(projectID)
+	// Gọi service đã được cập nhật để lấy chi tiết project và trạng thái tham gia
+	project, hasJoined, hasApplied, err := h.projectService.GetProjectWithUserStatus(projectID, userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Trả về chi tiết project
-	c.JSON(http.StatusOK, project)
+	// Trả về chi tiết project kèm thông tin participation status
+	c.JSON(http.StatusOK, gin.H{
+		"project":    project,
+		"hasJoined":  hasJoined,  // User đã tham gia vào project này
+		"hasApplied": hasApplied, // User đã apply nhưng chưa được chấp nhận
+	})
 }
 
 // GetProjectByStudent xử lý endpoint GET /api/projects/student
@@ -291,4 +296,37 @@ func (h *ProjectHandler) RemoveStudentFromProject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Student removed from project successfully",
 	})
+}
+
+// GetStudentsByProject xử lý endpoint GET /api/projects/:projectID/students
+// Return: Trả về JSON danh sách sinh viên tham gia dự án hoặc lỗi
+func (h *ProjectHandler) GetStudentsByProject(c *gin.Context) {
+	projectID := c.Param("id")
+
+	if projectID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+		return
+	}
+
+	// Kiểm tra project có tồn tại không
+	_, err := h.projectService.GetProjectByID(projectID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
+		return
+	}
+
+	// Gọi service để lấy danh sách sinh viên tham gia dự án
+	students, err := h.projectService.GetStudentsByProjectID(projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Đảm bảo không trả về null cho mảng trống
+	if students == nil {
+		students = []models.User{} // Trả về mảng rỗng thay vì nil
+	}
+
+	// Trả về danh sách sinh viên
+	c.JSON(http.StatusOK, students)
 }

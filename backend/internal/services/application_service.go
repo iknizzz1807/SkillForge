@@ -47,8 +47,6 @@ func NewApplicationService(db *mongo.Database, notificationService *Notification
 // ApplyProject xử lý ứng tuyển dự án
 // Input: userID (string), projectID (string), motivation (string), detailedProposal (string)
 // Return: *models.Application (ứng tuyển), error (nếu có lỗi)
-// --- CHANGE START ---
-// Thay đổi signature hàm
 func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detailedProposal string) (*models.Application, error) {
 	// Kiểm tra input hợp lệ
 	if userID == "" || projectID == "" || motivation == "" || detailedProposal == "" {
@@ -56,6 +54,17 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 	}
 
 	ctx := context.Background() // Tạo context
+
+	// THÊM KIỂM TRA TRÙNG LẶP: Kiểm tra xem user đã apply vào project này chưa
+	existingApplication, err := s.applicationRepo.FindByUserAndProject(ctx, userID, projectID)
+	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, errors.New("failed to check existing application: " + err.Error())
+	}
+
+	// Nếu tìm thấy application đã tồn tại, trả về lỗi
+	if existingApplication != nil {
+		return nil, errors.New("you have already applied to this project")
+	}
 
 	// Kiểm tra xem project có tồn tại và đang mở không?
 	project, err := s.projectRepo.FindProjectByID(ctx, projectID)

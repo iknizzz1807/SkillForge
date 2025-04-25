@@ -170,7 +170,6 @@
             <div>
               <h4 class="text-base font-medium">{project.title}</h4>
               <p class="text-sm text-gray-500">
-                <!-- 90% match is for AI calculate this, consider hardcoding instead -->
                 {project.skills} | 90% Match
               </p>
               <p class="text-xs text-gray-400 mt-1">
@@ -183,45 +182,58 @@
               </p>
             </div>
 
-            <div class="flex flex-row gap-2">
-              <p class="text-sm text-gray-500">
-                {project.current_member}/{project.max_member}
-              </p>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="gray"
-                height="20px"
-                width="px"
-                version="1.1"
-                id="Layer_1"
-                viewBox="0 0 315.539 315.539"
-                xml:space="preserve"
+            <div class="flex space-x-2 items-center">
+              <!-- Hiển thị số lượng thành viên -->
+              <div class="flex items-center bg-gray-100 px-2 py-1 rounded-lg">
+                <div class="flex -space-x-2 mr-2">
+                  <div
+                    class="w-6 h-6 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center"
+                  >
+                    <span class="text-[10px] font-bold text-white"
+                      >{project.current_member > 0
+                        ? project.current_member
+                        : ""}</span
+                    >
+                  </div>
+                  {#if project.current_member >= 2}
+                    <div
+                      class="w-6 h-6 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center"
+                    ></div>
+                  {/if}
+                  {#if project.current_member >= 3}
+                    <div
+                      class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center"
+                    ></div>
+                  {/if}
+                </div>
+
+                <div class="flex items-center">
+                  <span class="text-xs font-medium">
+                    {project.current_member}/{project.max_member}
+                  </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="w-4 h-4 ml-1 text-gray-500"
+                  >
+                    <path
+                      d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Thêm hiển thị status với màu sắc tương ứng -->
+              <span
+                class={`text-xs px-2 py-1 rounded font-bold ${
+                  project.status?.toLowerCase() === "open"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
               >
-                <g>
-                  <g>
-                    <g>
-                      <path
-                        d="M38.877,38.884C17.44,38.884,0,56.325,0,77.761c0,21.436,17.44,38.877,38.877,38.877s38.877-17.44,38.877-38.877     S60.314,38.884,38.877,38.884z M38.877,101.638C25.711,101.638,15,90.927,15,77.761s10.711-23.877,23.877-23.877     s23.877,10.711,23.877,23.877S52.043,101.638,38.877,101.638z"
-                      />
-                      <path
-                        d="M38.877,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C75.281,147.981,58.95,131.65,38.877,131.65z M60.281,261.655H17.473v-93.601     c0-11.802,9.602-21.404,21.404-21.404c11.803,0,21.404,9.601,21.404,21.404V261.655z"
-                      />
-                      <path
-                        d="M157.77,38.884c-21.437,0-38.877,17.44-38.877,38.877s17.44,38.877,38.877,38.877s38.877-17.44,38.877-38.877     S179.207,38.884,157.77,38.884z M157.77,101.638c-13.166,0-23.877-10.711-23.877-23.877s10.711-23.877,23.877-23.877     s23.877,10.711,23.877,23.877S170.936,101.638,157.77,101.638z"
-                      />
-                      <path
-                        d="M157.769,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C194.173,147.981,177.842,131.65,157.769,131.65z M179.174,261.655h-42.808v-93.601     c0-11.802,9.602-21.404,21.404-21.404s21.404,9.601,21.404,21.404V261.655z"
-                      />
-                      <path
-                        d="M276.662,116.638c21.437,0,38.877-17.44,38.877-38.877s-17.44-38.877-38.877-38.877s-38.877,17.44-38.877,38.877     S255.225,116.638,276.662,116.638z M276.662,53.884c13.166,0,23.877,10.711,23.877,23.877s-10.711,23.877-23.877,23.877     c-13.166,0-23.877-10.711-23.877-23.877S263.496,53.884,276.662,53.884z"
-                      />
-                      <path
-                        d="M276.662,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C313.066,147.981,296.735,131.65,276.662,131.65z M298.066,261.655h-42.808v-93.601     c0-11.802,9.602-21.404,21.404-21.404s21.404,9.601,21.404,21.404V261.655z"
-                      />
-                    </g>
-                  </g>
-                </g>
-              </svg>
+                {project.status ? project.status.toUpperCase() : "OPEN"}
+              </span>
             </div>
           </div>
         </a>

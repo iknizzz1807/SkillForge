@@ -23,6 +23,8 @@
   let projectsDisplay: ProjectDisplay[] = $state(data.projects);
   let errorLoadingProjects: string | null = $state(data.error);
 
+  let projectsDisplayCopy = projectsDisplay;
+
   let filterState: string = $state("all");
 
   // Modal states
@@ -39,6 +41,7 @@
     {
       id: "user123",
       name: "John Doe",
+      major: "Computer Science",
       skills: ["JavaScript", "React"],
       avatar: "https://avatars.githubusercontent.com/u/123456?v=4",
       appliedDate: "2025-04-15",
@@ -46,6 +49,7 @@
     {
       id: "user456",
       name: "Jane Smith",
+      major: "Data Science & Analytics",
       skills: ["Python", "Data Science"],
       avatar: "https://avatars.githubusercontent.com/u/234567?v=4",
       appliedDate: "2025-04-18",
@@ -53,11 +57,63 @@
     {
       id: "user789",
       name: "Robert Chen",
+      major: "Software Engineering",
       skills: ["Java", "Spring Boot"],
       avatar: "https://avatars.githubusercontent.com/u/345678?v=4",
       appliedDate: "2025-04-20",
     },
   ];
+
+  // Thêm state cho modal xác nhận xóa
+  let showRemoveStudentModal: boolean = $state(false);
+  let studentToRemove: any = $state(null);
+
+  // Hàm mở modal xác nhận xóa
+  function openRemoveStudentModal(e: Event, student: any, projectId: string) {
+    e.preventDefault(); // Ngăn chặn sự kiện nổi bọt
+    e.stopPropagation(); // Ngăn chặn click event truyền lên thẻ cha
+    studentToRemove = { ...student, projectId };
+    showRemoveStudentModal = true;
+  }
+
+  function closeRemoveStudentModal() {
+    showRemoveStudentModal = false;
+    studentToRemove = null;
+  }
+
+  // Hàm xử lý xóa sinh viên khỏi dự án
+  const removeStudentFromProject = async () => {
+    if (!studentToRemove) return;
+
+    try {
+      // TODO: Thay thế bằng API call thực tế
+      // const response = await fetch(`/api/projects/${studentToRemove.projectId}/students/${studentToRemove.id}`, {
+      //   method: 'DELETE',
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`
+      //   }
+      // });
+
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   throw new Error(errorData.error || 'Failed to remove student');
+      // }
+
+      // Xóa sinh viên khỏi danh sách hiện tại
+      currentApplicants = currentApplicants.filter(
+        (a) => a.id !== studentToRemove.id
+      );
+
+      // Đóng modal xác nhận
+      closeRemoveStudentModal();
+
+      // Hiển thị thông báo thành công
+      alert(`Removed ${studentToRemove.name} from the project successfully`);
+    } catch (error) {
+      console.error("Error removing student:", error);
+      alert("Failed to remove student: " + error);
+    }
+  };
 
   // Hàm mở modal các sinh viên đang apply
   function openApplicantsModal(projectId: string) {
@@ -144,8 +200,6 @@
     }
   });
 
-  let projectsDisplayCopy = projectsDisplay;
-
   // Thêm một computed state để lọc projects dựa trên filterState
   $effect(() => {
     if (filterState === "all") {
@@ -199,6 +253,7 @@
       projectsDisplay = projectsDisplay.filter(
         (p) => p.id !== currentProject?.id
       );
+      projectsDisplayCopy = projectsDisplay;
 
       // Close the modal after successful deletion
       closeDeleteModal();
@@ -257,7 +312,8 @@
         <div
           class="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full mr-2"
         >
-          5
+          <!-- Cân nhắc thêm số lượng application còn pending vào đây nếu còn thời
+          gian -->
         </div>
         Applications
       </div>
@@ -343,51 +399,54 @@
                 </p>
               </div>
 
-              <div class="flex space-x-2">
-                <div class="flex flex-row gap-1">
-                  <p class="text-sm text-gray-500">
-                    {ProjectDisplay.current_member}/{ProjectDisplay.max_member}
-                  </p>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="gray"
-                    height="20px"
-                    width="px"
-                    version="1.1"
-                    id="Layer_1"
-                    viewBox="0 0 315.539 315.539"
-                    xml:space="preserve"
-                  >
-                    <g>
-                      <g>
-                        <g>
-                          <path
-                            d="M38.877,38.884C17.44,38.884,0,56.325,0,77.761c0,21.436,17.44,38.877,38.877,38.877s38.877-17.44,38.877-38.877     S60.314,38.884,38.877,38.884z M38.877,101.638C25.711,101.638,15,90.927,15,77.761s10.711-23.877,23.877-23.877     s23.877,10.711,23.877,23.877S52.043,101.638,38.877,101.638z"
-                          />
-                          <path
-                            d="M38.877,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C75.281,147.981,58.95,131.65,38.877,131.65z M60.281,261.655H17.473v-93.601     c0-11.802,9.602-21.404,21.404-21.404c11.803,0,21.404,9.601,21.404,21.404V261.655z"
-                          />
-                          <path
-                            d="M157.77,38.884c-21.437,0-38.877,17.44-38.877,38.877s17.44,38.877,38.877,38.877s38.877-17.44,38.877-38.877     S179.207,38.884,157.77,38.884z M157.77,101.638c-13.166,0-23.877-10.711-23.877-23.877s10.711-23.877,23.877-23.877     s23.877,10.711,23.877,23.877S170.936,101.638,157.77,101.638z"
-                          />
-                          <path
-                            d="M157.769,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C194.173,147.981,177.842,131.65,157.769,131.65z M179.174,261.655h-42.808v-93.601     c0-11.802,9.602-21.404,21.404-21.404s21.404,9.601,21.404,21.404V261.655z"
-                          />
-                          <path
-                            d="M276.662,116.638c21.437,0,38.877-17.44,38.877-38.877s-17.44-38.877-38.877-38.877s-38.877,17.44-38.877,38.877     S255.225,116.638,276.662,116.638z M276.662,53.884c13.166,0,23.877,10.711,23.877,23.877s-10.711,23.877-23.877,23.877     c-13.166,0-23.877-10.711-23.877-23.877S263.496,53.884,276.662,53.884z"
-                          />
-                          <path
-                            d="M276.662,131.65c-20.073,0-36.404,16.331-36.404,36.404v101.101c0,4.143,3.358,7.5,7.5,7.5h57.808     c4.142,0,7.5-3.357,7.5-7.5V168.054C313.066,147.981,296.735,131.65,276.662,131.65z M298.066,261.655h-42.808v-93.601     c0-11.802,9.602-21.404,21.404-21.404s21.404,9.601,21.404,21.404V261.655z"
-                          />
-                        </g>
-                      </g>
-                    </g>
-                  </svg>
+              <div class="flex space-x-2 items-center">
+                <!-- Hiển thị số lượng thành viên mới - thiết kế đẹp hơn -->
+                <div class="flex items-center bg-gray-100 px-2 py-1 rounded-lg">
+                  <div class="flex -space-x-2 mr-2">
+                    <!-- Hiển thị avatar đại diện cho thành viên (có thể là placeholder) -->
+                    <div
+                      class="w-6 h-6 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center"
+                    >
+                      <span class="text-[10px] font-bold text-white"
+                        >{ProjectDisplay.current_member > 0
+                          ? ProjectDisplay.current_member
+                          : ""}</span
+                      >
+                    </div>
+                    {#if ProjectDisplay.current_member >= 2}
+                      <div
+                        class="w-6 h-6 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center"
+                      ></div>
+                    {/if}
+                    {#if ProjectDisplay.current_member >= 3}
+                      <div
+                        class="w-6 h-6 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center"
+                      ></div>
+                    {/if}
+                  </div>
+
+                  <div class="flex items-center">
+                    <span class="text-xs font-medium">
+                      {ProjectDisplay.current_member}/{ProjectDisplay.max_member}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      class="w-4 h-4 ml-1 text-gray-500"
+                    >
+                      <path
+                        d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"
+                      />
+                    </svg>
+                  </div>
                 </div>
+
                 <span
                   class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-bold"
                   >{ProjectDisplay.status.toUpperCase()}</span
                 >
+
                 <svg
                   class="w-5 h-5 text-gray-400"
                   fill="none"
@@ -480,7 +539,7 @@
         {/each}
       {:else}
         <div class="card p-4 text-center">
-          <p class="text-gray-500">No active projects found.</p>
+          <p class="text-gray-500">No projects found.</p>
           <!-- <button class="btn mt-2">Create Your First Project</button> -->
         </div>
       {/if}
@@ -620,7 +679,7 @@
           <div class="space-y-4">
             {#each currentApplicants as applicant}
               <div
-                class="border rounded-lg p-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                class=" rounded-lg p-4 flex items-center justify-between bg-gray-100 hover:bg-gray-100 transition-colors"
               >
                 <div class="flex items-center space-x-4">
                   <img
@@ -630,6 +689,10 @@
                   />
                   <div>
                     <h3 class="font-medium">{applicant.name}</h3>
+                    <!-- Thêm hiển thị chuyên ngành -->
+                    <p class="text-xs text-gray-600 mt-0.5">
+                      {applicant.major}
+                    </p>
                     <p class="text-sm text-gray-500">
                       Skills: {applicant.skills.join(", ")}
                     </p>
@@ -646,6 +709,19 @@
                   >
                     View Profile
                   </a>
+
+                  <!-- Thêm nút xóa sinh viên -->
+                  <button
+                    class="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200"
+                    onclick={(e) =>
+                      openRemoveStudentModal(
+                        e,
+                        applicant,
+                        currentProject?.id || ""
+                      )}
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             {/each}
@@ -862,6 +938,56 @@
               onclick={deleteProject}
             >
               Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Thêm modal xác nhận xóa sinh viên -->
+  {#if showRemoveStudentModal && studentToRemove}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
+    >
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-12 w-12 mx-auto text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+
+          <h2 class="text-xl font-semibold mt-4">Remove Team Member</h2>
+
+          <p class="mt-2 text-gray-600">
+            Are you sure you want to remove <span class="font-medium"
+              ><strong>{studentToRemove.name}</strong></span
+            >
+            from this project? This action <strong>cannot be undone</strong>.
+          </p>
+
+          <div class="flex justify-center space-x-3 mt-6">
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onclick={closeRemoveStudentModal}
+            >
+              Cancel
+            </button>
+            <button
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              onclick={removeStudentFromProject}
+            >
+              Remove
             </button>
           </div>
         </div>

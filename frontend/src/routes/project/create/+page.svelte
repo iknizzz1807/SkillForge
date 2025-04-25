@@ -1,9 +1,107 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
+  import { goto } from "$app/navigation";
 
   let member: number = $state(1);
-
   let description: string = $state("");
+  let isSubmitting: boolean = $state(false);
+  let error: string | null = $state(null);
+
+  // Khai báo các biến để lưu trữ dữ liệu form
+  let title: string = $state("");
+  let skills: string[] = $state([]);
+  let startDate: string = $state("");
+  let endDate: string = $state("");
+
+  // Thêm state cho modal thành công
+  let showSuccessModal: boolean = $state(false);
+  let createdProjectInfo: any = $state(null);
+
+  async function handleSubmit(event: Event) {
+    event.preventDefault();
+    isSubmitting = true;
+    error = null;
+
+    try {
+      // Lấy dữ liệu từ form
+      const formElement = event.target as HTMLFormElement;
+      const formSkills = Array.from(
+        formElement.querySelector("#skills") as HTMLSelectElement
+      )
+        .filter((option) => (option as HTMLOptionElement).selected)
+        .map((option) => (option as HTMLOptionElement).value);
+
+      // Tạo payload cho API
+      const payload = {
+        title: title,
+        description: description,
+        skills: formSkills,
+        max_member: member,
+        start_time: startDate,
+        end_time: endDate,
+      };
+
+      // Gửi request đến API endpoint
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create project");
+      }
+
+      // Xử lý phản hồi thành công
+      const createdProject = await response.json();
+      console.log("Project created:", createdProject);
+
+      // Lưu thông tin project đã tạo và hiển thị modal thành công
+      createdProjectInfo = createdProject;
+      showSuccessModal = true;
+    } catch (err: any) {
+      error = err.message || "An unexpected error occurred";
+      console.error("Error creating project:", err);
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  // Hàm đóng modal và chuyển hướng về trang projects
+  function closeModalAndRedirect() {
+    showSuccessModal = false;
+    goto("/project");
+  }
+
+  // Hàm đóng modal và giữ nguyên trang để tạo project mới
+  function closeModalAndStay() {
+    showSuccessModal = false;
+    // Reset form
+    title = "";
+    description = "";
+    skills = [];
+    startDate = "";
+    endDate = "";
+    member = 1;
+
+    // Reset select element (cần phải reset DOM element vì Svelte không tự động cập nhật select multiple)
+    const selectElement = document.querySelector(
+      "#skills"
+    ) as HTMLSelectElement;
+    if (selectElement) {
+      Array.from(selectElement.options).forEach((option) => {
+        option.selected = false;
+      });
+    }
+  }
+
+  // Xử lý khi người dùng chọn skills
+  function handleSkillsChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    skills = Array.from(select.selectedOptions).map((option) => option.value);
+  }
 </script>
 
 <svelte:head>
@@ -33,8 +131,16 @@
     <h2 class="text-xl font-semibold">Create New Project</h2>
   </div>
 
+  {#if error}
+    <div
+      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+    >
+      <p>{error}</p>
+    </div>
+  {/if}
+
   <div class="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
-    <form class="space-y-6" method="POST" use:enhance>
+    <form class="space-y-6" onsubmit={handleSubmit}>
       <!-- Basic Project Info -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-4">
@@ -45,100 +151,12 @@
             <input
               type="text"
               id="title"
-              name="title"
+              bind:value={title}
               class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               placeholder="Enter a descriptive title"
               required
             />
           </div>
-
-          <!-- Project type
-          <div>
-            <label class="block text-sm font-medium mb-1">Project Type*</label>
-            <div class="grid grid-cols-3 gap-3">
-              <label class="cursor-pointer">
-                <input
-                  type="radio"
-                  name="projectType"
-                  value="development"
-                  class="sr-only"
-                />
-                <div
-                  class="p-3 border border-gray-300 rounded text-center hover:border-[#6b48ff] project-type-card"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 mx-auto mb-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                    />
-                  </svg>
-                  <span class="text-sm font-medium">Development</span>
-                </div>
-              </label>
-              <label class="cursor-pointer">
-                <input
-                  type="radio"
-                  name="projectType"
-                  value="design"
-                  class="sr-only"
-                />
-                <div
-                  class="p-3 border border-gray-300 rounded text-center hover:border-[#6b48ff] project-type-card"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 mx-auto mb-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                    />
-                  </svg>
-                  <span class="text-sm font-medium">Design</span>
-                </div>
-              </label>
-              <label class="cursor-pointer">
-                <input
-                  type="radio"
-                  name="projectType"
-                  value="research"
-                  class="sr-only"
-                />
-                <div
-                  class="p-3 border border-gray-300 rounded text-center hover:border-[#6b48ff] project-type-card"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 mx-auto mb-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  <span class="text-sm font-medium">Research</span>
-                </div>
-              </label>
-            </div>
-          </div> -->
 
           <div>
             <label for="skills" class="block text-sm font-medium mb-1"
@@ -148,8 +166,9 @@
               class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               multiple
               size="4"
-              name="skills"
               id="skills"
+              onchange={handleSkillsChange}
+              required
             >
               <option>React</option>
               <option>Node.js</option>
@@ -173,7 +192,6 @@
             >
             <div class="flex items-center space-x-2">
               <input
-                name="max-member"
                 id="max-member"
                 type="range"
                 min="1"
@@ -202,9 +220,10 @@
                 >
                 <input
                   type="date"
-                  name="start-time"
                   id="start-time"
+                  bind:value={startDate}
                   class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  required
                 />
               </div>
               <div>
@@ -213,9 +232,10 @@
                 >
                 <input
                   type="date"
-                  name="end-time"
                   id="end-time"
+                  bind:value={endDate}
                   class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  required
                 />
               </div>
             </div>
@@ -352,31 +372,94 @@
           </div>
           <!-- Editor content area with increased height -->
           <textarea
-            name="description"
             id="description"
+            bind:value={description}
             class="p-3 min-h-[250px] focus:outline-none w-full resize-none"
             placeholder="Describe your project requirements, goals, and expectations in detail..."
+            required
           ></textarea>
         </div>
       </div>
 
       <!-- Form Actions -->
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-        <!-- <button
-          type="button"
-          class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button> -->
         <button
           type="submit"
           class="bg-[#6b48ff] hover:bg-[#5a3de6] text-white py-2 px-4 rounded transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6b48ff]"
+          disabled={isSubmitting}
         >
-          Create Project
+          {isSubmitting ? "Creating..." : "Create Project"}
         </button>
       </div>
     </form>
   </div>
+
+  <!-- Modal Thành Công -->
+  {#if showSuccessModal}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <div class="text-center">
+          <!-- Icon Success -->
+          <div
+            class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4"
+          >
+            <svg
+              class="h-6 w-6 text-green-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+
+          <h3 class="text-lg font-medium text-gray-900 mb-2">
+            Project Created Successfully!
+          </h3>
+
+          <p class="text-sm text-gray-500 mb-1">
+            Your project <span class="font-medium text-gray-700"
+              >{createdProjectInfo?.title || "New Project"}</span
+            > has been created.
+          </p>
+
+          <p class="text-sm text-gray-500 mb-6">
+            Start date: <span class="font-medium"
+              >{new Date(createdProjectInfo?.start_time).toLocaleDateString() ||
+                "N/A"}</span
+            >
+            | Team size:
+            <span class="font-medium"
+              >{createdProjectInfo?.max_member || "N/A"}</span
+            >
+          </p>
+
+          <div class="flex space-x-3 justify-center">
+            <button
+              class="px-4 py-2 bg-[#6b48ff] text-white rounded hover:bg-[#5a3dd3] transition-colors"
+              onclick={closeModalAndRedirect}
+            >
+              Go to Projects
+            </button>
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+              onclick={closeModalAndStay}
+            >
+              Create Another
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
 </main>
 
 <style>

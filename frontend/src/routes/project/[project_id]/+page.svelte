@@ -128,7 +128,7 @@
 </script>
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
-  <div class="flex items-center mb-6">
+  <div class="flex items-center mb-4">
     <a href="/project">
       <button class="text-gray-500 hover:text-gray-700 mr-3">
         <svg

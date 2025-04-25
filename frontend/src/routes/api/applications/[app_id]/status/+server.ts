@@ -34,7 +34,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
     }
 
     const response = await fetch(
-      `http://backend:8080/api/applications/${applicationId}/status`,
+      `http://backend:8080/api/applications/status/${applicationId}`,
       {
         method: "PUT",
         headers: {
