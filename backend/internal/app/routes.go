@@ -34,6 +34,8 @@ func RegisterRoutes(
 	talentPoolService *services.TalentPoolService,
 	fileService *services.FileService,
 	businessInfoService *services.BusinessInfoService,
+	feedbackService *services.FeedbackService,
+	gamificationService *services.GamificationService,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -56,6 +58,7 @@ func RegisterRoutes(
 	websocketHanlder := handlers.NewWebSocketHandler(realtimeClient, messageService, notificationService,
 		taskService,
 		projectService)
+	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
@@ -148,6 +151,11 @@ func RegisterRoutes(
 		// Badges routes
 		api.GET("/badges/:userID", badgeHandler.GetUserBadges)
 		// More routes if needed here...
+
+		// Feedback routes
+		api.POST("/feedbacks", feedbackHandler.CreateFeedback)
+		api.GET("/feedbacks/student/:userID", feedbackHandler.GetStudentFeedbacks)
+		api.GET("/feedbacks/business/:userID", feedbackHandler.GetBusinessFeedbacks)
 
 		// === Route phục vụ file avatar ===
 		r.GET("/avatars", avatarHandler.ServeAvatar)
