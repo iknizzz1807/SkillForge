@@ -7,6 +7,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type GamificationRepository struct {
@@ -61,6 +62,7 @@ func (r *GamificationRepository) UpdateUserSkill(ctx context.Context, skill *mod
 			"skill":   skill.Skill,
 		},
 		bson.M{"$set": skill},
+		options.Update().SetUpsert(true),
 	)
 	return err
 }

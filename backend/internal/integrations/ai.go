@@ -26,13 +26,13 @@ func NewAIClient(url string) *AIClient {
 }
 
 // MatchSkills gọi API AI để match skills
-// Input: userSkills ([]string), projectSkills ([]string)
+// Input: userInfo (string), projectInfo (string)
 // Return: float64 (độ phù hợp), error (nếu có lỗi)
-func (c *AIClient) MatchSkills(userSkills, projectSkills []string) (float64, error) {
+func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	// Tạo payload JSON
-	payload := map[string][]string{
-		"user_skills":    userSkills,
-		"project_skills": projectSkills,
+	payload := map[string]string{
+		"user_skills":    userInfo,
+		"project_skills": projectInfo,
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -57,4 +57,33 @@ func (c *AIClient) MatchSkills(userSkills, projectSkills []string) (float64, err
 
 	// Trả về độ phù hợp
 	return result.MatchScore, nil
+}
+
+func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string)  ([]float64, error) {
+	// Tạo payload JSON
+	payload := map[string]interface{}{
+		"user_skills":    userInfo,
+		"project_skills": projectInfos,
+	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	// Gửi POST request tới FastAPI
+	resp, err := http.Post(c.url+"/match2", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	var result struct {
+		MatchScores []float64 `json:"match_scores"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result.MatchScores, nil
 }

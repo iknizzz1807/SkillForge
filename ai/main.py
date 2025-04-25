@@ -9,6 +9,13 @@ class MatchingRequest(BaseModel):
 class MatchingResponse(BaseModel):
     match_score: float
 
+class MatchingRequest2(BaseModel):
+    student_infos: str
+    project_infos: list
+
+class MatchingResponse2(BaseModel):
+    match_score: list
+
 app = FastAPI()
 
 # API endpoint
@@ -18,4 +25,10 @@ app = FastAPI()
 async def root(request: MatchingRequest) -> any:
     return {
         "match_score": generate_score(request.student_infos, request.project_infos)
+    }
+
+@app.post('/matching2/', response_model=MatchingResponse2)
+async def root2(request: MatchingRequest2) -> any:
+    return {
+        "match_score": generate_score_with_many_projects(request.student_infos, request.project_infos)
     }
