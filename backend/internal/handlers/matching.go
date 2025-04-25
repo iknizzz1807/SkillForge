@@ -49,7 +49,7 @@ func (h *matchingHandler) GetMatchScore(c *gin.Context) {
 		return
 	}
 
-	score, err := h.matchingService.GetMatchScoreForPair(userID, projectID)
+	score, err := h.matchingService.GetScore(userID, projectID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
