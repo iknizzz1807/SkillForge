@@ -113,6 +113,28 @@ func (s *UserService) UpdateUserWithAvatar(userID, name, email, title, avatarFil
 	return user, nil
 }
 
+// UpdateUserSkills updates the skills array for a user
+func (s *UserService) UpdateUserSkills(userID string, skills []string) (*models.User, error) {
+	if userID == "" {
+		return nil, errors.New("user ID cannot be empty")
+	}
+
+	// Validate skills
+	if len(skills) == 0 {
+		return nil, errors.New("skills array cannot be empty")
+	}
+
+	// Create repository and update skills
+	userRepo := repositories.NewUserRepository(s.db)
+	err := userRepo.UpdateUserSkills(context.Background(), userID, skills)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch and return updated user
+	return s.GetUserByID(userID)
+}
+
 // GetUserRepository returns the user repository instance
 // This is a helper to allow FileService to access the user repository
 func (s *UserService) GetUserRepository() *repositories.UserRepository {

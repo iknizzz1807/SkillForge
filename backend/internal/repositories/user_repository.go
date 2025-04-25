@@ -129,3 +129,23 @@ func (r *UserRepository) UpdateUserAvatarURL(ctx context.Context, userID string,
 	}
 	return nil
 }
+
+// UpdateUserSkills updates only the skills array for a user
+func (r *UserRepository) UpdateUserSkills(ctx context.Context, userID string, skills []string) error {
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$set": bson.M{
+			"skills":     skills,
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found for skills update")
+	}
+	return nil
+}

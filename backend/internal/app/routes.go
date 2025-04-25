@@ -36,6 +36,7 @@ func RegisterRoutes(
 	businessInfoService *services.BusinessInfoService,
 	feedbackService *services.FeedbackService,
 	gamificationService *services.GamificationService,
+	matchingService *services.MatchingService,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -59,6 +60,7 @@ func RegisterRoutes(
 		taskService,
 		projectService)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
+	matchingHandler := handlers.NewMatchingHandler(matchingService)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
@@ -147,6 +149,10 @@ func RegisterRoutes(
 		// Analytics routes
 		api.GET("/analytics/skills/:userID", analyticsHandler.GetSkillAnalytics)
 		api.GET("/analytics/projects/:projectID", analyticsHandler.GetProjectAnalytics)
+
+		// Matching routes
+		api.GET("/matches", matchingHandler.GetTopMatches)             // Get top 10 matches for authenticated user
+		api.GET("/matches/:project_id", matchingHandler.GetMatchScore) // Get specific match score
 
 		// Badges routes
 		api.GET("/badges/:userID", badgeHandler.GetUserBadges)

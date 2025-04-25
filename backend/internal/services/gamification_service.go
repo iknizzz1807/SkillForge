@@ -11,11 +11,15 @@ import (
 )
 
 type GamificationService struct {
-	repo *repositories.GamificationRepository
+	repo        *repositories.GamificationRepository
+	userService *UserService
 }
 
-func NewGamificationService(repo *repositories.GamificationRepository) *GamificationService {
-	return &GamificationService{repo: repo}
+func NewGamificationService(repo *repositories.GamificationRepository, userService *UserService) *GamificationService {
+	return &GamificationService{
+		repo:        repo,
+		userService: userService,
+	}
 }
 
 // Calculate XP needed for next level using a formula: base * (multiplier ^ (level-1))
@@ -27,6 +31,9 @@ func calculateXPNeeded(level int) int {
 
 // Calculate points needed for next skill level
 func calculatePointsNeeded(level int) int {
+	if level == 1 {
+		return 1
+	}
 	return level * 2 // Each level requires 2 more projects than previous
 }
 
@@ -109,17 +116,34 @@ func (s *GamificationService) AddSkillPoint(userID string, skillName string) (*m
 		return nil, err
 	}
 
+	isNewSkill := skill.PointCurrent == 0
+
 	skill.PointCurrent++
 
 	// Check for skill level up
 	if skill.PointCurrent >= skill.PointNeeded {
 		skill.PointCurrent = 0
-		skill.PointNeeded = calculatePointsNeeded(skill.PointNeeded/2 + 1) // Since PointNeeded = level * 2
+		skill.PointNeeded = calculatePointsNeeded(skill.PointNeeded/2 + 1)
 	}
 
 	err = s.repo.UpdateUserSkill(ctx, skill)
 	if err != nil {
 		return nil, err
+	}
+
+	// If this is the first point for this skill, update user's skills array
+	if isNewSkill {
+		user, err := s.userService.GetUserByID(userID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the new skill to user's skills array
+		newSkills := append(user.Skills, skillName)
+		_, err = s.userService.UpdateUserSkills(userID, newSkills)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return skill, nil
