@@ -66,25 +66,25 @@ func (s *AuthService) Register(email, name, password, role, website string, file
 		// Gọi FileService để lưu avatar, sử dụng user.ID vừa tạo
 		savedFilename, err := s.fileService.SaveAvatar(user.ID, file, header)
 		if err != nil {
-			// Nếu lưu avatar lỗi, không làm hỏng cả quá trình đăng ký
-			// Chỉ log lỗi và tiếp tục mà không cập nhật AvatarURL
 			fmt.Printf("Warning: Failed to save avatar for user %s during registration: %v\n", user.ID, err)
 			// Không return lỗi ở đây
 		} else {
 			fmt.Printf("Avatar saved for user %s with filename %s\n", user.ID, savedFilename)
 			avatarFilename = savedFilename // Lưu lại tên file để cập nhật DB
 
-			// --- Cập nhật lại record user trong DB với avatar_url ---
-			errUpdate := s.userRepo.UpdateUserAvatarURL(ctx, user.ID, avatarFilename)
+			// Cập nhật thông tin user model
+			user.AvatarName = avatarFilename
+			user.UpdatedAt = time.Now()
+
+			errUpdate := s.userRepo.UpdateUser(ctx, user)
 			if errUpdate != nil {
-				// Log lỗi nếu cập nhật DB thất bại, nhưng vẫn coi đăng ký là thành công
-				fmt.Printf("Warning: Failed to update AvatarURL in DB for user %s after saving file %s: %v\n", user.ID, avatarFilename, errUpdate)
-				// Không return lỗi ở đây, user đã được tạo, token vẫn sẽ được tạo
+				fmt.Printf("Warning: Failed to update user in DB for user %s after saving avatar: %v\n", user.ID, errUpdate)
 			} else {
-				fmt.Printf("Successfully updated AvatarURL for user %s\n", user.ID)
-				// Cập nhật lại user model để trả về cho client
-				user.AvatarName = avatarFilename
-				user.UpdatedAt = time.Now() // Cập nhật thời gian luôn
+				fmt.Printf("Successfully updated user with avatar for user %s\n", user.ID)
+
+				// Thêm log để kiểm tra lưu trữ avatar
+				avatarPath, _ := s.fileService.GetAvatarFilePath(avatarFilename)
+				fmt.Printf("Avatar stored at: %s\n", avatarPath)
 			}
 		}
 	} else {

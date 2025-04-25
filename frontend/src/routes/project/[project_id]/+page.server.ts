@@ -21,7 +21,8 @@ export const load = (async ({ params, fetch, cookies }) => {
       throw new Error(`Failed to fetch project: ${response.statusText}`);
     }
 
-    const project = await response.json();
+    const data = await response.json();
+    const project = data.project;
 
     // You can fetch additional related data here if needed
     // For example, project tasks, team members, etc.

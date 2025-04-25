@@ -68,6 +68,57 @@
   let showRemoveStudentModal: boolean = $state(false);
   let studentToRemove: any = $state(null);
 
+  // Thêm state cho modal xác nhận rời dự án
+  let showLeaveProjectModal: boolean = $state(false);
+  let projectToLeave: ProjectDisplay | null = $state(null);
+
+  // Hàm mở modal xác nhận rời dự án
+  function openLeaveProjectModal(project: ProjectDisplay) {
+    projectToLeave = project;
+    showLeaveProjectModal = true;
+  }
+
+  // Hàm đóng modal xác nhận rời dự án
+  function closeLeaveProjectModal() {
+    showLeaveProjectModal = false;
+    projectToLeave = null;
+  }
+
+  // Hàm xử lý rời dự án
+  const leaveProject = async () => {
+    if (!projectToLeave) return;
+
+    try {
+      // TODO: Thay thế bằng API call thực tế
+      // const response = await fetch(`/api/projects/${projectToLeave.id}/leave`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`
+      //   }
+      // });
+
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   throw new Error(errorData.error || 'Failed to leave project');
+      // }
+
+      // Mock xử lý: Giả lập xóa dự án khỏi danh sách hiển thị hoặc thay đổi trạng thái
+      projectsDisplay = projectsDisplay.filter(
+        (p) => p.id !== projectToLeave?.id
+      );
+      projectsDisplayCopy = projectsDisplay;
+
+      // Đóng modal xác nhận
+      closeLeaveProjectModal();
+
+      // Hiển thị thông báo thành công
+      alert(`You have successfully left the project "${projectToLeave.title}"`);
+    } catch (error) {
+      console.error("Error leaving project:", error);
+      alert("Failed to leave project: " + error);
+    }
+  };
+
   // Hàm mở modal xác nhận xóa
   function openRemoveStudentModal(e: Event, student: any, projectId: string) {
     e.preventDefault(); // Ngăn chặn sự kiện nổi bọt
@@ -345,7 +396,7 @@
   {/if}
 </header>
 
-<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
+<main class="flex-1 pr-4 pl-4 ml-64 pt-2">
   <div class="flex space-x-4">
     <!-- Phần danh sách dự án active -->
     <div class="w-3/5 space-y-3">
@@ -531,6 +582,55 @@
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </div>
+          {:else if data.role === "student"}
+            <div
+              class="group-hover:opacity-100 transition-opacity flex space-x-2"
+            >
+              <button
+                class="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
+                onclick={(e) => {
+                  e.preventDefault(); // Ngăn chặn chuyển hướng từ thẻ a
+                  openApplicantsModal(ProjectDisplay.id);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+              </button>
+              <button
+                class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                onclick={(e) => {
+                  e.preventDefault();
+                  openLeaveProjectModal(ProjectDisplay);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                   />
                 </svg>
               </button>
@@ -988,6 +1088,55 @@
               onclick={removeStudentFromProject}
             >
               Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Leave Project Modal -->
+  {#if showLeaveProjectModal && projectToLeave}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal"
+    >
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="text-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-12 w-12 mx-auto text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+
+          <h2 class="text-xl font-semibold mt-4">Leave Project</h2>
+
+          <p class="mt-2 text-gray-600">
+            Are you sure you want to leave <span class="font-medium"
+              ><strong>{projectToLeave.title}</strong></span
+            >? This action <strong>cannot be undone</strong>.
+          </p>
+
+          <div class="flex justify-center space-x-3 mt-6">
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onclick={closeLeaveProjectModal}
+            >
+              Cancel
+            </button>
+            <button
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              onclick={leaveProject}
+            >
+              Leave Project
             </button>
           </div>
         </div>

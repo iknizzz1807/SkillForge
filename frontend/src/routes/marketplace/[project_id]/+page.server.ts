@@ -21,7 +21,10 @@ export const load = (async ({ params, fetch, cookies }) => {
       throw new Error(`Failed to fetch project: ${response.statusText}`);
     }
 
-    const project = await response.json();
+    const data = await response.json();
+    const project = data.project;
+    const hasJoined: boolean = data.hasJoined;
+    const hasApplied: boolean = data.hasApplied;
 
     // You can fetch additional related data here if needed
     // For example, project tasks, team members, etc.
@@ -30,6 +33,8 @@ export const load = (async ({ params, fetch, cookies }) => {
 
     return {
       project,
+      hasJoined,
+      hasApplied,
       token,
       // Add any other data you want to return
     };

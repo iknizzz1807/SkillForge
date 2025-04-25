@@ -125,6 +125,153 @@
 
     closeTaskModal();
   }
+
+  // Activities mock data
+  let showActivitiesModal = $state(false);
+
+  // Mock data for activities
+  const mockActivities = $state([
+    {
+      id: 1,
+      user: "Sarah",
+      action: "moved",
+      item: "Test Features",
+      targetStatus: "Review",
+      timestamp: "2025-04-24T14:32:00",
+    },
+    {
+      id: 2,
+      user: "John",
+      action: "moved",
+      item: "Code Backend",
+      targetStatus: "In Progress",
+      timestamp: "2025-04-24T13:45:00",
+    },
+    {
+      id: 3,
+      user: "Alex",
+      action: "completed",
+      item: "Login Screen UI",
+      targetStatus: "Done",
+      timestamp: "2025-04-24T11:20:00",
+    },
+    {
+      id: 4,
+      user: "Emma",
+      action: "created",
+      item: "New Feature Request",
+      targetStatus: "To-do",
+      timestamp: "2025-04-23T16:15:00",
+    },
+    {
+      id: 5,
+      user: "Michael",
+      action: "commented on",
+      item: "API Documentation",
+      targetStatus: "",
+      timestamp: "2025-04-23T14:32:00",
+    },
+    {
+      id: 6,
+      user: "Tran Le Minh Nhat",
+      action: "assigned",
+      item: "Wireframes",
+      targetStatus: "To-do",
+      timestamp: "2025-04-22T09:30:00",
+    },
+    {
+      id: 7,
+      user: "Nguyen My Thong",
+      action: "updated",
+      item: "Authentication Logic",
+      targetStatus: "",
+      timestamp: "2025-04-21T17:25:00",
+    },
+    {
+      id: 8,
+      user: "Tran Tuan Kiet",
+      action: "completed",
+      item: "Database Schema",
+      targetStatus: "Done",
+      timestamp: "2025-04-21T15:10:00",
+    },
+    {
+      id: 9,
+      user: "Tran Le Minh Nhat",
+      action: "created",
+      item: "Project Repository",
+      targetStatus: "",
+      timestamp: "2025-04-20T11:45:00",
+    },
+    {
+      id: 10,
+      user: "Sarah",
+      action: "added",
+      item: "New Team Member",
+      targetStatus: "",
+      timestamp: "2025-04-19T10:30:00",
+    },
+  ]);
+
+  // Function to format the date for grouping
+  function formatActivityDate(dateString: string): string {
+    const date = new Date(dateString);
+
+    // Get today and yesterday dates for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Check if the date is today, yesterday, or earlier
+    if (date >= today) {
+      return "Today";
+    } else if (date >= yesterday) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+  }
+
+  // Function to format the time
+  function formatActivityTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  // Function to get the grouped activities
+  function getGroupedActivities() {
+    const groups: Record<string, typeof mockActivities> = {};
+
+    mockActivities.forEach((activity) => {
+      const dateGroup = formatActivityDate(activity.timestamp);
+      if (!groups[dateGroup]) {
+        groups[dateGroup] = [];
+      }
+      groups[dateGroup].push(activity);
+    });
+
+    // Convert the groups object to an array of { date, activities } objects
+    return Object.entries(groups).map(([date, activities]) => {
+      return { date, activities };
+    });
+  }
+
+  function openActivitiesModal() {
+    showActivitiesModal = true;
+  }
+
+  function closeActivitiesModal() {
+    showActivitiesModal = false;
+  }
 </script>
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
@@ -167,7 +314,7 @@
             <div class="text-center">
               <p class="text-sm font-medium">Start</p>
               <p class="text-xs text-gray-500">
-                {formatDate(project.start_time)}
+                {formatDate(project.start_time.toString())}
               </p>
             </div>
             <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
@@ -179,7 +326,7 @@
             <div class="text-center">
               <p class="text-sm font-medium">End</p>
               <p class="text-xs text-gray-500">
-                {formatDate(project.end_time)}
+                {formatDate(project.end_time.toString())}
               </p>
             </div>
           </div>
@@ -252,51 +399,14 @@
                   <span class="font-medium">Code Backend</span> to In Progress
                 </p>
               </div>
-
-              <!-- <div class="relative pl-8">
-                <div
-                  class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
-                ></div>
-                <span class="text-xs font-semibold text-gray-500 mb-1 block"
-                  >18 Mar, 10:17</span
-                >
-                <p class="text-sm">
-                  <span class="font-medium text-[#6b48ff]">Adam</span>
-                  created
-                  <span class="font-medium">Make a button style</span> in To-do
-                </p>
-              </div>
-
-              <div class="relative pl-8">
-                <div
-                  class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-gray-400 border-2 border-white"
-                ></div>
-                <span class="text-xs font-semibold text-gray-500 mb-1 block"
-                  >17 Mar, 16:23</span
-                >
-                <p class="text-sm">
-                  <span class="font-medium">Alex</span> completed
-                  <span class="font-medium">Setup DB</span>
-                </p>
-              </div>
-
-              <div class="relative pl-8">
-                <div
-                  class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-gray-400 border-2 border-white"
-                ></div>
-                <span class="text-xs font-semibold text-gray-500 mb-1 block"
-                  >17 Mar, 11:05</span
-                >
-                <p class="text-sm">
-                  <span class="font-medium">Emma</span> created
-                  <span class="font-medium">Test Features</span> task
-                </p>
-              </div> -->
             </div>
           </div>
 
           <!-- View all button -->
-          <button class="btn-secondary w-full mt-4 text-sm">
+          <button
+            class="btn-secondary w-full mt-4 text-sm"
+            onclick={openActivitiesModal}
+          >
             View All Activities
           </button>
         </div>
@@ -552,6 +662,95 @@
       </div>
     </div>
   </div>
+
+  <!-- Activities Modal -->
+  {#if showActivitiesModal}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
+    >
+      <div
+        class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
+      >
+        <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Project Activities</h3>
+            <button
+              class="text-gray-500 hover:text-gray-700"
+              onclick={closeActivitiesModal}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content - phần này sẽ cuộn -->
+        <div class="p-4 pb-6 overflow-y-auto flex-grow">
+          {#each getGroupedActivities() as group}
+            <div class="mb-6">
+              <h4 class="text-sm font-semibold text-gray-500 mb-3">
+                {group.date}
+              </h4>
+
+              <!-- Timeline -->
+              <div class="relative">
+                <!-- Timeline line -->
+                <div
+                  class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"
+                ></div>
+
+                <!-- Activity items -->
+                <div class="space-y-4">
+                  {#each group.activities as activity}
+                    <div class="relative pl-10">
+                      <!-- Timeline dot -->
+                      <div
+                        class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
+                      ></div>
+
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <span
+                            class="text-xs font-semibold text-gray-500 mb-1 block"
+                          >
+                            {formatActivityTime(activity.timestamp)}
+                          </span>
+                          <p class="text-sm">
+                            <span class="font-medium text-[#6b48ff]"
+                              >{activity.user}</span
+                            >
+                            {activity.action}
+                            <span class="font-medium">{activity.item}</span>
+                            {#if activity.targetStatus}
+                              to <span class="font-medium"
+                                >{activity.targetStatus}</span
+                              >
+                            {/if}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
 </main>
 
 <!-- Task Creation Modal -->
@@ -560,7 +759,7 @@
     class="fixed inset-0 bg-black z-50 flex items-center justify-center modal"
   >
     <div
-      class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
+      class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
     >
       <div class="p-4 border-b border-gray-100">
         <div class="flex justify-between items-center">
@@ -650,15 +849,6 @@
               </div>
 
               <div class="grid grid-cols-2 gap-3">
-                <!-- <div>
-                  <label class="block text-sm font-medium mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-                    bind:value={task.dueDate}
-                  />
-                </div> -->
-
                 <div>
                   <label class="block text-sm font-medium mb-1"
                     >Assigned To</label

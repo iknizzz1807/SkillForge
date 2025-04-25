@@ -117,6 +117,7 @@ func RegisterRoutes(
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
 		// This update for status is used for accept or reject an application, if accept add the student to the project
 		api.PUT("/applications/status/:id", applicationHandler.UpdateApplicationStatus)
+		// ID truyền vào ở đây là application id, còn userID thì truyền vào context
 		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
 
 		// Task routes
