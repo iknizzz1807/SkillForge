@@ -85,3 +85,14 @@ func (c *RealtimeClient) SendMessage(userID, message string) error {
 	// Trả về nil nếu thành công
 	return nil
 }
+
+func (c *RealtimeClient) Broadcast(room string, message []byte) error {
+	// Lặp qua tất cả các kết nối trong room và gửi message
+	for _, conn := range c.connections[room] {
+		err := conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

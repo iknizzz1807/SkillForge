@@ -87,11 +87,11 @@ func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 	}()
 
 	// Xử lý tin nhắn từ client
-	h.handleMessages(userID, projectID, conn)
+	h.handleMessages(room, userID, projectID, conn)
 }
 
 // handleMessages xử lý các message từ client
-func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *websocket.Conn) {
+func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, conn *websocket.Conn) {
 	// initial message - gửi danh sách task hiện tại cho client
 	tasks, err := h.taskService.GetTasksByProjectID(projectID)
 	if err != nil {
@@ -137,7 +137,7 @@ func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *we
 		}
 		response := tasks
 		respBytes, _ := json.Marshal(response)
-		conn.WriteMessage(websocket.TextMessage, respBytes)
+		h.realtimeClient.Broadcast(room, respBytes)
 	}
 }
 
