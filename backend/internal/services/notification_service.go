@@ -21,8 +21,6 @@ import (
 )
 
 type NotificationService struct {
-	// emailClient để gửi email
-	emailClient *integrations.EmailClient
 	// realtimeClient để gửi thông báo qua WebSocket
 	realtimeClient *integrations.RealtimeClient
 	// db để truy cập MongoDB database
@@ -32,27 +30,8 @@ type NotificationService struct {
 // NewNotificationService khởi tạo NotificationService với dependency
 // Input: emailClient (*integrations.EmailClient), realtimeClient (*integrations.RealtimeClient)
 // Return: *NotificationService - con trỏ đến NotificationService
-func NewNotificationService(emailClient *integrations.EmailClient, realtimeClient *integrations.RealtimeClient, db *mongo.Database) *NotificationService {
-	return &NotificationService{emailClient, realtimeClient, db}
-}
-
-// SendEmail gửi email thông báo
-// Input: to (string), subject (string), body (string)
-// Return: error (nếu có lỗi)
-func (s *NotificationService) SendEmail(to, subject, body string) error {
-	// Kiểm tra input hợp lệ
-	if to == "" || subject == "" || body == "" {
-		return errors.New("invalid email data")
-	}
-
-	// Gọi emailClient để gửi email
-	err := s.emailClient.SendEmail(to, subject, body)
-	if err != nil {
-		return err
-	}
-
-	// Trả về nil nếu thành công
-	return nil
+func NewNotificationService(realtimeClient *integrations.RealtimeClient, db *mongo.Database) *NotificationService {
+	return &NotificationService{realtimeClient, db}
 }
 
 // SendRealtime gửi thông báo realtime qua WebSocket
@@ -82,6 +61,9 @@ func (s *NotificationService) SendRealtime(userID, content, Type string) error {
 	}
 
 	notifications, err := s.GetUserNotifications(userID)
+	if err != nil {
+		return err
+	}
 
 	// Gọi realtimeClient để gửi thông báo
 	err = s.realtimeClient.SendNotification(userID, notifications)

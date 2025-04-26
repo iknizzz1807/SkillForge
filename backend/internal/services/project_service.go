@@ -34,13 +34,14 @@ type ProjectService struct {
 	aiClient *integrations.AIClient
 	// githubClient để tạo repository GitHub
 	githubClient *integrations.GitHubClient
+	emailClient *integrations.EmailClient
 }
 
 // NewProjectService khởi tạo ProjectService với các dependency
 // Input: db (*mongo.Database), notificationService (*NotificationService), aiClient (*integrations.AIClient), githubClient (*integrations.GitHubClient)
 // Return: *ProjectService - con trỏ đến ProjectService
-func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient, githubClient *integrations.GitHubClient) *ProjectService {
-	return &ProjectService{db, notificationService, aiClient, githubClient}
+func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient, githubClient *integrations.GitHubClient, emailClient *integrations.EmailClient) *ProjectService {
+	return &ProjectService{db, notificationService, aiClient, githubClient, emailClient}
 }
 
 // GetAllProjects lấy danh sách tất cả dự án
@@ -152,7 +153,7 @@ func (s *ProjectService) DeleteProject(projectID string, userID string) error {
 	}
 
 	// 2. Khởi tạo các repositories cần thiết
-	applicationService := NewApplicationService(s.db, s.notificationService)
+	applicationService := NewApplicationService(s.db, s.notificationService, s.emailClient)
 	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
 
 	// 3. Xóa tất cả applications liên quan đến project

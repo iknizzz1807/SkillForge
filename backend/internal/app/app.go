@@ -48,10 +48,10 @@ func Run() {
 	webrtcClient := integrations.NewWebRTCClient()
 
 	// Khởi tạo các services
-	notificationService := services.NewNotificationService(emailClient, realtimeClient, db)
+	notificationService := services.NewNotificationService(realtimeClient, db)
 	userService := services.NewUserService(db)
-	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient)
-	applicationService := services.NewApplicationService(db, notificationService)
+	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient, emailClient)
+	applicationService := services.NewApplicationService(db, notificationService, emailClient)
 	taskService := services.NewTaskService(db, notificationService)
 	reviewService := services.NewReviewService(db)
 	messageService := services.NewMessageService(db, realtimeClient, webrtcClient)

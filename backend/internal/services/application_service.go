@@ -14,6 +14,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/repositories"
 	"github.com/iknizzz1807/SkillForge/internal/utils"
@@ -29,18 +30,19 @@ type ApplicationService struct {
 	projectRepo *repositories.ProjectRepository // Thêm project repo
 	// applicationRepo để truy vấn application
 	applicationRepo *repositories.ApplicationRepository // Thêm application repo
-
+	emailClient *integrations.EmailClient // Thêm email client
 }
 
 // NewApplicationService khởi tạo ApplicationService với dependency
 // Input: db (*mongo.Database), notificationService (*NotificationService)
 // Return: *ApplicationService - con trỏ đến ApplicationService
-func NewApplicationService(db *mongo.Database, notificationService *NotificationService) *ApplicationService {
+func NewApplicationService(db *mongo.Database, notificationService *NotificationService, emailClient *integrations.EmailClient) *ApplicationService {
 	return &ApplicationService{
 		db:                  db,
 		notificationService: notificationService,
 		projectRepo:         repositories.NewProjectRepository(db),     // Khởi tạo project repo
 		applicationRepo:     repositories.NewApplicationRepository(db), // Khởi tạo application repo
+		emailClient: emailClient, // Thêm email client
 	}
 }
 
@@ -255,7 +257,7 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 	// Nếu status là "approved":
 	if status == "approved" && application.Status != "approved" { // Chỉ xử lý khi chuyển sang approved
 		// Thêm student vào project (cần inject ProjectService hoặc gọi trực tiếp repo)
-		projectService := NewProjectService(s.db, s.notificationService, nil, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
+		projectService := NewProjectService(s.db, s.notificationService, nil, nil, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
 		errAdd := projectService.AddStudentToProject(updatedApplication.ProjectID, updatedApplication.UserID)
 		if errAdd != nil {
 			// Xử lý lỗi khi thêm student vào project (quan trọng)
@@ -266,11 +268,10 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 			// utils.GetLogger().Errorf("Application %s approved but failed to add student %s to project %s: %v", applicationID, updatedApplication.UserID, updatedApplication.ProjectID, errAdd)
 			// Không rollback, chỉ log lỗi, vì application vẫn được coi là approved
 		} else {
-			// Gửi thông báo cho student là application đã được approved
-			// go func() {
-			// 	// s.notificationService.SendNotification(updatedApplication.UserID, "Application Approved", fmt.Sprintf("Your application for project '%s' has been approved!", updatedApplication.ProjectID), true)
-			// 	// s.notificationService.SendEmail(...)
-			// }()
+			userID := updatedApplication.UserID
+			userRepo := repositories.NewUserRepository(s.db)
+			user, _ := userRepo.FindUserByID(context.Background(), userID)
+			s.emailClient.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!") // Gửi email thông báo cho student
 		}
 	} else if status == "rejected" && application.Status != "rejected" {
 		// Gửi thông báo cho student là application đã bị rejected

@@ -8,52 +8,26 @@ package integrations
 // - Gửi email thông báo (ví dụ: project created, new application) tới user
 
 import (
-	"net/smtp"
+	gomail "gopkg.in/gomail.v2"
 
-	"github.com/jordan-wright/email"
+	"github.com/iknizzz1807/SkillForge/internal/constants"
 )
 
 type EmailClient struct {
-	// host là địa chỉ server SMTP (ví dụ: smtp.gmail.com)
-	host string
-	// port là cổng SMTP (ví dụ: 587)
-	port string
-	// username là tên đăng nhập SMTP
-	username string
-	// password là mật khẩu SMTP
-	password string
+	client *gomail.Dialer
 }
 
-// NewEmailClient khởi tạo EmailClient với thông tin cấu hình
-// Input: host (string), port (string), username (string), password (string)
-// Return: *EmailClient - con trỏ đến EmailClient
-func NewEmailClient(host, port, username, password string) *EmailClient {
-	return &EmailClient{
-		host:     host,
-		port:     port,
-		username: username,
-		password: password,
-	}
+func NewEmailClient(host string, port int, username string, password string) *EmailClient {
+	return &EmailClient{gomail.NewDialer(host, port, username, password)}
 }
 
-// SendEmail gửi email tới người nhận
-// Input: to (string), subject (string), body (string)
-// Return: error (nếu có lỗi)
-func (c *EmailClient) SendEmail(to, subject, body string) error {
-	// Tạo email mới
-	e := email.NewEmail()
-	// Điền thông tin email
-	e.From = c.username
-	e.To = []string{to}
-	e.Subject = subject
-	e.Text = []byte(body)
+func (e *EmailClient) SendEmail(to string, subject string, body string) error {
+	m := gomail.NewMessage()
 
-	// Gửi email qua SMTP
-	err := e.Send(c.host+":"+c.port, smtp.PlainAuth("", c.username, c.password, c.host))
-	if err != nil {
-		return err
-	}
+	m.SetHeader("From", constants.EmailFrom)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", body)
 
-	// Trả về nil nếu thành công
-	return nil
+	return e.client.DialAndSend(m)
 }
