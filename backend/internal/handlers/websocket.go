@@ -57,6 +57,51 @@ func NewWebSocketHandler(
 	}
 }
 
+// GET /ws/notifi
+func (h *WebSocketHandler) HandleNotificationConnection(c *gin.Context) {
+	userID := c.Query("userId")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user ID"})
+		return
+	}
+
+	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Printf("Error upgrading to WebSocket: %v", err)
+		return
+	}
+
+	h.realtimeClient.AddConnection(userID, conn)
+
+	log.Printf("New WebSocket connection established for user: %s", userID)
+
+	defer func() {
+		h.realtimeClient.RemoveConnection(userID)
+		log.Printf("WebSocket connection closed for user: %s", userID)
+	}()
+	
+	// Trả về danh sách thông báo lần đầu tiên từ khi bắt đầu kết nối
+	allNotifications, err := h.notifyService.GetUserNotifications(userID)
+	if err != nil {
+		log.Printf("Error fetching notifications: %v", err)
+		return	
+	}
+
+	response, err := json.Marshal(allNotifications)
+	if err != nil {
+		log.Printf("Error marshalling notifications: %v", err)
+		return
+	}
+
+	err = conn.WriteMessage(websocket.TextMessage, response)
+	if err != nil {
+		log.Printf("Error sending initial notifications: %v", err)
+		return
+	}
+
+	h.handleMessages(userID, conn)
+}
+
 // HandleConnection xử lý kết nối WebSocket từ client
 func (h *WebSocketHandler) HandleConnection(c *gin.Context) {
 	// Cái này là đang test, uncommnent nếu dùng thực sự trong app

@@ -64,7 +64,7 @@ func (s *MessageService) SendMessage(senderID, receiverID, content string) (*mod
 	}
 
 	// Gửi tin nhắn qua WebSocket
-	s.realtimeClient.SendNotification(receiverID, content)
+	s.realtimeClient.SendMessage(receiverID, content)
 
 	// Trả về tin nhắn
 	return message, nil

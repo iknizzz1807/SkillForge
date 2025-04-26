@@ -40,7 +40,8 @@ func Run() {
 
 	// Khởi tạo các integrations
 	emailClient := integrations.NewEmailClient(cfg.EmailHost, cfg.EmailPort, cfg.EmailUser, cfg.EmailPass)
-	realtimeClient := integrations.NewRealtimeClient()
+	realtimeNotificationClient := integrations.NewRealtimeClient()
+	realtimeMessageClient := integrations.NewRealtimeClient()
 	// storageClient := integrations.NewStorageClient(cfg.StorageConfig)
 	aiClient := integrations.NewAIClient(cfg.AIURL)
 	githubClient := integrations.NewGitHubClient(cfg.GitHubToken)
@@ -48,13 +49,13 @@ func Run() {
 	webrtcClient := integrations.NewWebRTCClient()
 
 	// Khởi tạo các services
-	notificationService := services.NewNotificationService(emailClient, realtimeClient)
+	notificationService := services.NewNotificationService(emailClient, realtimeNotificationClient, db)
 	userService := services.NewUserService(db)
 	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient)
 	applicationService := services.NewApplicationService(db, notificationService)
 	taskService := services.NewTaskService(db, notificationService)
 	reviewService := services.NewReviewService(db)
-	messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
+	messageService := services.NewMessageService(db, realtimeMessageClient, webrtcClient)
 	portfolioService := services.NewPortfolioService(db)
 	analyticsService := services.NewAnalyticsService(db)
 	authService := services.NewAuthService(repositories.NewUserRepository(db), services.NewFileService(repositories.NewUserRepository(db)))
@@ -72,7 +73,7 @@ func Run() {
 	// Ví dụ: r.Use(middleware.LogMiddleware())
 
 	// Đăng ký các route từ routes.go
-	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService)
+	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeNotificationClient)
 
 	// Chạy server
 	if err := r.Run(":8080"); err != nil {

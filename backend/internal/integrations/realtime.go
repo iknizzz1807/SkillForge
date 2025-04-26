@@ -9,8 +9,10 @@ package integrations
 
 import (
 	"errors"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 )
 
 type RealtimeClient struct {
@@ -45,7 +47,26 @@ func (c *RealtimeClient) RemoveConnection(userID string) {
 // SendNotification gửi thông báo qua WebSocket tới user
 // Input: userID (string), message (string)
 // Return: error (nếu có lỗi)
-func (c *RealtimeClient) SendNotification(userID, message string) error {
+func (c *RealtimeClient) SendNotification(userID string, notifications []*models.Notification) error {
+	// Tìm kết nối của user
+	conn, exists := c.connections[userID]
+	if !exists {
+		return errors.New("user not connected")
+	}
+
+	response, _ := json.Marshal(notifications)
+
+	// Gửi message qua WebSocket
+	err := conn.WriteMessage(websocket.TextMessage, []byte(response))
+	if err != nil {
+		return err
+	}
+
+	// Trả về nil nếu thành công
+	return nil
+}
+
+func (c *RealtimeClient) SendMessage(userID, message string) error {
 	// Tìm kết nối của user
 	conn, exists := c.connections[userID]
 	if !exists {
