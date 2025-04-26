@@ -79,3 +79,23 @@ func (h *TalentPoolHandler) RemoveFromTalentPool(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Student removed from talent pool successfully"})
 }
+
+func (h* TalentPoolHandler) CheckStudentInTalentPool(c *gin.Context) {
+	studentID := c.Param("id")
+	businessID := c.GetString("userID")
+
+	// Check if user is a business
+	if c.GetString("role") != "business" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only business accounts can check talent pool"})
+		return
+	}
+
+	// Call service to check if student is in talent pool
+	isInPool, err := h.talentPoolService.CheckStudentInTalentPool(studentID, businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"is_in_pool": isInPool})
+}

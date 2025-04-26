@@ -127,3 +127,19 @@ func (s *TalentPoolService) RemoveFromTalentPool(studentID string, businessID st
 
 	return nil
 }
+
+func (s *TalentPoolService) CheckStudentInTalentPool(studentID string, businessID string) (bool, error) {
+	if studentID == "" || businessID == "" {
+		return false, errors.New("student ID and business ID cannot be empty")
+	}
+
+	ctx := context.Background()
+	talentPoolRepo := repositories.NewTalentPoolRepository(s.db)
+
+	exists, err := talentPoolRepo.CheckStudentInTalentPool(ctx, businessID, studentID)
+	if err != nil {
+		return false, errors.New("failed to check if student is in talent pool: " + err.Error())
+	}
+
+	return exists, nil
+}

@@ -61,15 +61,12 @@ func RegisterRoutes(
 	websocketTaskHanlder := handlers.NewWebSocketTaskHandler(realtimeClient, taskService)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 	matchingHandler := handlers.NewMatchingHandler(matchingService)
+	levelHandler := handlers.NewLevelHandler(gamificationService)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
 	r.POST("/auth/register", authHandler.Register) // Tạo user mới
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
-
-	// Route để server web socket client
-	r.GET("/ws/task/:projectID", websocketTaskHanlder.HandleConnection)
-	r.GET("/ws/notifi", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
 	r.Use(middleware.AuthMiddleware())
@@ -148,6 +145,7 @@ func RegisterRoutes(
 		api.GET("/talenpool", talentPoolHandler.GetTalentPool)
 		api.POST("/talentpool:id", talentPoolHandler.AddStudentToTalentPool)
 		api.DELETE("/talentpool/:id", talentPoolHandler.RemoveFromTalentPool)
+		api.GET("/talentpool/:id/check", talentPoolHandler.CheckStudentInTalentPool)
 
 		// Analytics routes
 		api.GET("/analytics/skills/:userID", analyticsHandler.GetSkillAnalytics)
@@ -173,6 +171,13 @@ func RegisterRoutes(
 		// === Route phục vụ business info
 		api.GET("/business-info", businessInfoHandler.GetBusinessInfo)
 		api.PUT("/business-info", businessInfoHandler.UpdateBusinessInfo)
+
+		// Route để server web socket client
+		api.GET("/ws/task/:projectID", websocketTaskHanlder.HandleConnection)
+		api.GET("/ws/notifi", websocketNotificationHandler.HandleNotificationConnection)
+
+		//Route cho level
+		api.GET("/levels", levelHandler.GetUserLevel)
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {

@@ -135,3 +135,25 @@ func (r *TalentPoolRepository) RemoveFromTalentPool(ctx context.Context, busines
 
 	return nil
 }
+
+func (r *TalentPoolRepository) CheckStudentInTalentPool(ctx context.Context, businessID, studentID string) (bool, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	filter := bson.M{
+		"business_id": businessID,
+		"student_id":  studentID,
+	}
+
+	var talentPoolEntry models.TalentPool
+	err := r.collection.FindOne(ctx, filter).Decode(&talentPoolEntry)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
