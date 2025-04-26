@@ -78,7 +78,6 @@ func (s *TaskService) CreateTasks(projectID string, taskInputs []models.TaskInpu
 			Note:        input.Note,
 			Assigned_to: input.AssignedTo,
 			Status:      "todo",
-			Review:      "",
 			Finished_by: "",
 			CreatedAt:   time.Now(),
 		}
@@ -212,7 +211,6 @@ func (s *TaskService) UpdateTask(taskID string, taskUpdate *models.TaskUpdate) (
 	task.Title = taskUpdate.Title
 	task.Description = taskUpdate.Description
 	task.Note = taskUpdate.Note
-	task.Review = taskUpdate.Review
 	task.Assigned_to = taskUpdate.Assigned_to
 	task.UpdatedAt = time.Now()
 
