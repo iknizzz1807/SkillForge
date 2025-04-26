@@ -100,15 +100,21 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 	tasks, err := h.taskService.GetTasksByProjectID(projectID)
 	if err != nil {
 		log.Printf("Error fetching tasks: %v", err)
+		sendErrorMessage(conn, "Failed to fetch tasks")
 		return
 	}
-	response := tasks
-	respBytes, err := json.Marshal(response)
+	activities, err := h.taskService.GetActivityByProjectID(userID, projectID)
 	if err != nil {
-		log.Printf("Error marshalling tasks: %v", err)
+		log.Printf("Error fetching activities: %v", err)
+		sendErrorMessage(conn, "Failed to fetch activities")
 		return
 	}
-	conn.WriteMessage(websocket.TextMessage, respBytes)
+	response := map[string]interface{}{
+		"tasks":    tasks,
+		"activities": activities,
+	}
+	respBytes, _ := json.Marshal(response)
+	h.realtimeClient.Broadcast(room, respBytes)
 
 	for {
 		// Đọc message từ WebSocket
