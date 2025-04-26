@@ -50,8 +50,8 @@ func Run() {
 	// Khởi tạo các services
 	notificationService := services.NewNotificationService(realtimeClient, db, emailClient)
 	userService := services.NewUserService(db)
-	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient, emailClient)
-	applicationService := services.NewApplicationService(db, notificationService, emailClient)
+	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient)
+	applicationService := services.NewApplicationService(db, notificationService)
 	taskService := services.NewTaskService(db, notificationService)
 	reviewService := services.NewReviewService(db)
 	messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
