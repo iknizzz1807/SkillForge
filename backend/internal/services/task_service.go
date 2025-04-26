@@ -56,7 +56,7 @@ func (s *TaskService) GetTasksByProjectID(projectID string) ([]*models.Task, err
 // CreateTasks tạo nhiều tasks mới cho một project
 // Input: projectID (string), taskInputs ([]TaskInput)
 // Return: []*models.Task (danh sách tasks vừa tạo), error (nếu có lỗi)
-func (s *TaskService) CreateTasks(projectID string, taskInputs []models.TaskInput) ([]*models.Task, error) {
+func (s *TaskService) CreateTasks(projectID, userID string, taskInputs []models.TaskInput) ([]*models.Task, error) {
 	// Kiểm tra input hợp lệ
 	if projectID == "" || len(taskInputs) == 0 {
 		return nil, errors.New("invalid inputs")
@@ -96,104 +96,17 @@ func (s *TaskService) CreateTasks(projectID string, taskInputs []models.TaskInpu
 		return nil, err
 	}
 
+	for _, task := range tasks {
+		s.InsertActivity("create", userID, projectID, task.Title, "", "")
+	}
 	// Trả về danh sách tasks
 	return tasks, nil
 }
 
-// AssignTask gán task cho người dùng cụ thể
-// Input: taskID (string), userID (string)
-// Return: *models.Task (task đã cập nhật), error (nếu có lỗi)
-func (s *TaskService) AssignTask(taskID string, userID string) (*models.Task, error) {
-	// Kiểm tra input hợp lệ
-	if taskID == "" || userID == "" {
-		return nil, errors.New("task ID và user ID không được để trống")
-	}
-
-	// Tạo repository và tìm task
-	taskRepo := repositories.NewTaskRepository(s.db)
-	task, err := taskRepo.FindTaskByID(context.Background(), taskID)
-	if err != nil || task == nil {
-		return nil, errors.New("không tìm thấy task")
-	}
-
-	// Cập nhật người được gán và thời gian
-	task.Assigned_to = userID
-	task.UpdatedAt = time.Now()
-
-	// Nếu task đang ở trạng thái "todo", chuyển sang "in-progress"
-	if task.Status == "todo" {
-		task.Status = "in-progress"
-	}
-
-	// Lưu thay đổi
-	err = taskRepo.UpdateTask(context.Background(), task)
-	if err != nil {
-		return nil, err
-	}
-
-	// // Gửi thông báo cho người được gán task
-	// s.notificationService.SendNotification(userID, "Task Assignment",
-	//     "You have been assigned a new task: "+task.Description)
-
-	// // Có thể gửi email hoặc thông báo khác nếu cần
-	// s.notificationService.SendEmail(userID, "New Task Assignment",
-	//     "You have been assigned to task: "+task.Description)
-
-	// Trả về task đã cập nhật
-	return task, nil
-}
-
-// FinishTask đánh dấu task là đã hoàn thành bởi người dùng
-// Input: taskID (string), userID (string)
-// Return: *models.Task (task đã cập nhật), error (nếu có lỗi)
-func (s *TaskService) FinishTask(taskID string, userID string) (*models.Task, error) {
-	// Kiểm tra input hợp lệ
-	if taskID == "" || userID == "" {
-		return nil, errors.New("invalid inputs")
-	}
-
-	// Tạo repository và tìm task
-	taskRepo := repositories.NewTaskRepository(s.db)
-	task, err := taskRepo.FindTaskByID(context.Background(), taskID)
-	if err != nil || task == nil {
-		return nil, errors.New("cannot find the task with the task id")
-	}
-
-	// Kiểm tra xem người hoàn thành có phải là người được gán hay không
-	if task.Assigned_to != "" && task.Assigned_to != userID {
-		return nil, errors.New("you are not assined to this task")
-	}
-
-	// Cập nhật người hoàn thành, trạng thái và thời gian
-	task.Finished_by = userID
-	task.Status = "completed"
-	task.UpdatedAt = time.Now()
-
-	// Lưu thay đổi
-	err = taskRepo.UpdateTask(context.Background(), task)
-	if err != nil {
-		return nil, err
-	}
-
-	// // Lấy thông tin dự án để thông báo cho người tạo dự án
-	// projectRepo := repositories.NewProjectRepository(s.db)
-	// project, err := projectRepo.FindProjectByID(context.Background(), task.ProjectID)
-	// if err == nil && project != nil {
-	// 	// Thông báo cho người tạo dự án
-	// 	s.notificationService.SendNotification(project.CreatedBy, "Task Completed",
-	// 		"Task: "+task.Description+" has been completed")
-	// }
-
-	// Trả về task đã cập nhật
-	return task, nil
-}
-
-
-
 // UpdateTask cập nhật trạng thái task
 // Input: taskID (string), status (string)
 // Return: *models.Task (task đã cập nhật), error (nếu có lỗi)
-func (s *TaskService) UpdateTask(taskID string, taskUpdate *models.TaskUpdate) (*models.Task, error) {
+func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskUpdate) (*models.Task, error) {
 	// Kiểm tra input hợp lệ
 	if taskID == "" || taskUpdate == nil {
 		return nil, errors.New("invalid inputs")
@@ -204,6 +117,26 @@ func (s *TaskService) UpdateTask(taskID string, taskUpdate *models.TaskUpdate) (
 	task, err := taskRepo.FindTaskByID(context.Background(), taskID)
 	if err != nil || task == nil {
 		return nil, errors.New("task not found")
+	}
+
+	if task.Status != taskUpdate.Status {
+		s.InsertActivity("Move", userID, task.ProjectID, task.Title, task.Status, taskUpdate.Status)
+	}
+
+	if task.Title != taskUpdate.Title {
+		s.InsertActivity("ChangeTitle", userID, task.ProjectID, task.Title, task.Title, taskUpdate.Title)
+	}
+
+	if task.Description != taskUpdate.Description {
+		s.InsertActivity("ChangeDescription", userID, task.ProjectID, task.Title, task.Description, taskUpdate.Description)
+	}
+
+	if task.Note != taskUpdate.Note {
+		s.InsertActivity("ChangeNote", userID, task.ProjectID, task.Title, task.Note, taskUpdate.Note)
+	}
+
+	if task.Assigned_to != taskUpdate.Assigned_to {
+		s.InsertActivity("ChangeAssignee", userID, task.ProjectID, task.Title, task.Assigned_to, taskUpdate.Assigned_to)
 	}
 
 	// Cập nhật trạng thái và thời gian
@@ -227,7 +160,7 @@ func (s *TaskService) UpdateTask(taskID string, taskUpdate *models.TaskUpdate) (
 // DeleteTask xóa một task khỏi database
 // Input: taskID (string)
 // Return: error (nếu có lỗi)
-func (s *TaskService) DeleteTask(taskID string) error {
+func (s *TaskService) DeleteTask(taskID, userID string) error {
 	// Kiểm tra taskID hợp lệ
 	if taskID == "" {
 		return errors.New("task ID cannot be empty")
@@ -257,5 +190,27 @@ func (s *TaskService) DeleteTask(taskID string) error {
 	// }
 
 	// Trả về nil nếu thành công
+	s.InsertActivity("delete", userID, task.ProjectID, task.Title, "", "")
 	return nil
+}
+
+func (s *TaskService) GetActivityByProjectID(userID string, projectID string) ([]*models.Activity, error) {
+	// Tạo repository và tìm task
+	taskRepo := repositories.NewTaskRepository(s.db)
+	return taskRepo.FindActivitiesByProjectID(context.Background(), projectID)
+}
+
+func (s *TaskService) InsertActivity(Type, DoneBy, ProjectID, Title, From, To string) error {
+	// Tạo repository và tìm task
+	activity := &models.Activity{
+		ID:        utils.GenerateUUID(),
+		Type:      Type,
+		DoneBy:    DoneBy,
+		ProjectID: ProjectID,
+		Title:     Title,
+		From:      From,
+		To:        To,
+	}
+	taskRepo := repositories.NewTaskRepository(s.db)
+	return taskRepo.InsertActivity(context.Background(), activity)
 }
