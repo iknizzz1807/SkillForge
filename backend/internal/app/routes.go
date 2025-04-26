@@ -48,7 +48,7 @@ func RegisterRoutes(
 	authHandler := handlers.NewAuthHandler(authService)
 	projectHandler := handlers.NewProjectHandler(projectService)
 	applicationHandler := handlers.NewApplicationHandler(applicationService)
-	taskHandler := handlers.NewTaskHandler(taskService)
+	// taskHandler := handlers.NewTaskHandler(taskService)
 	reviewHandler := handlers.NewReviewHandler(reviewService)
 	messageHandler := handlers.NewMessageHandler(messageService)
 	portfolioHandler := handlers.NewPortfolioHandler(portfolioService)
@@ -121,13 +121,13 @@ func RegisterRoutes(
 		// ID truyền vào ở đây là application id, còn userID thì truyền vào context
 		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
 
-		// Task routes
-		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
-		api.POST("/tasks", taskHandler.CreateTasks)
-		api.PUT("/tasks/:id", taskHandler.UpdateTask)
-		api.PUT("/tasks/:id/assign", taskHandler.AssignTask)
-		api.PUT("/tasks/:id/finish", taskHandler.FinishTask)
-		api.DELETE("/tasks/:id", taskHandler.DeleteTask)
+		// // Task routes
+		// api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
+		// api.POST("/tasks", taskHandler.CreateTasks)
+		// api.PUT("/tasks/:id", taskHandler.UpdateTask)
+		// api.PUT("/tasks/:id/assign", taskHandler.AssignTask)
+		// api.PUT("/tasks/:id/finish", taskHandler.FinishTask)
+		// api.DELETE("/tasks/:id", taskHandler.DeleteTask)
 
 		// Review routes
 		api.POST("/reviews", reviewHandler.SubmitReview)

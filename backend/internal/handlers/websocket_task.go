@@ -126,6 +126,22 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 			return
 		}
 
+		if message.Type == "create" {
+			// Xử lý tạo task mới
+			var req *models.TaskInput
+			err = json.Unmarshal(message.Content, &req)
+			if err != nil {
+				log.Printf("Error unmarshalling task input: %v", err)
+				sendErrorMessage(conn, "Failed to unmarshal task input")
+				return
+			}
+			_, err = h.taskService.CreateTasks(projectID, []models.TaskInput{*req})
+			if err != nil {
+				log.Printf("Error creating task: %v", err)
+				sendErrorMessage(conn, "Failed to create task")
+				return
+			}
+		}
 		if message.Type != "update" {
 			var req *models.TaskUpdate
 			err = json.Unmarshal(message.Content, &req)
