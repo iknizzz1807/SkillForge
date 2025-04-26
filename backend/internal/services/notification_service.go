@@ -9,8 +9,15 @@ package services
 
 import (
 	"errors"
+	"time"
+	"context"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
+	"github.com/iknizzz1807/SkillForge/internal/utils"
+	"github.com/iknizzz1807/SkillForge/internal/repositories"
 )
 
 type NotificationService struct {
@@ -18,13 +25,15 @@ type NotificationService struct {
 	emailClient *integrations.EmailClient
 	// realtimeClient để gửi thông báo qua WebSocket
 	realtimeClient *integrations.RealtimeClient
+	// db để truy cập MongoDB database
+	db *mongo.Database
 }
 
 // NewNotificationService khởi tạo NotificationService với dependency
 // Input: emailClient (*integrations.EmailClient), realtimeClient (*integrations.RealtimeClient)
 // Return: *NotificationService - con trỏ đến NotificationService
-func NewNotificationService(emailClient *integrations.EmailClient, realtimeClient *integrations.RealtimeClient) *NotificationService {
-	return &NotificationService{emailClient, realtimeClient}
+func NewNotificationService(emailClient *integrations.EmailClient, realtimeClient *integrations.RealtimeClient, db *mongo.Database) *NotificationService {
+	return &NotificationService{emailClient, realtimeClient, db}
 }
 
 // SendEmail gửi email thông báo
@@ -47,20 +56,49 @@ func (s *NotificationService) SendEmail(to, subject, body string) error {
 }
 
 // SendRealtime gửi thông báo realtime qua WebSocket
-// Input: userID (string), message (string)
+// Input: userID gửi đến (string), message (string)
 // Return: error (nếu có lỗi)
-func (s *NotificationService) SendRealtime(userID, message string) error {
+func (s *NotificationService) SendRealtime(userID, content, Type string) error {
 	// Kiểm tra input hợp lệ
-	if userID == "" || message == "" {
+	
+	if userID == "" || content == "" || Type == "" {
 		return errors.New("invalid realtime data")
 	}
 
+	// Tạo notification
+	notification := &models.Notification{
+		ID:        utils.GenerateUUID(),
+		ToUserID:  userID,
+		Content:   content,
+		Type:      Type,
+		CreatedAt: time.Now(),
+	}
+
+	// Lưu notification vào database
+	notificationRepo := repositories.NewNotificationRepository(s.db)
+	err := notificationRepo.InsertNotification(context.Background(), notification)
+	if err != nil {
+		return err
+	}
+
+	notifications, err := s.GetUserNotifications(userID)
+
 	// Gọi realtimeClient để gửi thông báo
-	err := s.realtimeClient.SendNotification(userID, message)
+	err = s.realtimeClient.SendNotification(userID, notifications)
 	if err != nil {
 		return err
 	}
 
 	// Trả về nil nếu thành công
 	return nil
+}
+
+func (s *NotificationService) GetUserNotifications(userID string) ([]*models.Notification, error) {
+	notificationRepo := repositories.NewNotificationRepository(s.db)
+	notifications, err := notificationRepo.GetUserNotifications(context.Background(), userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return notifications, nil
 }

@@ -48,7 +48,7 @@ func Run() {
 	webrtcClient := integrations.NewWebRTCClient()
 
 	// Khởi tạo các services
-	notificationService := services.NewNotificationService(emailClient, realtimeClient)
+	notificationService := services.NewNotificationService(emailClient, realtimeClient, db)
 	userService := services.NewUserService(db)
 	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient)
 	applicationService := services.NewApplicationService(db, notificationService)
@@ -72,7 +72,7 @@ func Run() {
 	// Ví dụ: r.Use(middleware.LogMiddleware())
 
 	// Đăng ký các route từ routes.go
-	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService)
+	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeClient)
 
 	// Chạy server
 	if err := r.Run(":8080"); err != nil {
