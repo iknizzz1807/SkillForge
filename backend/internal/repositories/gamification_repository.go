@@ -37,6 +37,7 @@ func (r *GamificationRepository) UpdateUserLevel(ctx context.Context, level *mod
 		ctx,
 		bson.M{"user_id": level.UserID},
 		bson.M{"$set": level},
+		options.Update().SetUpsert(true),
 	)
 	return err
 }
