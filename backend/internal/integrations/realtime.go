@@ -17,31 +17,34 @@ import (
 
 type RealtimeClient struct {
 	// connections lưu trữ danh sách kết nối WebSocket theo userID
-	connections map[string]*websocket.Conn
+	connections map[string]map[string]*websocket.Conn
 }
 
 // NewRealtimeClient khởi tạo RealtimeClient
 // Return: *RealtimeClient - con trỏ đến RealtimeClient
 func NewRealtimeClient() *RealtimeClient {
 	return &RealtimeClient{
-		connections: make(map[string]*websocket.Conn),
+		connections: make(map[string]map[string]*websocket.Conn),
 	}
 }
 
 // AddConnection thêm kết nối WebSocket cho user
 // Input: userID (string), conn (*websocket.Conn)
 // Return: None
-func (c *RealtimeClient) AddConnection(userID string, conn *websocket.Conn) {
+func (c *RealtimeClient) AddConnection(room, userID string, conn *websocket.Conn) {
 	// Lưu kết nối vào map
-	c.connections[userID] = conn
+	c.connections[room][userID] = conn
 }
 
 // RemoveConnection xóa kết nối WebSocket của user
 // Input: userID (string)
 // Return: None
-func (c *RealtimeClient) RemoveConnection(userID string) {
+func (c *RealtimeClient) RemoveConnection(room, userID string) {
 	// Xóa kết nối khỏi map
-	delete(c.connections, userID)
+	delete(c.connections[room], userID)
+	if len(c.connections[room]) == 0 {
+		delete(c.connections, room)
+	}
 }
 
 // SendNotification gửi thông báo qua WebSocket tới user
@@ -49,7 +52,7 @@ func (c *RealtimeClient) RemoveConnection(userID string) {
 // Return: error (nếu có lỗi)
 func (c *RealtimeClient) SendNotification(userID string, notifications []*models.Notification) error {
 	// Tìm kết nối của user
-	conn, exists := c.connections[userID]
+	conn, exists := c.connections["notification"][userID]
 	if !exists {
 		return errors.New("user not connected")
 	}
@@ -68,7 +71,7 @@ func (c *RealtimeClient) SendNotification(userID string, notifications []*models
 
 func (c *RealtimeClient) SendMessage(userID, message string) error {
 	// Tìm kết nối của user
-	conn, exists := c.connections[userID]
+	conn, exists := c.connections["message"][userID]
 	if !exists {
 		return errors.New("user not connected")
 	}

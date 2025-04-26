@@ -37,7 +37,7 @@ func RegisterRoutes(
 	feedbackService *services.FeedbackService,
 	gamificationService *services.GamificationService,
 	matchingService *services.MatchingService,
-	realtimeNotificationClient *integrations.RealtimeClient,
+	realtimeClient *integrations.RealtimeClient,
 	// paymentClient *integrations.PaymentClient,
 ) {
 	// Khởi tạo integrations ở đây
@@ -57,9 +57,8 @@ func RegisterRoutes(
 	talentPoolHandler := handlers.NewTalentPoolHandler(talentPoolService)
 	avatarHandler := handlers.NewAvatarHandler(fileService)
 	businessInfoHandler := handlers.NewBusinessInfoHandler(businessInfoService)
-	websocketHanlder := handlers.NewWebSocketHandler(realtimeNotificationClient, messageService, notificationService,
-		taskService,
-		projectService)
+	websocketNotificationHandler := handlers.NewWebSocketNotificationHandler(realtimeClient, notificationService)
+	websocketTaskHanlder := handlers.NewWebSocketTaskHandler(realtimeClient, taskService)
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 	matchingHandler := handlers.NewMatchingHandler(matchingService)
 
@@ -69,8 +68,8 @@ func RegisterRoutes(
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
 
 	// Route để server web socket client
-	r.GET("/ws/task/:taskID", websocketHanlder.HandleConnection)
-	r.GET("/ws/notifi", websocketHanlder.HandleNotificationConnection)
+	r.GET("/ws/task/:projectID", websocketTaskHanlder.HandleConnection)
+	r.GET("/ws/notifi", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
 	r.Use(middleware.AuthMiddleware())
