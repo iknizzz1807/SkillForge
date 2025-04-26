@@ -305,6 +305,7 @@
               type="text"
               id="companyType"
               bind:value={companyType}
+              placeholder="e.g. IT Consulting, Software Development, E-commerce"
               class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
             />
           </div>
@@ -318,6 +319,7 @@
                 type="text"
                 id="founded"
                 bind:value={founded}
+                placeholder="e.g. 2018"
                 class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
               />
             </div>
@@ -329,6 +331,7 @@
                 type="text"
                 id="companySize"
                 bind:value={companySize}
+                placeholder="e.g. 10-50 employees"
                 class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
               />
             </div>
@@ -342,6 +345,7 @@
               type="text"
               id="website"
               bind:value={website}
+              placeholder="e.g. www.yourcompany.com"
               class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
             />
           </div>
@@ -354,6 +358,7 @@
               id="aboutUs"
               bind:value={aboutUs}
               rows="4"
+              placeholder="Describe your company, mission, and what sets you apart..."
               class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
             ></textarea>
           </div>
@@ -1223,49 +1228,6 @@
     <!-- Right Column -->
     <div class="space-y-4">
       {#if role === "student"}
-        <!-- Project History -->
-        <div class="card p-4">
-          <h3 class="text-base font-semibold mb-3">Project History</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-sm font-medium">Build a Chat App</p>
-                <p class="text-xs text-gray-500">
-                  Skills: React, Node.js | Completed: 18/03/2025
-                </p>
-              </div>
-              <span
-                class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
-                >Completed</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-sm font-medium">Portfolio Website</p>
-                <p class="text-xs text-gray-500">
-                  Skills: HTML, CSS, JS | Completed: 10/03/2025
-                </p>
-              </div>
-              <span
-                class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
-                >Completed</span
-              >
-            </div>
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-sm font-medium">E-commerce Dashboard</p>
-                <p class="text-xs text-gray-500">
-                  Skills: React, MongoDB | Completed: 05/03/2025
-                </p>
-              </div>
-              <span
-                class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
-                >Completed</span
-              >
-            </div>
-          </div>
-        </div>
-
         <!-- Certificates -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Certificates</h3>
@@ -1318,10 +1280,7 @@
               <p class="text-xl font-bold text-[#6b48ff]">8</p>
               <p class="text-xs text-gray-500">Certificates</p>
             </div>
-            <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">98%</p>
-              <p class="text-xs text-gray-500">On-time Completion</p>
-            </div>
+
             <div class="text-center p-2 bg-gray-50 rounded">
               <p class="text-xl font-bold text-[#6b48ff]">4.9</p>
               <p class="text-xs text-gray-500">Client Rating</p>

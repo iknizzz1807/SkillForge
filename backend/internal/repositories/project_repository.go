@@ -132,6 +132,7 @@ func (r *ProjectRepository) UpdateProject(project *models.Project) (*models.Proj
 			"end_time":    project.EndTime,
 			"max_member":  project.MaxMember,
 			"status":      project.Status,
+			"difficulty":  project.Difficulty,
 			// "current_member" đã bị loại bỏ để không cho phép cập nhật trực tiếp
 		},
 	}

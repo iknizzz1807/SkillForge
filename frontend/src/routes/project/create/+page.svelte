@@ -21,18 +21,7 @@
   // Thêm các biến state mới
   let isSkillDropdownOpen = $state(false);
   let skillSearchTerm = $state("");
-  // let filteredSkills: string[] = $state([]);
 
-  // // Lọc kỹ năng theo tìm kiếm
-  // $effect(() => {
-  //   if (skillSearchTerm) {
-  //     filteredSkills = availableSkills.filter(
-  //       (skill) =>
-  //         !skillSearchTerm ||
-  //         skill.toLowerCase().includes(skillSearchTerm.toLowerCase())
-  //     );
-  //   }
-  // });
   // Toggle skill selection
   function toggleSkill(skill: string) {
     if (skills.includes(skill)) {

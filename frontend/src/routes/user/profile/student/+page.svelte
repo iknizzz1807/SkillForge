@@ -12,6 +12,11 @@
     name: "Your Name",
   };
 
+  let studentXP = $state(750);
+  let currentLevel = $state(3);
+  let xpForNextLevel = $state(250);
+  let xpProgress = $state(75); // percentage to next level
+
   // Mock data cho profile đang xem (profileData)
   // Thực tế sẽ lấy từ API dựa trên ID trong URL
   let profileData = {
@@ -30,26 +35,7 @@
       { name: "MongoDB", level: "Intermediate", percentage: 60 },
       { name: "Python", level: "Beginner", percentage: 30 },
     ],
-    completedProjects: [
-      {
-        name: "E-commerce Dashboard",
-        skills: "React, MongoDB",
-        completedDate: "05/03/2025",
-        rating: 4.8,
-      },
-      {
-        name: "Portfolio Website",
-        skills: "HTML, CSS, JS",
-        completedDate: "10/03/2025",
-        rating: 5.0,
-      },
-      {
-        name: "Build a Chat App",
-        skills: "React, Node.js",
-        completedDate: "18/03/2025",
-        rating: 4.7,
-      },
-    ],
+
     certificates: [
       {
         name: "React Development",
@@ -96,18 +82,7 @@
 
   // State cho các thao tác UI
   let isInTalentPool = $state(false);
-  let showContactInfoModal = $state(false);
-  let invitingToProject = $state(false);
-  let inviteSuccess = $state(false);
   let talentPoolSuccess = $state(false);
-  let selectedProject = $state("");
-
-  // Mock projects cho business để mời
-  let myProjects = [
-    { id: "proj1", name: "Mobile Banking App", positions: 1 },
-    { id: "proj2", name: "E-commerce Dashboard", positions: 2 },
-    { id: "proj3", name: "AI Content Generator", positions: 4 },
-  ];
 
   // Hàm chức năng - thực tế sẽ gọi API
   const addToTalentPool = async () => {
@@ -127,36 +102,6 @@
     }, 800);
   };
 
-  const inviteToProject = async () => {
-    if (!selectedProject) return;
-    invitingToProject = true;
-
-    // API Call: POST /api/projects/invite
-    // Body: { studentId: profileData.id, projectId: selectedProject }
-    console.log("Inviting to project:", selectedProject);
-
-    // Mock successful API response
-    setTimeout(() => {
-      invitingToProject = false;
-      inviteSuccess = true;
-
-      // Auto-hide success message & close modal after 2 seconds
-      setTimeout(() => {
-        inviteSuccess = false;
-        showContactInfoModal = false;
-        selectedProject = "";
-      }, 2000);
-    }, 1200);
-  };
-
-  const toggleContactInfoModal = () => {
-    showContactInfoModal = !showContactInfoModal;
-    if (!showContactInfoModal) {
-      inviteSuccess = false;
-      selectedProject = "";
-    }
-  };
-
   onMount(() => {
     // API call to fetch profile data
     // GET /api/profile/{id}
@@ -171,131 +116,6 @@
     }
   });
 </script>
-
-<!-- Contact Info Modal -->
-{#if showContactInfoModal}
-  <div class="modal">
-    <div class="bg-white rounded-lg w-full max-w-md shadow-xl mx-4 p-5">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Contact {profileData.name}</h3>
-        <button
-          onclick={toggleContactInfoModal}
-          class="text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {#if inviteSuccess}
-        <div class="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
-          <div class="flex">
-            <svg
-              class="h-5 w-5 text-green-500 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 13l4 4L19 7"
-              ></path>
-            </svg>
-            <span class="text-green-700">Invitation sent successfully!</span>
-          </div>
-        </div>
-      {:else}
-        <div class="mb-4">
-          <p class="text-gray-600 mb-2">Contact information:</p>
-          <div class="bg-gray-50 p-3 rounded border border-gray-200">
-            <p class="text-sm">
-              <span class="font-medium">Email:</span>
-              {profileData.email}
-            </p>
-            <!-- Show additional contact if available -->
-          </div>
-        </div>
-
-        {#if currentUser.role === "business" && profileData.role === "student"}
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1" for="project">
-              Invite to project
-            </label>
-            <select
-              id="project"
-              bind:value={selectedProject}
-              class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none"
-            >
-              <option value="">Select a project...</option>
-              {#each myProjects as project}
-                <option value={project.id}
-                  >{project.name} ({project.positions} positions)</option
-                >
-              {/each}
-            </select>
-          </div>
-        {/if}
-
-        <div class="flex justify-end space-x-3">
-          <button
-            class="btn-secondary px-4 py-2"
-            onclick={toggleContactInfoModal}
-          >
-            Close
-          </button>
-
-          {#if currentUser.role === "business" && profileData.role === "student"}
-            <button
-              class="btn px-4 py-2"
-              onclick={inviteToProject}
-              disabled={!selectedProject || invitingToProject}
-            >
-              {#if invitingToProject}
-                <div class="flex items-center">
-                  <svg
-                    class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Sending...
-                </div>
-              {:else}
-                Send Invite
-              {/if}
-            </button>
-          {/if}
-        </div>
-      {/if}
-    </div>
-  </div>
-{/if}
 
 <main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <!-- Header section -->
@@ -319,10 +139,6 @@
 
     <!-- Action buttons based on viewer role and viewed profile role -->
     <div class="flex space-x-2">
-      <button class="btn-secondary px-4 py-2" onclick={toggleContactInfoModal}>
-        Contact
-      </button>
-
       {#if currentUser.role === "business" && profileData.role === "student"}
         {#if isInTalentPool}
           <button
@@ -382,52 +198,195 @@
       <!-- Profile Card -->
       <div class="card p-4">
         <div class="flex flex-col items-center mb-4">
-          <img
-            class="w-24 h-24 rounded-full mb-3"
-            src={profileData.avatarUrl}
-            alt="{profileData.name}'s Avatar"
-          />
-          <h3 class="text-lg font-semibold text-center">{profileData.name}</h3>
-          <p class="text-sm text-gray-500 text-center">{profileData.title}</p>
+          <div class="relative">
+            <img
+              class="w-24 h-24 rounded-full object-cover border-2 border-[#6b48ff]"
+              src={profileData.avatarUrl}
+              alt="{profileData.name}'s Avatar"
+            />
+            <div
+              class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-green-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-lg font-semibold text-center mt-3">
+            {profileData.name}
+          </h3>
+          <p
+            class="text-sm text-gray-500 text-center flex items-center justify-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 mr-1 text-gray-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+                clip-rule="evenodd"
+              />
+              <path
+                d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"
+              />
+            </svg>
+            {profileData.title}
+          </p>
         </div>
 
-        <div class="space-y-3">
+        <!-- Add level system UI -->
+        <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+          <div class="flex justify-between items-center mb-1">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-1 text-[#6b48ff]"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M13.5 3a1.5 1.5 0 013 0v7.5a1.5 1.5 0 01-3 0V3z" />
+                <path d="M3.5 3a1.5 1.5 0 013 0v7.5a1.5 1.5 0 01-3 0V3z" />
+                <path
+                  d="M3.5 10.5a1.5 1.5 0 013 0v6a1.5 1.5 0 01-3 0v-6zM13.5 10.5a1.5 1.5 0 013 0v6a1.5 1.5 0 01-3 0v-6z"
+                />
+              </svg>
+              <span class="text-sm font-medium">Level 3</span>
+            </div>
+            <span class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded-full"
+              >750 XP</span
+            >
+          </div>
+          <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div class="bg-[#6b48ff] h-full" style="width: 75%"></div>
+          </div>
+          <div class="flex justify-between mt-1 text-xs text-gray-500">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Current: Level 3
+            </div>
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-3 w-3 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Next: 250 XP for Level 4
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3 mt-4">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium">Email:</span>
+            <span class="text-sm font-medium flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 mr-2 text-gray-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+                />
+                <path
+                  d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+                />
+              </svg>
+              Email:
+            </span>
             <span class="text-sm text-gray-600">{profileData.email}</span>
           </div>
           {#if profileData.shortBio}
             <div>
-              <span class="text-sm font-medium block mb-1">About:</span>
+              <span class="text-sm font-medium flex items-center mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2 text-gray-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                About:
+              </span>
               <p class="text-sm text-gray-600">{profileData.shortBio}</p>
             </div>
           {/if}
         </div>
 
         {#if profileData.role === "student"}
-          <!-- Stats for student -->
+          <!-- Stats for student with improved icons -->
           <div class="grid grid-cols-2 gap-2 mt-4">
             <div class="bg-gray-50 rounded p-2 text-center">
+              <div class="flex justify-center mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-[#6b48ff]"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
               <p class="text-xl font-bold text-[#6b48ff]">
                 {profileData.stats.completedProjects}
               </p>
-              <p class="text-xs text-gray-500">Projects</p>
+              <p class="text-xs text-gray-500">Completed projects</p>
             </div>
             <div class="bg-gray-50 rounded p-2 text-center">
+              <div class="flex justify-center mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-[#6b48ff]"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                  />
+                </svg>
+              </div>
               <p class="text-xl font-bold text-[#6b48ff]">
                 {profileData.stats.rating}
               </p>
               <p class="text-xs text-gray-500">Rating</p>
-            </div>
-          </div>
-        {:else}
-          <!-- Stats for business -->
-          <div class="mt-4">
-            <div class="bg-gray-50 rounded p-2 text-center">
-              <p class="text-xl font-bold text-[#6b48ff]">
-                {profileData.stats.completedProjects}
-              </p>
-              <p class="text-xs text-gray-500">Projects Completed</p>
             </div>
           </div>
         {/if}
@@ -520,40 +479,6 @@
                     class="progress-fill"
                     style="width: {skill.percentage}%"
                   ></div>
-                </div>
-              </div>
-            {/each}
-          </div>
-        </div>
-
-        <!-- Student Project History -->
-        <div class="card p-4">
-          <h3 class="text-base font-semibold mb-3">Project History</h3>
-          <div class="space-y-3">
-            {#each profileData.completedProjects as project}
-              <div class="flex justify-between items-center">
-                <div>
-                  <p class="text-sm font-medium">{project.name}</p>
-                  <p class="text-xs text-gray-500">
-                    Skills: {project.skills} | Completed: {project.completedDate}
-                  </p>
-                </div>
-                <div class="flex items-center">
-                  <span
-                    class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex items-center"
-                  >
-                    <span class="mr-1">{project.rating}</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3 w-3"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      />
-                    </svg>
-                  </span>
                 </div>
               </div>
             {/each}
@@ -748,12 +673,7 @@
               </p>
               <p class="text-xs text-gray-500">Certificates</p>
             </div>
-            <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">
-                {profileData.stats.onTimeCompletion}
-              </p>
-              <p class="text-xs text-gray-500">On-time Completion</p>
-            </div>
+
             <div class="text-center p-2 bg-gray-50 rounded">
               <p class="text-xl font-bold text-[#6b48ff]">
                 {profileData.stats.rating}

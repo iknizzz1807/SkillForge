@@ -288,32 +288,72 @@
         <div class="card p-4 hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-              <img
-                src={"/api/avatars/" + app.user_id}
-                alt={app.user_name || "User"}
-                class="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
-              />
-
-              <div>
-                <h4 class="text-base font-medium">
-                  <a
-                    href={`/profile/${app.user_id}`}
-                    class="hover:text-[#6b48ff] hover:underline"
+              {#if role === "business"}
+                <!-- Hiển thị avatar cho business role -->
+                <img
+                  src={"/api/avatars/" + app.user_id}
+                  alt={app.user_name || "User"}
+                  class="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
+                />
+                <div>
+                  <h4 class="text-base font-medium">
+                    <a
+                      href={`/profile/${app.user_id}`}
+                      class="hover:text-[#6b48ff] hover:underline"
+                    >
+                      {app.user_name || "User"}
+                    </a>
+                  </h4>
+                  <div
+                    class="flex items-center space-x-2 text-sm text-gray-500 mt-1"
                   >
-                    {app.user_name || "User"}
-                  </a>
-                </h4>
-                <div
-                  class="flex items-center space-x-2 text-sm text-gray-500 mt-1"
-                >
-                  <span
-                    >{role === "student" ? "Your application to" : "Applied to"}
-                    <span class="text-[#6b48ff]">{app.project_name}</span></span
-                  >
-                  <span>•</span>
-                  <span>{formatDate(app.created_at)}</span>
+                    <span
+                      >Applied to <span class="text-[#6b48ff]"
+                        >{app.project_name}</span
+                      ></span
+                    >
+                    <span>•</span>
+                    <span>{formatDate(app.created_at)}</span>
+                  </div>
                 </div>
-              </div>
+              {:else}
+                <!-- Hiển thị project icon cho student role -->
+                <div
+                  class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-[#6b48ff]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-base font-medium">
+                    <a
+                      href={`/marketplace/${app.project_id}`}
+                      class="hover:text-[#6b48ff] hover:underline"
+                    >
+                      {app.project_name || "Project"}
+                    </a>
+                  </h4>
+                  <div
+                    class="flex items-center space-x-2 text-sm text-gray-500 mt-1"
+                  >
+                    <span>Your application</span>
+                    <span>•</span>
+                    <span>{formatDate(app.created_at)}</span>
+                  </div>
+                </div>
+              {/if}
             </div>
 
             <div class="flex items-center space-x-2">
@@ -504,24 +544,58 @@
       <!-- Scrollable content -->
       <div class="p-6 overflow-y-auto flex-grow">
         <div class="flex items-center space-x-4 mb-6">
-          <img
-            src={"/api/avatars/" + selectedApplication.user_id}
-            alt={selectedApplication.user_name || "User"}
-            class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-          />
-          <div>
-            <h4 class="text-xl font-semibold">
-              <a
-                href={`/profile/${selectedApplication.user_id}`}
-                class="hover:text-[#6b48ff] hover:underline"
+          {#if role === "business"}
+            <img
+              src={"/api/avatars/" + selectedApplication.user_id}
+              alt={selectedApplication.user_name || "User"}
+              class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+            />
+            <div>
+              <h4 class="text-xl font-semibold">
+                <a
+                  href={`/profile/${selectedApplication.user_id}`}
+                  class="hover:text-[#6b48ff] hover:underline"
+                >
+                  {selectedApplication.user_name || "User"}
+                </a>
+              </h4>
+              <p class="text-gray-500">
+                Applied on {formatDate(selectedApplication.created_at)}
+              </p>
+            </div>
+          {:else}
+            <div
+              class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-8 w-8 text-[#6b48ff]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                {selectedApplication.user_name || "User"}
-              </a>
-            </h4>
-            <p class="text-gray-500">
-              Applied on {formatDate(selectedApplication.created_at)}
-            </p>
-          </div>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-xl font-semibold">
+                <a
+                  href={`/marketplace/${selectedApplication.project_id}`}
+                  class="hover:text-[#6b48ff] hover:underline"
+                >
+                  {selectedApplication.project_name || "Project"}
+                </a>
+              </h4>
+              <p class="text-gray-500">
+                Applied on {formatDate(selectedApplication.created_at)}
+              </p>
+            </div>
+          {/if}
 
           <!-- AI Match Score (if available) -->
           <div class="ml-auto flex items-center space-x-3">

@@ -11,6 +11,7 @@ type ProjectDisplay = {
   created_by_name: string;
   max_member: number;
   current_member: number;
+  difficulty: string;
   status: string;
   created_at: string;
 };
@@ -72,6 +73,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
       max_member: project.max_member || 0,
       current_member: project.current_member || 0,
       status: project.status || "",
+      difficulty: project.difficulty || "",
       created_at: project.created_at || new Date().toISOString(),
     }));
 

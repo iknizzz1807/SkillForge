@@ -1406,7 +1406,7 @@
         .split("T")[0];
       editMaxMember = currentProject.max_member;
       editStatus = currentProject.status;
-      editDifficulty = currentProject.difficulty || "beginner";
+      editDifficulty = currentProject.difficulty;
     }
   });
 
@@ -1742,18 +1742,12 @@
 
                 <!-- Skills với thiết kế dạng tag -->
                 <div class="flex flex-wrap gap-1 mb-3">
-                  {#each ProjectDisplay.skills.slice(0, 3) as skill}
+                  {#each ProjectDisplay.skills as skill}
                     <span
                       class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700"
                       >{skill}</span
                     >
                   {/each}
-                  {#if ProjectDisplay.skills.length > 3}
-                    <span
-                      class="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700"
-                      >+{ProjectDisplay.skills.length - 3} more</span
-                    >
-                  {/if}
                 </div>
 
                 <!-- Progress bar -->
