@@ -26,11 +26,7 @@ type Task struct {
 	// Status là trạng thái task: "todo", "in_progress", "review", "done"
 	Status string `json:"status" bson:"status"`
 
-	// Review là nhận xét của business về task đó, và có thể có hay không có
-	// bởi vì task có thể được review xấu rồi từ status "in_progress" hay "review" quay về status todo
-	Review string `json:"review" bson:"review"`
-
-	// Note là một trường khác ngoài description để ghi chú thích về task
+	// Note là một trường khác ngoài description để ghi chú thích về task hoặc review
 	Note string `json:"note" bson:"note"`
 
 	// Assigned by là id của người chịu trách nhiệm hoàn thành task này
@@ -60,6 +56,5 @@ type TaskUpdate struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Note        string `json:"note"`
-	Review      string `json:"review"`
 	Assigned_to string `json:"assigned_to"`
 }

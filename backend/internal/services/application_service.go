@@ -29,7 +29,6 @@ type ApplicationService struct {
 	projectRepo *repositories.ProjectRepository // Thêm project repo
 	// applicationRepo để truy vấn application
 	applicationRepo *repositories.ApplicationRepository // Thêm application repo
-
 }
 
 // NewApplicationService khởi tạo ApplicationService với dependency
@@ -266,11 +265,10 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 			// utils.GetLogger().Errorf("Application %s approved but failed to add student %s to project %s: %v", applicationID, updatedApplication.UserID, updatedApplication.ProjectID, errAdd)
 			// Không rollback, chỉ log lỗi, vì application vẫn được coi là approved
 		} else {
-			// Gửi thông báo cho student là application đã được approved
-			// go func() {
-			// 	// s.notificationService.SendNotification(updatedApplication.UserID, "Application Approved", fmt.Sprintf("Your application for project '%s' has been approved!", updatedApplication.ProjectID), true)
-			// 	// s.notificationService.SendEmail(...)
-			// }()
+			userID := updatedApplication.UserID
+			userRepo := repositories.NewUserRepository(s.db)
+			user, _ := userRepo.FindUserByID(context.Background(), userID)
+			s.notificationService.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!") // Gửi email thông báo cho student
 		}
 	} else if status == "rejected" && application.Status != "rejected" {
 		// Gửi thông báo cho student là application đã bị rejected

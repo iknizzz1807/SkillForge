@@ -16,7 +16,7 @@ type Env struct {
 	// EmailHost: Địa chỉ server SMTP để gửi email
 	EmailHost string
 	// EmailPort: Cổng SMTP (thường là 587 cho TLS)
-	EmailPort string
+	EmailPort int
 	// EmailUser: Tên người dùng để đăng nhập SMTP
 	EmailUser string
 	// EmailPass: Mật khẩu để đăng nhập SMTP

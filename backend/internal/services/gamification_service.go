@@ -57,6 +57,7 @@ func (s *GamificationService) GetUserLevel(userID string) (*models.UserLevel, er
 		if err != nil {
 			return nil, err
 		}
+		return level, nil
 	}
 	return level, nil
 }
@@ -105,6 +106,7 @@ func (s *GamificationService) GetSkill(userID string, skillName string) (*models
 		if err != nil {
 			return nil, err
 		}
+		return skill, nil
 	}
 	return skill, nil
 }

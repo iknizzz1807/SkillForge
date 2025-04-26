@@ -12,6 +12,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -24,15 +25,16 @@ func Load() *Env {
 	if err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
-
+	emailPort, _ := strconv.Atoi(getEnv("EMAIL_PORT", "587"))
 	// Tạo struct Env và điền giá trị từ biến môi trường
 	return &Env{
 		// MongoDB URI để kết nối database
 		MongoURI: getEnv("MONGO_URI", "mongodb://localhost:27017"),
 
 		// Cấu hình email (SMTP)
+		
 		EmailHost: getEnv("EMAIL_HOST", "smtp.example.com"),
-		EmailPort: getEnv("EMAIL_PORT", "587"),
+		EmailPort: emailPort,
 		EmailUser: getEnv("EMAIL_USER", "user@example.com"),
 		EmailPass: getEnv("EMAIL_PASS", "password"),
 

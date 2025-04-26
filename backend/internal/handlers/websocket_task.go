@@ -19,7 +19,6 @@ type WebSocketTaskHandler struct {
 	taskService    *services.TaskService
 }
 
-
 // NewWebSocketHandler tạo một handler mới cho WebSocket
 func NewWebSocketTaskHandler(
 	realtimeClient *integrations.RealtimeClient,
@@ -87,11 +86,16 @@ func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 	}()
 
 	// Xử lý tin nhắn từ client
-	h.handleMessages(userID, projectID, conn)
+	h.handleMessages(room, userID, projectID, conn)
+}
+
+type TaskMessage struct {
+	Type    string          `json:"type"`
+	Content json.RawMessage `json:"content"`
 }
 
 // handleMessages xử lý các message từ client
-func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *websocket.Conn) {
+func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, conn *websocket.Conn) {
 	// initial message - gửi danh sách task hiện tại cho client
 	tasks, err := h.taskService.GetTasksByProjectID(projectID)
 	if err != nil {
@@ -102,10 +106,9 @@ func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *we
 	respBytes, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Error marshalling tasks: %v", err)
-		return 
+		return
 	}
 	conn.WriteMessage(websocket.TextMessage, respBytes)
-	
 
 	for {
 		// Đọc message từ WebSocket
@@ -115,20 +118,45 @@ func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *we
 			break
 		}
 
-		var req *models.TaskUpdate
-		if err := json.Unmarshal(rawMessage, &req); err != nil {
-			log.Printf("Error parsing task update message: %v", err)
-			sendErrorMessage(conn, "Invalid task update format")
-			return
-		}
-
-		_, err = h.taskService.UpdateTask(req.TaskID, req)
+		var message TaskMessage
+		err = json.Unmarshal(rawMessage, &message)
 		if err != nil {
-			log.Printf("Error updating task: %v", err)
-			sendErrorMessage(conn, "Failed to update task")
+			log.Printf("Error unmarshalling message: %v", err)
+			sendErrorMessage(conn, "Failed to unmarshal message")
 			return
 		}
 
+		if message.Type != "update" {
+			var req *models.TaskUpdate
+			err = json.Unmarshal(message.Content, &req)
+			if err != nil {
+				log.Printf("Error unmarshalling task update: %v", err)
+				sendErrorMessage(conn, "Failed to unmarshal task update")
+				return
+			}
+			_, err = h.taskService.UpdateTask(req.TaskID, req)
+			if err != nil {
+				log.Printf("Error updating task: %v", err)
+				sendErrorMessage(conn, "Failed to update task")
+				return
+			}
+		}
+		if message.Type == "delete" {
+			// Xử lý xóa task
+			var req string
+			err = json.Unmarshal(message.Content, &req)
+			if err != nil {
+				log.Printf("Error unmarshalling task ID: %v", err)
+				sendErrorMessage(conn, "Failed to unmarshal task ID")
+				return
+			}
+			err := h.taskService.DeleteTask(req)
+			if err != nil {
+				log.Printf("Error deleting task: %v", err)
+				sendErrorMessage(conn, "Failed to delete task")
+				return
+			}
+		}
 		tasks, err := h.taskService.GetTasksByProjectID(projectID)
 		if err != nil {
 			log.Printf("Error fetching tasks: %v", err)
@@ -137,7 +165,7 @@ func (h *WebSocketTaskHandler) handleMessages(userID, projectID string, conn *we
 		}
 		response := tasks
 		respBytes, _ := json.Marshal(response)
-		conn.WriteMessage(websocket.TextMessage, respBytes)
+		h.realtimeClient.Broadcast(room, respBytes)
 	}
 }
 
