@@ -10,8 +10,8 @@
   const project = data.project;
   // Biến hasJoined và hasApplied là để dùng khi role là student, nếu đã joined hoặc apply thì sẽ không hiện form
   // apply project nữa mà sẽ điều chỉnh UI sao cho hợp lý để thông báo rằng họ đã apply hoặc joined dự án này
-  const hasJoined: boolean = data.hasJoined;
-  const hasApplied: boolean = data.hasApplied;
+  let hasJoined: boolean = $state(data.hasJoined);
+  let hasApplied: boolean = $state(data.hasApplied);
 
   let motivationInput: string = $state("");
   let proposalInput: string = $state("");
@@ -59,6 +59,9 @@
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to submit application");
       }
+
+      // Cập nhật hasApplied thành true sau khi submit thành công
+      hasApplied = true;
 
       // Handle success
       successMessage = "Your application has been submitted successfully!";

@@ -10,14 +10,15 @@ export const actions = {
     const name = formData.get("name") as string;
     const role = formData.get("role") as string;
     const website = (formData.get("website") as string) || "";
+    const title = formData.get("title") as string;
     const avatar = formData.get("avatar") as File | null;
 
     // Validate form data
-    if (!email || !password || !confirmPassword || !name || !role) {
+    if (!email || !password || !confirmPassword || !name || !role || !title) {
       return fail(400, {
         error: true,
         message: "All fields are required",
-        formData: { email, name, website, role },
+        formData: { email, name, website, role, title },
       });
     }
 
@@ -25,7 +26,7 @@ export const actions = {
       return fail(400, {
         error: true,
         message: "Passwords do not match",
-        formData: { email, name, website, role },
+        formData: { email, name, website, role, title },
       });
     }
 
@@ -38,6 +39,7 @@ export const actions = {
       apiFormData.append("password", password);
       apiFormData.append("name", name);
       apiFormData.append("role", role);
+      apiFormData.append("title", title);
 
       // Add website field if it's a business account
       if (role === "business" && website) {
@@ -60,7 +62,7 @@ export const actions = {
         return fail(response.status, {
           error: true,
           message: errorData.error || "Registration failed",
-          formData: { email, name, website, role },
+          formData: { email, name, website, role, title },
         });
       }
 
@@ -72,7 +74,7 @@ export const actions = {
       return fail(500, {
         error: true,
         message: "An error occurred during registration",
-        formData: { email, name, website, role },
+        formData: { email, name, website, role, title },
       });
     }
   },

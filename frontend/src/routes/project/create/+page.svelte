@@ -8,6 +8,7 @@
   let error: string | null = $state(null);
 
   // Khai báo các biến để lưu trữ dữ liệu form
+  let difficulty: string = $state("");
   let title: string = $state("");
   let skills: string[] = $state([]);
   let startDate: string = $state("");
@@ -20,19 +21,18 @@
   // Thêm các biến state mới
   let isSkillDropdownOpen = $state(false);
   let skillSearchTerm = $state("");
-  let filteredSkills: string[] = $state([]);
+  // let filteredSkills: string[] = $state([]);
 
-  // Lọc kỹ năng theo tìm kiếm
-  // Tôi đang dùng svelte 5 nên cú pháp effect có thay đổi như thế này bạn hãy nắm ý tưởng và chỉnh sửa cho đúng nhé
-  $effect(() => {
-    if (skillSearchTerm) {
-      filteredSkills = availableSkills.filter(
-        (skill) =>
-          !skillSearchTerm ||
-          skill.toLowerCase().includes(skillSearchTerm.toLowerCase())
-      );
-    }
-  });
+  // // Lọc kỹ năng theo tìm kiếm
+  // $effect(() => {
+  //   if (skillSearchTerm) {
+  //     filteredSkills = availableSkills.filter(
+  //       (skill) =>
+  //         !skillSearchTerm ||
+  //         skill.toLowerCase().includes(skillSearchTerm.toLowerCase())
+  //     );
+  //   }
+  // });
   // Toggle skill selection
   function toggleSkill(skill: string) {
     if (skills.includes(skill)) {
@@ -1223,6 +1223,7 @@
         max_member: member,
         start_time: startDate,
         end_time: endDate,
+        difficulty: difficulty,
       };
 
       // Gửi request đến API endpoint
@@ -1269,6 +1270,7 @@
     skills = [];
     startDate = "";
     endDate = "";
+    difficulty = "";
     member = 1;
 
     // Reset select element (cần phải reset DOM element vì Svelte không tự động cập nhật select multiple)
@@ -1283,10 +1285,10 @@
   }
 
   // Xử lý khi người dùng chọn skills
-  function handleSkillsChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    skills = Array.from(select.selectedOptions).map((option) => option.value);
-  }
+  // function handleSkillsChange(event: Event) {
+  //   const select = event.target as HTMLSelectElement;
+  //   skills = Array.from(select.selectedOptions).map((option) => option.value);
+  // }
 
   // Thêm hàm tính khoảng thời gian dự án
   function calculateDuration(start: string, end: string): string {
@@ -1436,6 +1438,68 @@
                 </svg>
               </div>
             </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-medium text-gray-700 mb-1"
+              for="difficulty"
+            >
+              Difficulty Level<span class="text-[#ff6f61]">*</span>
+            </label>
+            <div class="relative">
+              <select
+                id="difficulty"
+                name="difficulty"
+                bind:value={difficulty}
+                class="w-full p-3 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent transition-all duration-200 appearance-none"
+                required
+              >
+                <option value="" disabled selected
+                  >Select difficulty level</option
+                >
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="expert">Expert</option>
+              </select>
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <svg
+                  class="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+              <div
+                class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
+              >
+                <svg
+                  class="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              Choose the skill level required for this project
+            </p>
           </div>
 
           <div>
@@ -2024,6 +2088,15 @@
             <div class="text-left">
               <p class="text-xs text-gray-500">Status</p>
               <p class="text-green-600 font-medium">Active</p>
+            </div>
+            <div class="text-left">
+              <p class="text-xs text-gray-500">Difficulty</p>
+              <p class="font-medium text-gray-800">
+                {createdProjectInfo?.difficulty
+                  ? createdProjectInfo.difficulty.charAt(0).toUpperCase() +
+                    createdProjectInfo.difficulty.slice(1)
+                  : "Not specified"}
+              </p>
             </div>
           </div>
 

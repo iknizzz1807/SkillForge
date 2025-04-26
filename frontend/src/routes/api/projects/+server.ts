@@ -9,8 +9,15 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
     }
 
     const data = await request.json();
-    const { title, description, skills, max_member, start_time, end_time } =
-      data;
+    const {
+      title,
+      description,
+      skills,
+      max_member,
+      start_time,
+      end_time,
+      difficulty,
+    } = data;
 
     // Validate required fields
     if (
@@ -20,7 +27,8 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
       !skills ||
       skills.length === 0 ||
       !end_time ||
-      !max_member
+      !max_member ||
+      !difficulty
     ) {
       throw new Error("All fields are required");
     }
@@ -37,6 +45,7 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
         description,
         skills,
         max_member,
+        difficulty,
         start_time: new Date(start_time).toISOString(),
         end_time: new Date(end_time).toISOString(),
       }),

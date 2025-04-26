@@ -39,6 +39,9 @@ type Project struct {
 	// CurrentMember là số lượng sinh viên tham gia dự án (chỉ đọc, được tính toán tự động)
 	CurrentMember int `json:"current_member" bson:"current_member"`
 
+	// Difficulty là trường chỉ độ khó của dự án gồm "beginer", "intermediate" và "expert"
+	Difficulty string `json:"difficulty" bson:"difficulty"`
+
 	// CreatedBy là ID của user tạo dự án (doanh nghiệp)
 	CreatedByID string `json:"created_by_id" bson:"created_by_id"`
 

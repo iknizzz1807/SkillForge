@@ -1,9 +1,11 @@
 import type { PageServerLoad } from "./$types";
 
-export const load = (async ({ locals, fetch, url }) => {
+export const load = (async ({ locals, fetch, url, parent }) => {
   const user = locals.user;
   const origin = url.origin;
   const token = locals.token;
+  const parentData = await parent();
+  const title = parentData.title;
 
   // Initialize businessInfo with default empty values
   let businessInfo = {
@@ -14,8 +16,8 @@ export const load = (async ({ locals, fetch, url }) => {
     aboutUs: "",
   };
 
-  // Only fetch business info if user is logged in
-  if (token) {
+  // Only fetch business info if user is logged in and the role is business
+  if (token && user?.role === "business") {
     try {
       const response = await fetch("/api/business-info", {
         method: "GET",
@@ -46,6 +48,7 @@ export const load = (async ({ locals, fetch, url }) => {
     name: user?.name,
     email: user?.email,
     role: user?.role,
+    title: title,
     avatarUrl: `${origin}/api/avatars` || null,
     businessInfo,
   };

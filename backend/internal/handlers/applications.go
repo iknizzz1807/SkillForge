@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -147,6 +148,45 @@ func (h *ApplicationHandler) GetApplicationsByCurrentUser(c *gin.Context) {
 
 	// Trả về danh sách applications
 	c.JSON(http.StatusOK, applications)
+}
+
+// GetApplicationCount xử lý endpoint GET /api/applications/count
+// Lấy số lượng applications liên quan đến người dùng hiện tại (dựa vào role)
+// - Nếu là student: trả về số lượng applications mà student đã đăng ký
+// - Nếu là business: trả về số lượng applications cho projects của business
+// Return: Trả về JSON chứa số lượng applications hoặc lỗi
+func (h *ApplicationHandler) GetApplicationCount(c *gin.Context) {
+	userID := c.GetString("userID")
+	role := c.GetString("role")
+
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
+		return
+	}
+
+	var applications []models.Application
+	var err error
+
+	// Dựa vào role để gọi service phù hợp
+	switch role {
+	case "student":
+		applications, err = h.applicationService.GetApplicationsByUserID(userID)
+	case "business":
+		applications, err = h.applicationService.GetApplicationsByBusinessID(userID)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user role"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về số lượng applications trong một JSON object
+	c.JSON(http.StatusOK, gin.H{
+		"count": len(applications),
+	})
 }
 
 // UpdateApplicationStatus xử lý endpoint PUT /api/applications/:id/status

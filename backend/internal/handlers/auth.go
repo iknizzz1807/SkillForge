@@ -35,11 +35,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	name := c.PostForm("name")
 	password := c.PostForm("password")
 	role := c.PostForm("role")
+	title := c.PostForm("title")
 	website := c.PostForm("website") // Get website field
 
 	// Basic validation
-	if email == "" || name == "" || password == "" || role == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email, name, password, and role are required"})
+	if email == "" || name == "" || password == "" || role == "" || title == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email, name, password, role and title are required"})
 		return
 	}
 
@@ -78,7 +79,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	// Register the user
-	user, token, err := h.authService.Register(email, name, password, roleLower, website, avatarFile, fileHeader)
+	user, token, err := h.authService.Register(email, name, password, roleLower, website, title, avatarFile, fileHeader)
 	if err != nil {
 		errMsg := err.Error()
 		statusCode := http.StatusInternalServerError

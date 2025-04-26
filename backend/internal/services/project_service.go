@@ -80,7 +80,7 @@ func (s *ProjectService) GetProjectByID(projectID string) (*models.Project, erro
 // CreateProject tạo dự án mới
 // Input: userID (string), title (string), description (string), skills ([]string), timeline (string)
 // Return: *models.Project (project vừa tạo), error (nếu có lỗi)
-func (s *ProjectService) CreateProject(creatorID, userName, title, description string, skills []string, startTime time.Time, endTime time.Time, maxMember int) (*models.Project, error) {
+func (s *ProjectService) CreateProject(creatorID, userName, title, description string, skills []string, startTime time.Time, endTime time.Time, maxMember int, difficulty string) (*models.Project, error) {
 	// Kiểm tra input hợp lệ
 	if creatorID == "" || title == "" || description == "" || len(skills) == 0 {
 		return nil, errors.New("invalid project data")
@@ -96,6 +96,7 @@ func (s *ProjectService) CreateProject(creatorID, userName, title, description s
 		EndTime:       endTime,
 		MaxMember:     maxMember,
 		CurrentMember: 0,
+		Difficulty:    difficulty,
 		CreatedByID:   creatorID,
 		CreatedByName: userName,
 		// Trường status này chỉ dùng để hiển thị và tìm kiếm
@@ -222,6 +223,7 @@ func (s *ProjectService) UpdateProject(
 	endTime time.Time,
 	maxMember int,
 	status string,
+	difficulty string,
 ) (*models.Project, error) {
 	// Lấy thông tin project hiện tại
 	project, err := s.GetProjectByID(projectID)
@@ -235,6 +237,9 @@ func (s *ProjectService) UpdateProject(
 	}
 	if description != "" {
 		project.Description = description
+	}
+	if difficulty != "" {
+		project.Difficulty = difficulty
 	}
 	if skills != nil && len(skills) > 0 {
 		project.Skills = skills

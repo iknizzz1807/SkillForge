@@ -117,6 +117,7 @@ func RegisterRoutes(
 		// - Với business: xem những students nào apply vào dự án của mình
 		// - Với student: xem mình đã apply vào những project nào cùng với status của các dự án đó
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
+		api.GET("/applications/count", applicationHandler.GetApplicationCount)
 		// This update for status is used for accept or reject an application, if accept add the student to the project
 		api.PUT("/applications/status/:id", applicationHandler.UpdateApplicationStatus)
 		// ID truyền vào ở đây là application id, còn userID thì truyền vào context
@@ -166,6 +167,7 @@ func RegisterRoutes(
 
 		// === Route phục vụ file avatar ===
 		r.GET("/avatars", avatarHandler.ServeAvatar)
+		r.GET("/avatars/:id", avatarHandler.ServeAvatarByUserID)
 
 		// === Route phục vụ business info
 		api.GET("/business-info", businessInfoHandler.GetBusinessInfo)

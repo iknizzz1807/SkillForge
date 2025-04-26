@@ -12,6 +12,7 @@ type ProjectDisplay = {
   created_by_name: string;
   max_member: number;
   current_member: number;
+  difficulty: string;
   status: string;
   created_at: string;
 };
@@ -23,10 +24,22 @@ export const load = (async ({ fetch, cookies, parent }) => {
 
     const parentData = await parent();
     const role = parentData.role || "";
-    const id = parentData.id || "";
-    const name = parentData.userName || "";
+    // const id = parentData.id || "";
+    // const name = parentData.userName || "";
 
     let response;
+    let applicationCountResponse;
+
+    // Fetch application count in parallel with projects
+    applicationCountResponse = await fetch(
+      "http://backend:8080/api/applications/count",
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (role === "business") {
       // Make get request to the business API
@@ -48,11 +61,26 @@ export const load = (async ({ fetch, cookies, parent }) => {
       });
     }
 
+    // Xử lý dữ liệu số lượng applications
+    let applicationCount = 0;
+    if (applicationCountResponse) {
+      if (applicationCountResponse.ok) {
+        const countData = await applicationCountResponse.json();
+        applicationCount = countData.count || 0;
+      } else {
+        console.error(
+          "Error fetching application count:",
+          applicationCountResponse.statusText
+        );
+      }
+    }
+
     if (response) {
       if (!response.ok) {
         console.error("Error fetching projects:", response.statusText);
         return {
           projects: [],
+          applicationCount,
           error: `Failed to load projects: ${response.statusText}`,
         };
       }
@@ -66,6 +94,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
       console.log("API returned null, treating as empty array");
       return {
         projects: [],
+        applicationCount,
         error: null,
       };
     }
@@ -75,6 +104,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
       console.error("API returned invalid data format:", responseData);
       return {
         projects: [],
+        applicationCount,
         error: "Received invalid data format from server",
       };
     }
@@ -91,6 +121,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
       created_by_name: project.created_by_name || "",
       max_member: project.max_member || 0,
       current_member: project.current_member || 0,
+      difficulty: project.difficulty || "beginer",
       status: project.status || "",
       created_at: project.created_at || new Date().toISOString(),
     }));
@@ -99,6 +130,7 @@ export const load = (async ({ fetch, cookies, parent }) => {
     return {
       role: role,
       projects,
+      applicationCount,
       error: null,
       token: token,
     };
@@ -106,86 +138,8 @@ export const load = (async ({ fetch, cookies, parent }) => {
     console.error("Error loading projects:", error);
     return {
       projects: [],
+      applicationCount: 0,
       error: "Failed to load projects. Please try again later.",
     };
   }
 }) satisfies PageServerLoad;
-
-export const actions = {
-  default: async ({
-    request,
-    cookies,
-  }: {
-    request: Request;
-    cookies: Cookies;
-  }) => {
-    try {
-      const data = await request.formData();
-
-      const title = data.get("title")?.toString();
-      const description = data.get("description")?.toString();
-      const skills = data.getAll("skills").map((skill) => skill.toString());
-      const timeline = data.get("timeline")?.toString();
-
-      const token = cookies.get("auth_token");
-      if (!token) {
-        return fail(401, {
-          success: false,
-          error: "Authentication required",
-        });
-      }
-
-      if (!title || !description || !timeline || skills.length === 0) {
-        return fail(400, {
-          success: false,
-          error: "All fields are required",
-        });
-      }
-
-      // Send data to API
-      const response = await fetch("http://backend:8080/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          skills,
-          timeline,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Failed to create project";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Ignore JSON parsing error
-        }
-
-        return fail(response.status, {
-          success: false,
-          error: errorMessage,
-        });
-      }
-
-      // Parse the created project
-      const createdProject = await response.json();
-
-      // Success
-      return {
-        success: true,
-        project: createdProject,
-      };
-    } catch (error) {
-      console.error("Error creating project:", error);
-      return fail(500, {
-        success: false,
-        error: "An unexpected error occurred",
-      });
-    }
-  },
-} satisfies Actions;

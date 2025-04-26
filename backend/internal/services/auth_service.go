@@ -30,7 +30,7 @@ func NewAuthService(userRepo *repositories.UserRepository, fileService *FileServ
 // Register đăng ký người dùng mới, bao gồm cả xử lý avatar (nếu có)
 // Input: email, name, password, role (string), file (multipart.File), header (*multipart.FileHeader) - file và header có thể nil
 // Return: *models.User (user vừa tạo, có thể có AvatarURL), string (token JWT), error
-func (s *AuthService) Register(email, name, password, role, website string, file multipart.File, header *multipart.FileHeader) (*models.User, string, error) {
+func (s *AuthService) Register(email, name, password, role, website, title string, file multipart.File, header *multipart.FileHeader) (*models.User, string, error) {
 	ctx := context.Background()
 
 	// 1. Kiểm tra email tồn tại
@@ -47,6 +47,7 @@ func (s *AuthService) Register(email, name, password, role, website string, file
 		Password:  utils.HashPassword(password),
 		Role:      strings.ToLower(role),
 		Website:   website,
+		Title:     title,
 		CreatedAt: time.Now(),
 		// AvatarURL sẽ được cập nhật sau nếu có file
 	}

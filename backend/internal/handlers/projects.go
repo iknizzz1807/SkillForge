@@ -136,6 +136,7 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 		StartTime   time.Time `json:"start_time" binding:"required"`
 		EndTime     time.Time `json:"end_time" binding:"required"`
 		MaxMember   int       `json:"max_member" binding:"required"`
+		Difficulty  string    `json:"difficulty" binding:"required"`
 	}
 
 	// Parse và validate request body
@@ -149,7 +150,7 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
 	userName := c.GetString("name")
 
 	// Gọi service để tạo project
-	project, err := h.projectService.CreateProject(userID, userName, req.Title, req.Description, req.Skills, req.StartTime, req.EndTime, req.MaxMember)
+	project, err := h.projectService.CreateProject(userID, userName, req.Title, req.Description, req.Skills, req.StartTime, req.EndTime, req.MaxMember, req.Difficulty)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -223,6 +224,7 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 		EndTime     time.Time `json:"end_time"`
 		MaxMember   int       `json:"max_member"`
 		Status      string    `json:"status"`
+		Difficulty  string    `json:"difficulty"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -251,6 +253,7 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 		req.EndTime,
 		req.MaxMember,
 		req.Status,
+		req.Difficulty,
 	)
 
 	if err != nil {

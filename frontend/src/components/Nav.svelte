@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
+  import { browser } from "$app/environment";
+  import { goto } from "$app/navigation";
   let {
     url,
     role,
@@ -154,39 +156,45 @@
     };
   });
 
-  const logout = async () => {
-    const response = await fetch("/api/logout", {
-      method: "POST",
-    });
+  // const logout = async () => {
+  //   const response = await fetch("/api/logout", {
+  //     method: "POST",
+  //   });
 
-    if (response.ok) {
-      // Chuyển hướng thủ công sau khi logout thành công
+  //   if (response.ok) {
+  //     // Chuyển hướng thủ công sau khi logout thành công
+  //     window.location.href = "/login";
+  //   }
+  // };
+
+  // Logout client side
+  const logout = async () => {
+    try {
+      // 1. Gọi API server để xóa session nếu cần
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include", // Gửi kèm cookie
+      });
+
+      // 2. Xóa cookie ở client (vì cookie có httpOnly: false nên có thể xóa ở client)
+      if (browser) {
+        // Xóa cookie với cùng các thuộc tính khi set
+        document.cookie =
+          "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+        // Xóa dữ liệu lưu trữ cục bộ
+        localStorage.removeItem("user");
+        sessionStorage.clear();
+      }
+
+      // 3. Redirect về trang login
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Vẫn cố gắng redirect nếu có lỗi
       window.location.href = "/login";
     }
   };
-
-  // Logout client side
-  // const logout = () => {
-  //   // Client-side logout
-  //   if (browser) {
-  //     // 1. Xóa cookie auth_token
-  //     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-  //     // 2. Nếu bạn đang sử dụng nhiều domain, xóa cookie trên tất cả domain có thể
-  //     const domains = ["localhost", "skillforge.ikniz.site", ".skillforge.ikniz.site"];
-
-  //     domains.forEach(domain => {
-  //       document.cookie = `auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
-  //     });
-
-  //     // 3. Xóa bất kỳ dữ liệu local nào (localStorage, sessionStorage)
-  //     localStorage.removeItem("user");
-  //     sessionStorage.clear();
-
-  //     // 4. Chuyển hướng đến trang đăng nhập
-  //     goto("/login", { replaceState: true });
-  //   }
-  // };
 
   const toggleAccountForm = () => {
     //
@@ -380,63 +388,6 @@
                 class="absolute top-0 right-0 w-2 h-2 bg-[#ff6f61] rounded-full"
               ></span>
             </button>
-
-            <!-- Dropdown menu -->
-            <!-- <div
-              class={`absolute bottom-full left-5 mb-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] ${!isNotificationOpen ? "hidden" : ""}`}
-            >
-              <div
-                class="px-4 py-3 border-b border-gray-200 flex justify-between items-center"
-              >
-                <h3 class="font-semibold text-gray-700">Notifications</h3>
-              </div>
-              <div class="max-h-72 overflow-y-auto">
-                {#each notifications.slice(0, 3) as notification}
-                  <div
-                    class="p-3 border-l-4 {notification.colorClass} hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div class="flex items-start">
-                      <div class="{notification.bgClass} p-2 rounded-full mr-3">
-                        <svg
-                          class="w-5 h-5 {notification.textClass}"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d={notification.icon}
-                          ></path>
-                        </svg>
-                      </div>
-                      <div class="flex-1">
-                        <p class="font-semibold text-sm text-gray-800">
-                          {notification.title}
-                        </p>
-                        <p class="text-xs text-gray-600 mt-1">
-                          {notification.message}
-                        </p>
-                        <p class="text-xs text-gray-500 mt-2">
-                          {notification.time}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                {/each}
-              </div>
-
-              <div class="px-4 py-3 text-center border-t border-gray-200">
-                <button
-                  class="text-sm text-[#896DFF] font-medium hover:underline w-full"
-                  onclick={openAllNotificationsModal}
-                >
-                  View All Notifications
-                </button>
-              </div>
-            </div> -->
           </div>
 
           <!-- Logout Icon -->

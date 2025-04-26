@@ -39,6 +39,28 @@ func (h *AvatarHandler) ServeAvatar(c *gin.Context) {
 	c.File(avatarPath)
 }
 
+// ServeAvatarByUserID phục vụ file avatar tĩnh dựa trên user ID được truyền vào
+// Được gọi bởi route GET /avatars/:id
+func (h *AvatarHandler) ServeAvatarByUserID(c *gin.Context) {
+	// Lấy userID từ URL parameter
+	userID := c.Param("id")
+	if userID == "" {
+		c.String(http.StatusBadRequest, "User ID is required")
+		return
+	}
+
+	// Sử dụng service để tìm avatar
+	avatarPath, err := h.fileService.FindAvatarByUserID(userID)
+	if err != nil {
+		// Trả về status 404 nếu không tìm thấy avatar
+		c.String(http.StatusNotFound, "Avatar not found")
+		return
+	}
+
+	// Phục vụ file bằng Gin
+	c.File(avatarPath)
+}
+
 // UploadAvatar xử lý upload avatar
 func (h *AvatarHandler) UploadAvatar(c *gin.Context) {
 	// Lấy userID từ context đã được authentication middleware thiết lập
