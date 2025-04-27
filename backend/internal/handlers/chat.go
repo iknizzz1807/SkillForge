@@ -38,7 +38,7 @@ func (ch *ChatHandler) GetGroupInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Group ID is required"})
 		return
 	}
-	Messages, members, err := ch.chatService.GetGroupInfo(c, groupID)
+	Messages, members, err := ch.chatService.GetGroupInfo(groupID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

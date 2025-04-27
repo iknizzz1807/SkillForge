@@ -72,8 +72,9 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 	return groups, nil
 }
 
-func (r *ChatRepository) GetGroupMessages(ctx context.Context, groupID string) ([]*models.Message, error) {
+func (r *ChatRepository) GetGroupMessages(groupID string) ([]*models.Message, error) {
 	// Get all messages with groupID
+	ctx := context.Background()
 	cursor, err := r.MessageCollection.Find(ctx, bson.M{"group_id": groupID})
 	if err != nil {
 		return nil, err
@@ -88,8 +89,9 @@ func (r *ChatRepository) GetGroupMessages(ctx context.Context, groupID string) (
 	return messages, nil
 }
 
-func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([]*models.User, error) {
+func (r *ChatRepository) GetGroupMembers(groupID string) ([]*models.User, error) {
 	// Get all userID with groupID in project_student
+	ctx := context.Background()
 	cursor, err := r.ProjectStudentCollection.Find(ctx, bson.M{"project_id": groupID})
 	if err != nil {
 		return nil, err
@@ -101,7 +103,7 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 		return nil, err
 	}
 
-	// Get all userID 
+	// Get all userID
 	usersID := []string{}
 	for _, projectStudent := range projectStudents {
 		usersID = append(usersID, projectStudent.Student_id)
