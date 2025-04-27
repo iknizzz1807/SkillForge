@@ -39,13 +39,12 @@
         projectsSuggest = projectsSuggest.map((project) => ({
           ...project,
           // Standardize field names
-          id: project.ProjectID || project.id,
-          title: project.ProjectTitle || project.title,
-          skills: project.ProjectSkills || project.skills || [],
+          id: project.ProjectID || project.project_id,
+          title: project.ProjectTitle || project.project_title,
+          skills: project.ProjectSkills || project.project_skills || [],
           start_time: project.StartTime || project.start_time,
           end_time: project.EndTime || project.end_time,
-          created_by_id: project.CreatorID || project.created_by_id,
-          created_by_name: project.CreatorName || project.created_by_name,
+          created_by_name: project.CreatorName || project.creator_name,
           match_score: project.match_score,
         }));
       }
@@ -1069,7 +1068,7 @@
                     project.end_time.toString()
                   )} | By
                   <a
-                    href={"/profile/" + project.created_by_id}
+                    href="/marketplace"
                     class="text-xs text-[#6b48ff] hover:underline"
                   >
                     {project.created_by_name}

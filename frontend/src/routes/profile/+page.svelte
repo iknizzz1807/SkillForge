@@ -2,6 +2,7 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const userData = data.userData;
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
 

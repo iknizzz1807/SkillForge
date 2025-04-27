@@ -72,11 +72,15 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 		}
 		Content := PassedMessage.Content
 
+		// Tại đây cần kiểm tra xem Message có thông tin user_name không
 		Message, err := wsh.chatService.InsertMessage(context.Background(), room, userID, Content)
 		if err != nil {
 			log.Printf("Error inserting message: %v", err)
 			continue
 		}
+
+		// Thêm log để xem tin nhắn được lưu và trả về
+		log.Printf("Message inserted and broadcast: %+v", Message)
 
 		response, err := json.Marshal(Message)
 		if err != nil {

@@ -17,6 +17,7 @@
   let { data }: { data: PageData } = $props();
   const project = data.project;
   const userId = data.id;
+  const role = data.role;
   const token = data.token;
 
   let socket: any;
@@ -63,6 +64,64 @@
   // Khởi tạo SortableJS cho các cột trong Kanban
   async function initSortable() {
     sortables = await initSortableJS(getTasksByStatus, handleTaskMove, socket);
+  }
+
+  // Thêm vào phần state variables
+  let showCompleteProjectModal = $state(false);
+  let showRatingModal = $state(false);
+  let teamRatings = $state<
+    { id: string | number; name: string; rating: number; comment: string }[]
+  >([]);
+  let tempRatings = $state<
+    { id: string | number; name: string; rating: number; comment: string }[]
+  >([]);
+
+  // Hàm mở modal kết thúc dự án
+  function openCompleteProjectModal() {
+    showCompleteProjectModal = true;
+  }
+
+  // Hàm đóng modal kết thúc dự án
+  function closeCompleteProjectModal() {
+    showCompleteProjectModal = false;
+  }
+
+  // Hàm xác nhận kết thúc dự án
+  function confirmCompleteProject() {
+    const unfinishedTasks = tasks.filter(
+      (task) => task.status !== "done" && task.status !== "completed"
+    );
+
+    // Chuẩn bị rating cho từng thành viên
+    tempRatings = teamMembers.map((member) => ({
+      id: member.id,
+      name: member.name,
+      rating: 0,
+      comment: "",
+    }));
+
+    // Đóng modal kết thúc dự án và mở modal đánh giá
+    closeCompleteProjectModal();
+    showRatingModal = true;
+  }
+
+  // Hàm đóng modal đánh giá
+  function closeRatingModal() {
+    showRatingModal = false;
+  }
+
+  // Hàm hoàn thành đánh giá và kết thúc dự án
+  function completeRatingAndProject() {
+    // Lưu đánh giá
+    teamRatings = [...tempRatings];
+
+    // Gửi dữ liệu đánh giá lên server (mô phỏng)
+    console.log("Project completed with ratings:", teamRatings);
+
+    // Đóng modal đánh giá
+    closeRatingModal();
+
+    // Hiển thị thông báo thành công
   }
 
   function handleTaskMove(
@@ -436,6 +495,30 @@
       <p class="text-sm text-gray-600">Manage your project</p>
     </div>
   </div>
+
+  <!-- Nút kết thúc dự án - chỉ hiển thị cho vai trò business -->
+  {#if role === "business"}
+    <button
+      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+      onclick={openCompleteProjectModal}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 mr-2"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+      End Project
+    </button>
+  {/if}
 </header>
 
 <main class="flex-1 pr-4 pl-4 ml-64">
@@ -1421,6 +1504,218 @@
   </div>
 {/if}
 
+<!-- Modal Kết thúc dự án -->
+{#if showCompleteProjectModal}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
+  >
+    <div class="bg-white rounded-lg w-full max-w-md shadow-lg overflow-hidden">
+      <div class="p-4 border-b border-gray-100">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Kết thúc dự án</h3>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeCompleteProjectModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-10 w-10 text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h4 class="text-xl font-medium mb-2">
+            Do you actually want to finish the project?
+          </h4>
+          <p class="text-gray-500">
+            Are you sure to finish the project "{project.title}"? <br />
+            <span class="text-sm"
+              >After finishing this project, you will have to rate the team
+              members</span
+            >
+          </p>
+        </div>
+
+        <div class="bg-yellow-50 p-3 rounded-lg mb-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-5 w-5 text-yellow-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-700">
+                {tasks.filter(
+                  (t) => t.status !== "done" && t.status !== "completed"
+                ).length} task(s) not completed
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex justify-end space-x-3">
+        <button
+          class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+          onclick={closeCompleteProjectModal}
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          onclick={confirmCompleteProject}
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal Đánh giá thành viên -->
+{#if showRatingModal}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
+  >
+    <div
+      class="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
+    >
+      <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Rating members</h3>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeRatingModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-grow">
+        <p class="text-gray-600 mb-6">Please rate members in this project</p>
+
+        <div class="space-y-6">
+          {#each tempRatings as rating, index}
+            <div class="p-4 bg-gray-50 rounded-lg">
+              <div class="flex items-center mb-3">
+                <div
+                  class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 mr-3"
+                >
+                  <img
+                    src={`/api/avatars/${rating.id}`}
+                    alt={rating.name}
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <h4 class="font-medium">{rating.name}</h4>
+              </div>
+
+              <div class="mb-3">
+                <label class="block text-sm font-medium mb-2"
+                  >Rate (1-5 stars):</label
+                >
+                <div class="flex space-x-2">
+                  {#each Array(5) as _, starIndex}
+                    <button
+                      class="text-2xl focus:outline-none"
+                      onclick={() =>
+                        (tempRatings[index].rating = starIndex + 1)}
+                    >
+                      {#if starIndex < rating.rating}
+                        <span class="text-yellow-400">★</span>
+                      {:else}
+                        <span class="text-gray-300">☆</span>
+                      {/if}
+                    </button>
+                  {/each}
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-2">Comment</label>
+                <textarea
+                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                  rows="2"
+                  placeholder="Your comment about this member..."
+                  bind:value={tempRatings[index].comment}
+                ></textarea>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex justify-end space-x-3">
+        <button
+          class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+          onclick={closeRatingModal}
+        >
+          Later
+        </button>
+        <button
+          class="px-4 py-2 bg-[#6b48ff] text-white rounded-lg hover:bg-[#5a3dd4]"
+          onclick={completeRatingAndProject}
+        >
+          Finish
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   .modal {
     background-color: rgba(0, 0, 0, 0.5);
@@ -1443,5 +1738,31 @@
 
   .bg-gray-200 .fallback-avatar {
     color: #4b5563;
+  }
+
+  /* Rating stars styling */
+  .star-rating {
+    display: flex;
+    align-items: center;
+  }
+
+  .star-rating button {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .star-rating button:hover ~ button span,
+  .star-rating button:hover span {
+    color: #fcd34d;
+  }
+
+  .star-rating .filled {
+    color: #fcd34d;
+  }
+
+  .star-rating .empty {
+    color: #d1d5db;
   }
 </style>

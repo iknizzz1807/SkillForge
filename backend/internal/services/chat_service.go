@@ -42,5 +42,5 @@ func (c *ChatService) InsertMessage(ctx context.Context, userID, projectID, cont
 		GroupID:  projectID,
 		Content:  content,
 	}
-	return c.chatRepo.InsertMessage(ctx, message)
+	return c.chatRepo.InsertMessage(message)
 }

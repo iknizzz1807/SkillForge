@@ -14,7 +14,7 @@ type ChatRepository struct {
 	GroupCollection          *mongo.Collection
 	ProjectStudentCollection *mongo.Collection
 	ProjectCollection        *mongo.Collection
-	UserCollection *mongo.Collection
+	UserCollection           *mongo.Collection
 }
 
 func NewChatRepository(db *mongo.Database) *ChatRepository {
@@ -23,7 +23,7 @@ func NewChatRepository(db *mongo.Database) *ChatRepository {
 		GroupCollection:          db.Collection("groups"),
 		ProjectStudentCollection: db.Collection("project_student"),
 		ProjectCollection:        db.Collection("projects"),
-		UserCollection: db.Collection("users"),
+		UserCollection:           db.Collection("users"),
 	}
 }
 
@@ -130,8 +130,9 @@ func (r *ChatRepository) GetGroupMembers(groupID string) ([]*models.User, error)
 	return users, nil
 }
 
-func (r *ChatRepository) InsertMessage(ctx context.Context, message *models.Message) (*models.Message, error) {
+func (r *ChatRepository) InsertMessage(message *models.Message) (*models.Message, error) {
 	// Insert message into database
+	ctx := context.Background()
 	message.CreatedAt = time.Now()
 	_, err := r.MessageCollection.InsertOne(ctx, message)
 	if err != nil {

@@ -16,6 +16,35 @@ export const load = (async ({ locals, fetch, url, parent }) => {
     aboutUs: "",
   };
 
+  let userData = {};
+
+  try {
+    const response = await fetch("/api/profile", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      // Kiểm tra content-type trước khi parse JSON
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        userData = await response.json();
+      } else {
+        console.error("API didn't return JSON content:", await response.text());
+      }
+    } else {
+      console.error(
+        "Profile API error:",
+        response.status,
+        await response.text()
+      );
+    }
+  } catch (error) {
+    console.error("Failed to fetch user data:", error);
+  }
+
   // Only fetch business info if user is logged in and the role is business
   if (token && user?.role === "business") {
     try {
@@ -27,16 +56,29 @@ export const load = (async ({ locals, fetch, url, parent }) => {
       });
 
       if (response.ok) {
-        // Get the business info directly from response
-        const data = await response.json();
-
-        businessInfo = {
-          companyType: data.company_type || "",
-          founded: data.founded || "",
-          companySize: data.company_size || "",
-          website: data.website || "",
-          aboutUs: data.about_us || "",
-        };
+        // Kiểm tra content-type trước khi parse JSON
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          businessInfo = {
+            companyType: data.company_type || "",
+            founded: data.founded || "",
+            companySize: data.company_size || "",
+            website: data.website || "",
+            aboutUs: data.about_us || "",
+          };
+        } else {
+          console.error(
+            "Business API didn't return JSON:",
+            await response.text()
+          );
+        }
+      } else {
+        console.error(
+          "Business API error:",
+          response.status,
+          await response.text()
+        );
       }
     } catch (error) {
       console.error("Failed to fetch business info:", error);
@@ -50,6 +92,7 @@ export const load = (async ({ locals, fetch, url, parent }) => {
     role: user?.role,
     title: title,
     avatarUrl: `${origin}/api/avatars` || null,
+    userData,
     businessInfo,
   };
 }) satisfies PageServerLoad;
