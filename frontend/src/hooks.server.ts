@@ -1,8 +1,5 @@
 import { redirect, type Handle } from "@sveltejs/kit";
-import { WebSocketServer } from "ws";
 
-// Biến lưu trữ WebSocket server
-let wss: WebSocketServer | null = null;
 // List of routes that don't require authentication
 const publicRoutes = ["/login", "/register", "/api/public"];
 
