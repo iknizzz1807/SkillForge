@@ -40,7 +40,7 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	}
 
 	// Gửi POST request tới FastAPI
-	resp, err := http.Post(c.url+"/match", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(c.url+"/matching", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +59,7 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	return result.MatchScore, nil
 }
 
-func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string)  ([]float64, error) {
+func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string) ([]float64, error) {
 	// Tạo payload JSON
 	payload := map[string]interface{}{
 		"user_skills":    userInfo,
@@ -71,7 +71,7 @@ func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string
 	}
 
 	// Gửi POST request tới FastAPI
-	resp, err := http.Post(c.url+"/match2", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(c.url+"/matching2", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string
 
 	// Decode response
 	var result struct {
-		MatchScores []float64 `json:"match_scores"`
+		MatchScores []float64 `json:"match_score"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {

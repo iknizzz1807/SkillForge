@@ -19,7 +19,7 @@ func NewChatHandler(chatService *services.ChatService) *ChatHandler {
 }
 
 func (ch *ChatHandler) GetGroups(c *gin.Context) {
-	userID := c.GetString("user_id")
+	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
 		return
@@ -38,14 +38,14 @@ func (ch *ChatHandler) GetGroupInfo(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Group ID is required"})
 		return
 	}
-	Messages , members, err := ch.chatService.GetGroupInfo(c, groupID)
+	Messages, members, err := ch.chatService.GetGroupInfo(c, groupID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	info := map[string]interface{}{
 		"messages": Messages,
-		"members": members,
+		"members":  members,
 	}
 	c.JSON(http.StatusOK, info)
 }

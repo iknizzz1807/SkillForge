@@ -32,14 +32,14 @@ func Load() *Env {
 		MongoURI: getEnv("MONGO_URI", "mongodb://localhost:27017"),
 
 		// Cấu hình email (SMTP)
-		
+
 		EmailHost: getEnv("EMAIL_HOST", "smtp.example.com"),
 		EmailPort: emailPort,
 		EmailUser: getEnv("EMAIL_USER", "user@example.com"),
 		EmailPass: getEnv("EMAIL_PASS", "password"),
 
 		// URL của dịch vụ AI (FastAPI)
-		AIURL: getEnv("AI_URL", "http://localhost:8000"),
+		AIURL: getEnv("AI_URL", "http://ai:5000"),
 
 		// Token GitHub để tích hợp API
 		GitHubToken: getEnv("GITHUB_TOKEN", ""),

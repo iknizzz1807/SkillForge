@@ -44,16 +44,10 @@ func NewWebSocketTaskHandler(
 // Return: Trả về JSON danh sách các task của projectID theo dạng task_model hoặc thông báo lỗi nếu có
 // HandleConnection xử lý kết nối WebSocket từ client
 func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
-	// Cái này là đang test, uncommnent nếu dùng thực sự trong app
-	// Xác định userID - có thể từ token auth hoặc query param
-	userID := c.Query("userId")
+	userID := c.Param("userID")
 	if userID == "" {
-		// Fallback lấy userID từ JWT token
-		userID = c.GetString("userID")
-		if userID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user identification"})
-			return
-		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user identification"})
+		return
 	}
 
 	projectID := c.Param("projectID")
@@ -61,7 +55,6 @@ func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing project ID"})
 		return
 	}
-	// userID := "Thong dep trai 123"
 	room := projectID
 
 	// Nâng cấp connection HTTP lên WebSocket
@@ -110,11 +103,15 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 		return
 	}
 	response := map[string]interface{}{
-		"tasks":    tasks,
+		"tasks":      tasks,
 		"activities": activities,
 	}
 	respBytes, _ := json.Marshal(response)
-	h.realtimeClient.Broadcast(room, respBytes)
+	err = h.realtimeClient.Broadcast(room, respBytes)
+	if err != nil {
+		log.Printf("Error broadcasting: %v", err)
+		// Vẫn tiếp tục xử lý, không cần return
+	}
 
 	for {
 		// Đọc message từ WebSocket
@@ -124,79 +121,106 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 			break
 		}
 
+		// Log raw message để debug
+		log.Printf("Received message from client: %s", string(rawMessage))
+
 		var message TaskMessage
 		err = json.Unmarshal(rawMessage, &message)
 		if err != nil {
 			log.Printf("Error unmarshalling message: %v", err)
 			sendErrorMessage(conn, "Failed to unmarshal message")
-			return
+			continue // Sử dụng continue thay vì return để giữ kết nối
 		}
 
-		if message.Type == "create" {
-			// Xử lý tạo task mới
-			var req *models.TaskInput
+		log.Printf("Processing message of type: %s", message.Type)
+
+		// Xử lý theo type của message
+		switch message.Type {
+		case "create":
+			var req models.TaskInput
 			err = json.Unmarshal(message.Content, &req)
 			if err != nil {
-				log.Printf("Error unmarshalling task input: %v", err)
+				log.Printf("Error unmarshalling task input: %v, content: %s", err, string(message.Content))
 				sendErrorMessage(conn, "Failed to unmarshal task input")
-				return
+				continue
 			}
-			_, err = h.taskService.CreateTasks(projectID, userID, []models.TaskInput{*req})
+
+			log.Printf("Creating task: %+v", req)
+			_, err = h.taskService.CreateTasks(projectID, userID, []models.TaskInput{req})
 			if err != nil {
 				log.Printf("Error creating task: %v", err)
 				sendErrorMessage(conn, "Failed to create task")
-				return
+				continue
 			}
-		}
-		if message.Type != "update" {
-			var req *models.TaskUpdate
+			log.Printf("Task created successfully")
+
+		case "update":
+			var req models.TaskUpdate
 			err = json.Unmarshal(message.Content, &req)
 			if err != nil {
 				log.Printf("Error unmarshalling task update: %v", err)
 				sendErrorMessage(conn, "Failed to unmarshal task update")
-				return
+				continue
 			}
-			_, err = h.taskService.UpdateTask(req.TaskID, userID, req)
+
+			log.Printf("Updating task: %+v", req)
+			_, err = h.taskService.UpdateTask(req.TaskID, userID, &req)
 			if err != nil {
 				log.Printf("Error updating task: %v", err)
 				sendErrorMessage(conn, "Failed to update task")
-				return
+				continue
 			}
-		}
-		if message.Type == "delete" {
-			// Xử lý xóa task
-			var req string
-			err = json.Unmarshal(message.Content, &req)
+			log.Printf("Task updated successfully")
+
+		case "delete":
+			var taskID string
+			err = json.Unmarshal(message.Content, &taskID)
 			if err != nil {
 				log.Printf("Error unmarshalling task ID: %v", err)
 				sendErrorMessage(conn, "Failed to unmarshal task ID")
-				return
+				continue
 			}
-			err := h.taskService.DeleteTask(req, userID)
+
+			log.Printf("Deleting task: %s", taskID)
+			err := h.taskService.DeleteTask(taskID, userID)
 			if err != nil {
 				log.Printf("Error deleting task: %v", err)
 				sendErrorMessage(conn, "Failed to delete task")
-				return
+				continue
 			}
+			log.Printf("Task deleted successfully")
+
+		default:
+			log.Printf("Unknown message type: %s", message.Type)
+			sendErrorMessage(conn, "Unknown message type")
+			continue
 		}
+
+		// Lấy lại danh sách tasks và activities sau mỗi thao tác
 		tasks, err := h.taskService.GetTasksByProjectID(projectID)
 		if err != nil {
 			log.Printf("Error fetching tasks: %v", err)
 			sendErrorMessage(conn, "Failed to fetch tasks")
-			return
+			continue
 		}
+
 		activities, err := h.taskService.GetActivityByProjectID(userID, projectID)
 		if err != nil {
 			log.Printf("Error fetching activities: %v", err)
 			sendErrorMessage(conn, "Failed to fetch activities")
-			return
+			continue
 		}
+
 		response := map[string]interface{}{
-			"tasks":    tasks,
+			"tasks":      tasks,
 			"activities": activities,
 		}
 		respBytes, _ := json.Marshal(response)
-		h.realtimeClient.Broadcast(room, respBytes)
+		err = h.realtimeClient.Broadcast(room, respBytes)
+		if err != nil {
+			log.Printf("Error broadcasting update: %v", err)
+			// Continue processing
+		}
 	}
 }
 

@@ -8,14 +8,16 @@ package integrations
 // - Gửi thông báo tức thời (ví dụ: tin nhắn mới) tới user qua WebSocket
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 )
 
 type RealtimeClient struct {
+	mu sync.RWMutex
 	// connections lưu trữ danh sách kết nối WebSocket theo userID
 	connections map[string]map[string]*websocket.Conn
 }
@@ -32,6 +34,14 @@ func NewRealtimeClient() *RealtimeClient {
 // Input: userID (string), conn (*websocket.Conn)
 // Return: None
 func (c *RealtimeClient) AddConnection(room, userID string, conn *websocket.Conn) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Kiểm tra và khởi tạo map nếu chưa tồn tại
+	if c.connections[room] == nil {
+		c.connections[room] = make(map[string]*websocket.Conn)
+	}
+
 	// Lưu kết nối vào map
 	c.connections[room][userID] = conn
 }
@@ -40,10 +50,17 @@ func (c *RealtimeClient) AddConnection(room, userID string, conn *websocket.Conn
 // Input: userID (string)
 // Return: None
 func (c *RealtimeClient) RemoveConnection(room, userID string) {
-	// Xóa kết nối khỏi map
-	delete(c.connections[room], userID)
-	if len(c.connections[room]) == 0 {
-		delete(c.connections, room)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Kiểm tra map tồn tại trước khi xóa
+	if c.connections[room] != nil {
+		delete(c.connections[room], userID)
+
+		// Nếu room trống thì xóa luôn room
+		if len(c.connections[room]) == 0 {
+			delete(c.connections, room)
+		}
 	}
 }
 
@@ -51,6 +68,14 @@ func (c *RealtimeClient) RemoveConnection(room, userID string) {
 // Input: userID (string), message (string)
 // Return: error (nếu có lỗi)
 func (c *RealtimeClient) SendNotification(userID string, notifications []*models.Notification) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Kiểm tra room và userID tồn tại
+	if c.connections["notification"] == nil {
+		return errors.New("notification room not found")
+	}
+
 	// Tìm kết nối của user
 	conn, exists := c.connections["notification"][userID]
 	if !exists {
@@ -70,6 +95,14 @@ func (c *RealtimeClient) SendNotification(userID string, notifications []*models
 }
 
 func (c *RealtimeClient) SendMessage(userID, message string) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Kiểm tra room và userID tồn tại
+	if c.connections["message"] == nil {
+		return errors.New("message room not found")
+	}
+
 	// Tìm kết nối của user
 	conn, exists := c.connections["message"][userID]
 	if !exists {
@@ -87,11 +120,21 @@ func (c *RealtimeClient) SendMessage(userID, message string) error {
 }
 
 func (c *RealtimeClient) Broadcast(room string, message []byte) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Kiểm tra room tồn tại
+	if c.connections[room] == nil {
+		return errors.New("room not found")
+	}
+
 	// Lặp qua tất cả các kết nối trong room và gửi message
 	for _, conn := range c.connections[room] {
 		err := conn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
-			return err
+			// Ghi log lỗi nhưng không dừng broadcast
+			// Có thể bạn muốn xử lý lỗi này bằng cách khác?
+			continue
 		}
 	}
 	return nil

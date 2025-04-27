@@ -1,12 +1,7 @@
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({
-  params,
-  fetch,
-  cookies,
-  locals,
-}) => {
+export const GET: RequestHandler = async ({ params, fetch, locals }) => {
   try {
     // Lấy project_id từ params URL
     const projectId = params.project_id;

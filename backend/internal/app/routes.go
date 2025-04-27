@@ -70,14 +70,14 @@ func RegisterRoutes(
 	// Nhóm route không cần auth
 	r.POST("/auth/register", authHandler.Register) // Tạo user mới
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
-
+	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
 	r.Use(middleware.AuthMiddleware())
 
 	// CORS type shit
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.id.vn"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
@@ -177,7 +177,6 @@ func RegisterRoutes(
 		api.PUT("/business-info", businessInfoHandler.UpdateBusinessInfo)
 
 		// Route để server web socket client
-		api.GET("/ws/task/:projectID", websocketTaskHanlder.HandleConnection)
 		api.GET("/ws/notifi", websocketNotificationHandler.HandleNotificationConnection)
 		api.GET("/ws/chats/:id", websocketChatHandler.HandleConnection)
 

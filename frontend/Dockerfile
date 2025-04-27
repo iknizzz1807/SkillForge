@@ -16,5 +16,7 @@ COPY . .
 # Thiết lập port
 EXPOSE 5173
 
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Command để chạy ứng dụng trong development
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

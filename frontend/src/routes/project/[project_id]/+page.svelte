@@ -1,8 +1,108 @@
 <script lang="ts">
   import type { PageData } from "./$types";
+  import { onMount, onDestroy } from "svelte";
+  import type { Socket } from "socket.io-client";
+  import { browser } from "$app/environment";
 
   let { data }: { data: PageData } = $props();
   const project = data.project;
+  const userId = data.id;
+  const token = data.token;
+
+  let socket: Socket;
+  let tasks = $state<
+    { id: string; title: string; status: string; assigned_to?: string }[]
+  >([]);
+  let activities = $state<
+    {
+      id: number;
+      user: string;
+      action: string;
+      item: string;
+      targetStatus?: string;
+      timestamp: string;
+    }[]
+  >([]);
+  let sortables: any[] = [];
+
+  // Khởi tạo SortableJS cho các cột trong Kanban
+  async function initSortable() {
+    if (!browser) return;
+
+    try {
+      // Lazy load Sortable
+      const SortableModule = await import("sortablejs");
+      const Sortable = SortableModule.default;
+
+      // Xóa các instance cũ để tránh duplicate
+      sortables.forEach((sortable) => sortable.destroy());
+      sortables = [];
+
+      const columns = document.querySelectorAll(".kanban-column");
+      columns.forEach((column) => {
+        const status = column.getAttribute("data-status");
+        const sortable = new Sortable(column as HTMLElement, {
+          group: "tasks",
+          animation: 150,
+          ghostClass: "task-ghost",
+          chosenClass: "task-chosen",
+          dragClass: "task-drag",
+          filter: ".ignore-elements", // Phần tử không kéo được
+          onEnd: function (evt) {
+            const taskId = evt.item.getAttribute("data-id");
+            const fromStatus = evt.from.getAttribute("data-status");
+            const toStatus = evt.to.getAttribute("data-status");
+
+            // Nếu di chuyển sang cột khác
+            if (fromStatus !== toStatus) {
+              if (taskId && fromStatus && toStatus)
+                handleTaskMove(taskId, fromStatus, toStatus);
+            }
+          },
+        });
+        sortables.push(sortable);
+      });
+    } catch (error) {
+      console.error("Error loading Sortable:", error);
+    }
+  }
+
+  function handleTaskMove(
+    taskId: string,
+    fromStatus: string,
+    toStatus: string
+  ) {
+    if (socket) {
+      console.log(`Moving task: ${taskId} from ${fromStatus} to ${toStatus}`);
+
+      // Cập nhật local trước - Optimistic UI
+      updateTaskPosition(taskId, toStatus);
+
+      // Gửi yêu cầu cập nhật đến server
+      socket.emit("message", {
+        type: "update",
+        content: {
+          taskId: taskId,
+          status: toStatus,
+        },
+      });
+    }
+  }
+
+  function updateTaskPosition(taskId: string, newStatus: string) {
+    // Cập nhật vị trí task trong UI
+    tasks = tasks.map((task) => {
+      if (task.id === taskId) {
+        return { ...task, status: newStatus };
+      }
+      return task;
+    });
+  }
+
+  // Lọc task theo trạng thái
+  function getTasksByStatus(status: string) {
+    return tasks.filter((task) => task.status === status);
+  }
 
   // Format date function
   function formatDate(dateString: string): string {
@@ -58,7 +158,6 @@
 
   // Task creation modal
   let showTaskModal = $state(false);
-
   let newTasks = $state([
     { name: "", description: "", note: "", assignedTo: "" },
   ]);
@@ -90,17 +189,67 @@
       return;
     }
 
-    createTasks();
-  }
-
-  function createTasks() {
-    // Here you would send the tasks to your backend
-    // console.log("Creating tasks:", validTasks);
+    // Tạo từng task và gửi lên server
+    validTasks.forEach((task) => {
+      createTask(task);
+    });
 
     closeTaskModal();
   }
 
-  // Activities mock data
+  async function fetchTeamMembers() {
+    try {
+      const response = await fetch(`/api/projects/${project.id}/students`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch team members");
+      }
+
+      const data = await response.json();
+      console.log("Team members from API:", data);
+
+      // Chuyển đổi dữ liệu từ API sang định dạng hiển thị
+      teamMembers = data.map((student: any) => ({
+        id: student.id,
+        name: student.name || student.username,
+        role: student.role || "Member",
+        email: student.email || "",
+      }));
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+    }
+  }
+  // Gửi yêu cầu tạo task mới đến server
+  function createTask(taskInput: {
+    name: string;
+    description: string;
+    note?: string;
+    assignedTo?: string;
+  }) {
+    if (socket) {
+      const message = {
+        type: "create",
+        content: {
+          title: taskInput.name,
+          description: taskInput.description,
+          note: taskInput.note || "",
+          assigned_to: taskInput.assignedTo || "",
+        },
+      };
+      console.log("Sending create task message:", message);
+
+      try {
+        socket.emit("message", message);
+        console.log("Message sent successfully");
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    } else {
+      console.error("Socket not connected");
+    }
+  }
+
+  // Activities modal
   let showActivitiesModal = $state(false);
 
   // Mock data for activities
@@ -199,44 +348,14 @@
   }
 
   // Extend the team members data with more info
-  let teamMembers = $state([
+  let teamMembers = $state<
     {
-      id: 1,
-      name: "John Doe",
-      role: "Frontend Developer",
-      email: "john@example.com",
-    },
-    {
-      id: 2,
-      name: "Sarah Smith",
-      role: "UI/UX Designer",
-      email: "sarah@example.com",
-    },
-    {
-      id: 3,
-      name: "Alex Johnson",
-      role: "Backend Developer",
-      email: "alex@example.com",
-    },
-    {
-      id: 4,
-      name: "Emma Wilson",
-      role: "Project Manager",
-      email: "emma@example.com",
-    },
-    {
-      id: 5,
-      name: "Tran Le Minh Nhat",
-      role: "Full Stack Developer",
-      email: "nhat@example.com",
-    },
-    {
-      id: 6,
-      name: "Nguyen My Thong",
-      role: "QA Engineer",
-      email: "thong@example.com",
-    },
-  ]);
+      id: number | string;
+      name: string;
+      role: string;
+      email: string;
+    }[]
+  >([]);
 
   // Function to format the date for grouping
   function formatActivityDate(dateString: string): string {
@@ -274,10 +393,14 @@
 
   // Function to get the grouped activities
   function getGroupedActivities() {
-    const groups: Record<string, typeof mockActivities> = {};
+    // Sử dụng activities từ server nếu có, nếu không dùng mockActivities
+    const activitiesData = activities.length > 0 ? activities : mockActivities;
+    const groups: Record<string, any[]> = {};
 
-    mockActivities.forEach((activity) => {
-      const dateGroup = formatActivityDate(activity.timestamp);
+    activitiesData.forEach((activity) => {
+      const timestamp = activity.timestamp;
+      const dateGroup = formatActivityDate(timestamp);
+
       if (!groups[dateGroup]) {
         groups[dateGroup] = [];
       }
@@ -290,6 +413,39 @@
     });
   }
 
+  // // Hàm xử lý activity từ server
+  // function formatActivityFromServer(activity) {
+  //   // Chuyển đổi cấu trúc activity từ server sang định dạng hiển thị
+  //   // Dạng activity từ server: {id, type, done_by, project_id, title, from, to, created_at}
+
+  //   let action = "";
+  //   switch (activity.type) {
+  //     case "create":
+  //       action = "created";
+  //       break;
+  //     case "update":
+  //       action = "updated";
+  //       break;
+  //     case "delete":
+  //       action = "deleted";
+  //       break;
+  //     case "move":
+  //       action = "moved";
+  //       break;
+  //     default:
+  //       action = activity.type;
+  //   }
+
+  //   return {
+  //     id: activity.id,
+  //     user: activity.done_by_name || activity.done_by,
+  //     action: action,
+  //     item: activity.title,
+  //     targetStatus: activity.to,
+  //     timestamp: activity.created_at,
+  //   };
+  // }
+
   function openActivitiesModal() {
     showActivitiesModal = true;
   }
@@ -300,7 +456,14 @@
 
   // Task edit modal
   let showEditTaskModal = $state(false);
-  let currentEditingTask = $state(null);
+  let currentEditingTask = $state<{
+    id: string;
+    title: string;
+    description: string;
+    note?: string;
+    status: string;
+    assigned_to?: string;
+  } | null>(null);
 
   function openEditTaskModal(task: any) {
     currentEditingTask = { ...task };
@@ -313,21 +476,108 @@
   }
 
   function updateTask() {
-    // Gửi thông tin task đã cập nhật lên server
-    // Code xử lý cập nhật task ở đây
-
-    // Đóng modal sau khi cập nhật
-    closeEditTaskModal();
-  }
-
-  function deleteTask() {
-    if (confirm("Are you sure you want to delete this task?")) {
-      // Code xử lý xóa task ở đây
-
-      // Đóng modal sau khi xóa
+    if (socket && currentEditingTask) {
+      socket.emit("message", {
+        type: "update",
+        content: {
+          taskId: currentEditingTask.id,
+          title: currentEditingTask.title,
+          description: currentEditingTask.description,
+          note: currentEditingTask.note || "",
+          status: currentEditingTask.status,
+          assigned_to: currentEditingTask.assigned_to || "",
+        },
+      });
       closeEditTaskModal();
     }
   }
+
+  function deleteTask() {
+    if (socket && currentEditingTask) {
+      if (confirm("Are you sure you want to delete this task?")) {
+        socket.emit("message", {
+          type: "delete",
+          content: currentEditingTask.id,
+        });
+        closeEditTaskModal();
+      }
+    }
+  }
+
+  onMount(async () => {
+    if (browser) {
+      try {
+        await fetchTeamMembers();
+        // Sửa URL để khớp với API của backend
+        const wsUrl = `ws://${window.location.hostname}:8080/ws/task/${project.id}/${data.id}`;
+        console.log("Connecting with WebSocket to:", wsUrl);
+
+        // Tạo một webSocket
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log("WebSocket connection established");
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log("Received via WebSocket:", data);
+
+            if (data.tasks) {
+              tasks = data.tasks;
+              setTimeout(initSortable, 100);
+            }
+
+            if (data.activities) {
+              activities = data.activities;
+            }
+          } catch (e) {
+            console.error("Error parsing WebSocket data:", e);
+          }
+        };
+
+        ws.onerror = (err) => {
+          console.error("WebSocket error:", err);
+        };
+
+        // Sửa hàm emit để gửi message đúng định dạng
+        socket = {
+          emit: (eventName: string, data: any) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              // Gửi tin nhắn trực tiếp theo định dạng backend yêu cầu
+              // Backend mong đợi { type: "...", content: {...} }
+              ws.send(
+                JSON.stringify({
+                  type: data.type, // lấy type từ data object
+                  content: data.content, // lấy content từ data object
+                })
+              );
+            } else {
+              console.error("WebSocket is not connected");
+            }
+          },
+          disconnect: () => {
+            ws.close();
+          },
+        } as any;
+
+        // Khởi tạo sortable
+        setTimeout(initSortable, 100);
+      } catch (error) {
+        console.error("Error setting up WebSocket:", error);
+      }
+    }
+  });
+
+  onDestroy(() => {
+    if (socket) {
+      socket.disconnect();
+    }
+
+    // Dọn dẹp sortable instances
+    sortables.forEach((sortable) => sortable.destroy());
+  });
 </script>
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
@@ -505,7 +755,7 @@
     <div class="card p-3 w-full min-h-[calc(100vh-380px)] mb-4">
       <h3 class="text-base font-semibold mb-2">Tasks</h3>
       <div class="grid grid-cols-4 gap-3 h-full">
-        <!-- To-do -->
+        <!-- To-do Column -->
         <div class="flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center space-x-2">
@@ -529,93 +779,56 @@
             </div>
             <span
               class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-gray-100 text-gray-700"
-              >3</span
+              >{getTasksByStatus("todo").length}</span
             >
           </div>
-          <button class="text-xs text-[#6b48ff] mb-2" onclick={openTaskModal}
-            >+ Add tasks</button
+          <button
+            class="text-xs text-[#6b48ff] mb-2 ignore-elements"
+            onclick={openTaskModal}>+ Add tasks</button
           >
-          <div class="bg-gray-50 rounded-lg p-2 flex-1 overflow-y-auto">
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <div class="flex justify-between items-center">
-                <div class="flex-1">
-                  <p class="text-sm font-medium">Create Wireframes</p>
-                  <p class="text-xs text-gray-500">
-                    Assign to:
-                    <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
-                  </p>
-                </div>
-                <button
-                  class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0"
-                  onclick={() =>
-                    openEditTaskModal({
-                      id: 1,
-                      name: "Create Wireframes",
-                      description:
-                        "Create wireframes for the main screens of the application",
-                      assignedTo: 5,
-                      status: "To-do",
-                    })}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+          <div
+            class="bg-gray-50 rounded-lg p-2 flex-1 overflow-y-auto kanban-column"
+            data-status="todo"
+          >
+            {#each getTasksByStatus("todo") as task (task.id)}
+              <div
+                class="card p-2 bg-white mb-2 shadow-sm cursor-move"
+                data-id={task.id}
+              >
+                <div class="flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{task.title}</p>
+                    <p class="text-xs text-gray-500">
+                      Assign to:
+                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                    </p>
+                  </div>
+                  <button
+                    class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
+                    onclick={() => openEditTaskModal(task)}
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <div class="flex justify-between items-center">
-                <div class="flex-1">
-                  <p class="text-sm font-medium">Create Wireframes</p>
-                  <p class="text-xs text-gray-500">
-                    Assign to:
-                    <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
-                  </p>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                    />
-                  </svg>
-                </button>
               </div>
-            </div>
-
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Research API</p>
-              <p class="text-xs text-gray-500">
-                Assign to:
-                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
-              </p>
-            </div>
+            {/each}
           </div>
         </div>
 
-        <!-- In Progress -->
+        <!-- In Progress Column -->
         <div class="flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center space-x-2">
@@ -639,28 +852,52 @@
             </div>
             <span
               class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700"
-              >2</span
+              >{getTasksByStatus("in_progress").length}</span
             >
           </div>
-          <div class="bg-yellow-50 rounded-lg p-2 flex-1 overflow-y-auto">
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Code Backend</p>
-              <p class="text-xs text-gray-500">
-                Doing by:
-                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
-              </p>
-            </div>
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Implement Auth</p>
-              <p class="text-xs text-gray-500">
-                Doing by:
-                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
-              </p>
-            </div>
+          <div
+            class="bg-yellow-50 rounded-lg p-2 flex-1 overflow-y-auto kanban-column"
+            data-status="in_progress"
+          >
+            {#each getTasksByStatus("in_progress") as task (task.id)}
+              <div
+                class="card p-2 bg-white mb-2 shadow-sm cursor-move"
+                data-id={task.id}
+              >
+                <div class="flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{task.title}</p>
+                    <p class="text-xs text-gray-500">
+                      Doing by:
+                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                    </p>
+                  </div>
+                  <button
+                    class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
+                    onclick={() => openEditTaskModal(task)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            {/each}
           </div>
         </div>
 
-        <!-- Review -->
+        <!-- Review Column -->
         <div class="flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center space-x-2">
@@ -683,21 +920,52 @@
             </div>
             <span
               class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-blue-100 text-blue-700"
-              >1</span
+              >{getTasksByStatus("review").length}</span
             >
           </div>
-          <div class="bg-blue-50 rounded-lg p-2 flex-1 overflow-y-auto">
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Test Features</p>
-              <p class="text-xs text-gray-500">
-                Done by:
-                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
-              </p>
-            </div>
+          <div
+            class="bg-blue-50 rounded-lg p-2 flex-1 overflow-y-auto kanban-column"
+            data-status="review"
+          >
+            {#each getTasksByStatus("review") as task (task.id)}
+              <div
+                class="card p-2 bg-white mb-2 shadow-sm cursor-move"
+                data-id={task.id}
+              >
+                <div class="flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{task.title}</p>
+                    <p class="text-xs text-gray-500">
+                      Done by:
+                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                    </p>
+                  </div>
+                  <button
+                    class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
+                    onclick={() => openEditTaskModal(task)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            {/each}
           </div>
         </div>
 
-        <!-- Done -->
+        <!-- Done Column -->
         <div class="flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center space-x-2">
@@ -719,41 +987,48 @@
             </div>
             <span
               class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium rounded-full bg-green-100 text-green-700"
-              >6</span
+              >{getTasksByStatus("done").length}</span
             >
           </div>
-          <div class="bg-green-50 rounded-lg p-2 flex-1 overflow-y-auto">
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Setup DB</p>
-              <p class="text-xs text-gray-500">
-                Completed by:
-                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
-              </p>
-            </div>
-
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Project Setup</p>
-              <p class="text-xs text-gray-500">
-                Completed by:
-                <a href="#" class="text-[#6b48ff]">Tran Le Minh Nhat</a>
-              </p>
-            </div>
-
-            <div class="card p-2 bg-white mb-2 shadow-sm">
-              <p class="text-sm font-medium">Create Repository</p>
-              <p class="text-xs text-gray-500">
-                Completed by:
-                <a href="#" class="text-[#6b48ff]">Tran Tuan Kiet</a>
-              </p>
-            </div>
-
-            <div class="card p-2 bg-white shadow-sm">
-              <p class="text-sm font-medium">Initial Planning</p>
-              <p class="text-xs text-gray-500">
-                Completed by:
-                <a href="#" class="text-[#6b48ff]">Nguyen My Thong</a>
-              </p>
-            </div>
+          <div
+            class="bg-green-50 rounded-lg p-2 flex-1 overflow-y-auto kanban-column"
+            data-status="done"
+          >
+            {#each getTasksByStatus("done") as task (task.id)}
+              <div
+                class="card p-2 bg-white mb-2 shadow-sm cursor-move"
+                data-id={task.id}
+              >
+                <div class="flex justify-between items-center">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{task.title}</p>
+                    <p class="text-xs text-gray-500">
+                      Completed by:
+                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                    </p>
+                  </div>
+                  <button
+                    class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
+                    onclick={() => openEditTaskModal(task)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            {/each}
           </div>
         </div>
       </div>
@@ -1111,7 +1386,6 @@
         </div>
       </div>
 
-      <!-- Task Edit Form -->
       <div class="p-4 overflow-y-auto flex-grow">
         <div class="space-y-4">
           <div>
@@ -1120,14 +1394,14 @@
               type="text"
               class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               placeholder="Enter task name"
-              bind:value={currentEditingTask.name}
+              bind:value={currentEditingTask.title}
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Description*</label>
+            <label class="block text-sm font-medium mb-1">Description</label>
             <textarea
-              class="w-full p-2 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               placeholder="Enter task description"
               rows="3"
               bind:value={currentEditingTask.description}
@@ -1135,10 +1409,33 @@
           </div>
 
           <div>
+            <label class="block text-sm font-medium mb-1">Note</label>
+            <textarea
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              placeholder="Additional notes"
+              rows="2"
+              bind:value={currentEditingTask.note}
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Status</label>
+            <select
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              bind:value={currentEditingTask.status}
+            >
+              <option value="todo">To-do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+
+          <div>
             <label class="block text-sm font-medium mb-1">Assigned To</label>
             <select
-              class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              bind:value={currentEditingTask.assignedTo}
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              bind:value={currentEditingTask.assigned_to}
             >
               <option value="">Unassigned</option>
               {#each teamMembers as member}
@@ -1146,32 +1443,18 @@
               {/each}
             </select>
           </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1">Status</label>
-            <select
-              class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              bind:value={currentEditingTask.status}
-            >
-              <option value="To-do">To-do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Review">Review</option>
-              <option value="Done">Done</option>
-            </select>
-          </div>
         </div>
       </div>
 
       <div class="p-4 border-t border-gray-100 flex justify-between">
-        <!-- Delete Button -->
         <button
           class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
           onclick={deleteTask}
         >
-          Delete Task
+          Delete
         </button>
 
-        <div class="space-x-2">
+        <div class="flex space-x-3">
           <button
             class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
             onclick={closeEditTaskModal}

@@ -11,4 +11,7 @@ export default defineConfig({
       "skillforge.ikniz.id.vn",
     ],
   },
+  ssr: {
+    noExternal: ["sortablejs", "socket.io-client"],
+  },
 });

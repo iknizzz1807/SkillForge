@@ -9,6 +9,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"context"
@@ -57,6 +58,7 @@ func (s *TaskService) GetTasksByProjectID(projectID string) ([]*models.Task, err
 // Input: projectID (string), taskInputs ([]TaskInput)
 // Return: []*models.Task (danh sách tasks vừa tạo), error (nếu có lỗi)
 func (s *TaskService) CreateTasks(projectID, userID string, taskInputs []models.TaskInput) ([]*models.Task, error) {
+	log.Printf("Creating tasks for project %s by user %s, inputs: %+v", projectID, userID, taskInputs)
 	// Kiểm tra input hợp lệ
 	if projectID == "" || len(taskInputs) == 0 {
 		return nil, errors.New("invalid inputs")

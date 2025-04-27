@@ -16,17 +16,43 @@
     }))
   );
 
-  let projectsSuggest = $state(
-    data.projects
-      .map((project) => ({
-        ...project,
-        skills:
-          typeof project.skills === "string"
-            ? (project.skills as string).split(",").map((s) => s.trim())
-            : project.skills || [],
-      }))
-      .slice(0, 5)
-  );
+  let projectsSuggest: any[] = $state([]);
+
+  // let projectsSuggest = $state(
+  //   data.projects
+  //     .map((project) => ({
+  //       ...project,
+  //       skills:
+  //         typeof project.skills === "string"
+  //           ? (project.skills as string).split(",").map((s) => s.trim())
+  //           : project.skills || [],
+  //     }))
+  //     .slice(0, 5)
+  // );
+
+  onMount(async () => {
+    if (data.role !== "student") return;
+    try {
+      const response = await fetch("/api/projects/matching");
+      if (response.ok) {
+        projectsSuggest = await response.json();
+        projectsSuggest = projectsSuggest.map((project) => ({
+          ...project,
+          // Standardize field names
+          id: project.ProjectID || project.id,
+          title: project.ProjectTitle || project.title,
+          skills: project.ProjectSkills || project.skills || [],
+          start_time: project.StartTime || project.start_time,
+          end_time: project.EndTime || project.end_time,
+          created_by_id: project.CreatorID || project.created_by_id,
+          created_by_name: project.CreatorName || project.created_by_name,
+          match_score: project.MatchScore || 90, // Default if not provided
+        }));
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
 
   // Format date function
   function formatDate(dateString: string): string {
@@ -1021,37 +1047,40 @@
       <div class="space-y-2">
         {#each projectsSuggest as project}
           <div
-            class="flex justify-between items-start p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+            class="flex flex-col p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
           >
-            <div class="flex-grow">
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-medium">{project.title}</p>
-                <!-- Hiển thị match rate nổi bật -->
-                <span
-                  class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5 ml-2"
-                >
-                  90% Match
-                </span>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">
-                Skills: {project.skills.join(", ")}
-              </p>
-              <p class="text-xs text-gray-500">
-                Timeline: {formatDate(project.start_time.toString())} - {formatDate(
-                  project.end_time.toString()
-                )} | By
-                <a
-                  href={"/profile/" + project.created_by_id}
-                  class="text-xs text-[#6b48ff] hover:underline"
-                >
-                  {project.created_by_name}
-                </a>
-              </p>
+            <!-- Match rate ở đầu card, căn trái -->
+            <div class="flex justify-start mb-2">
+              <span
+                class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5"
+              >
+                90% Match
+              </span>
             </div>
-            <a
-              href={"/marketplace/" + project.id}
-              class="btn text-xs ml-2 flex-shrink-0 self-center">View</a
-            >
+
+            <div class="flex justify-between items-start">
+              <div class="flex-grow">
+                <p class="text-sm font-medium">{project.title}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  Skills: {project.skills.join(", ")}
+                </p>
+                <p class="text-xs text-gray-500">
+                  Timeline: {formatDate(project.start_time.toString())} - {formatDate(
+                    project.end_time.toString()
+                  )} | By
+                  <a
+                    href={"/profile/" + project.created_by_id}
+                    class="text-xs text-[#6b48ff] hover:underline"
+                  >
+                    {project.created_by_name}
+                  </a>
+                </p>
+              </div>
+              <a
+                href={"/marketplace/" + project.id}
+                class="btn text-xs ml-2 flex-shrink-0 self-start">View</a
+              >
+            </div>
           </div>
         {/each}
       </div>

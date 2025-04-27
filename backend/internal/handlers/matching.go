@@ -20,7 +20,7 @@ func NewMatchingHandler(matchingService *services.MatchingService) *matchingHand
 // GetTopMatches returns top 10 project matches for the authenticated student
 func (h *matchingHandler) GetTopMatches(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID := c.GetString("user_id")
+	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -37,7 +37,7 @@ func (h *matchingHandler) GetTopMatches(c *gin.Context) {
 
 // GetMatchScore returns match score for specific project
 func (h *matchingHandler) GetMatchScore(c *gin.Context) {
-	userID := c.GetString("user_id")
+	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
