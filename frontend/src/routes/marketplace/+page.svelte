@@ -1045,44 +1045,70 @@
       <div class="card p-3">
         <h3 class="text-base font-semibold mb-2">Suggested Projects</h3>
         <div class="space-y-2">
-          {#each projectsSuggest as project}
-            <div
-              class="flex flex-col p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-            >
-              <!-- Match rate ở đầu card, căn trái -->
-              <div class="flex justify-start mb-2">
-                <span
-                  class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5"
-                >
-                  {Math.round(project.match_score)}
-                </span>
-              </div>
-
-              <div class="flex justify-between items-start">
-                <div class="flex-grow">
-                  <p class="text-sm font-medium">{project.title}</p>
-                  <p class="text-xs text-gray-500 mt-1">
-                    Skills: {project.skills.join(", ")}
-                  </p>
-                  <p class="text-xs text-gray-500">
-                    Timeline: {formatDate(project.start_time.toString())} - {formatDate(
-                      project.end_time.toString()
-                    )} | By
-                    <a
-                      href="/marketplace"
-                      class="text-xs text-[#6b48ff] hover:underline"
-                    >
-                      {project.created_by_name}
-                    </a>
-                  </p>
-                </div>
-                <a
-                  href={"/marketplace/" + project.id}
-                  class="btn text-xs ml-2 flex-shrink-0 self-start">View</a
-                >
-              </div>
+          {#if projectsSuggest.length === 0}
+            <div class="flex justify-center items-center py-4">
+              <div
+                class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6b48ff]"
+              ></div>
+              <span class="ml-2 text-sm text-gray-600"
+                >Loading suggestions...</span
+              >
             </div>
-          {/each}
+          {:else}
+            {#each projectsSuggest as project}
+              <div
+                class="flex flex-col p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              >
+                <!-- Match score ở đầu card với chỉ dẫn rõ ràng hơn -->
+                <div class="flex justify-start mb-2">
+                  <span
+                    class="text-xs bg-[#6b48ff] text-white rounded-full px-2 py-0.5 flex items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3 mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    <span class="font-bold"
+                      >{Math.round(project.match_score)}%</span
+                    >
+                    <span class="ml-1">skill match</span>
+                  </span>
+                </div>
+
+                <div class="flex justify-between items-start">
+                  <div class="flex-grow">
+                    <p class="text-sm font-medium">{project.title}</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Skills: {project.skills.join(", ")}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      Timeline: {formatDate(project.start_time.toString())} - {formatDate(
+                        project.end_time.toString()
+                      )} | By
+                      <a
+                        href="/marketplace"
+                        class="text-xs text-[#6b48ff] hover:underline"
+                      >
+                        {project.created_by_name}
+                      </a>
+                    </p>
+                  </div>
+                  <a
+                    href={"/marketplace/" + project.id}
+                    class="btn text-xs ml-2 flex-shrink-0 self-start">View</a
+                  >
+                </div>
+              </div>
+            {/each}
+          {/if}
         </div>
       </div>
     {/if}

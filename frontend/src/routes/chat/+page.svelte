@@ -839,34 +839,9 @@
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 
-  /* Custom scrollbar cho trình duyệt Webkit */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #e2e8f0;
-    border-radius: 3px;
-  }
-
-  /* Custom scrollbar cho Firefox */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #e2e8f0 transparent;
-  }
-
   /* Đảm bảo toàn bộ nội dung vừa khít trong viewport */
   main {
     max-height: 100vh;
-    overflow: hidden;
-  }
-
-  /* Ẩn thanh cuộn dọc toàn trang */
-  :global(body) {
     overflow: hidden;
   }
 </style>
