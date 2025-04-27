@@ -468,73 +468,6 @@
             </h4>
             <p class="text-sm text-gray-700">{project.description}</p>
           </div>
-
-          <!-- Deliverables with visual indicators -->
-          <div class="mt-3">
-            <h4 class="font-semibold text-sm flex items-center mb-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-[#6b48ff] mr-1"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                <path
-                  fill-rule="evenodd"
-                  d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              Deliverables
-            </h4>
-            <div class="grid grid-cols-3 gap-2">
-              <div class="bg-purple-50 p-2 rounded text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 mx-auto text-[#6b48ff] mb-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                <span class="text-xs font-medium">Frontend UI</span>
-              </div>
-              <div class="bg-purple-50 p-2 rounded text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 mx-auto text-[#6b48ff] mb-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                <span class="text-xs font-medium">Backend API</span>
-              </div>
-              <div class="bg-purple-50 p-2 rounded text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 mx-auto text-[#6b48ff] mb-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                <span class="text-xs font-medium">Documentation</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -639,21 +572,6 @@
                   required
                   bind:value={proposalInput}
                 ></textarea>
-              </div>
-
-              <div>
-                <label
-                  class="flex items-center space-x-2 text-sm mb-4 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    class="form-checkbox rounded text-[#6b48ff]"
-                  />
-                  <span
-                    >I understand that my profile information will be shared
-                    with the project owner</span
-                  >
-                </label>
               </div>
 
               <div class="flex space-x-2">

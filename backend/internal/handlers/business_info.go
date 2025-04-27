@@ -19,8 +19,15 @@ func NewBusinessInfoHandler(businessInfoService *services.BusinessInfoService) *
 // GetBusinessInfo handles GET /api/business-info
 func (h *BusinessInfoHandler) GetBusinessInfo(c *gin.Context) {
 	userID := c.GetString("userID")
+	role := c.GetString("role")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Nếu không phải business thì không trả về gì cả
+	if role != "business" {
+		c.JSON(http.StatusOK, nil)
 		return
 	}
 

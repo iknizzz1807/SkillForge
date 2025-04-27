@@ -9,6 +9,10 @@
   let avatarPreview: string | null = $state(null);
   let avatarError: string | null = $state(null);
 
+  // State cho việc loading và success
+  let isSubmitting = $state(false);
+  let registerSuccess = $state(false);
+
   // Danh sách title theo role
   const titleOptions = {
     student: [
@@ -90,6 +94,7 @@
 
   $effect(() => {
     if (form?.success) {
+      registerSuccess = true;
       // Wait 1.5s then redirect
       setTimeout(() => {
         goto("/login");
@@ -117,7 +122,23 @@
       <form
         class="space-y-4"
         method="POST"
-        use:enhance
+        use:enhance={() => {
+          isSubmitting = true;
+          registerSuccess = false;
+
+          return async ({ result, update }) => {
+            // Wait for the response and update the form
+            await update();
+
+            // If registration was successful
+            if (result.type === "success") {
+              registerSuccess = true;
+            } else {
+              // If there was an error, stop loading state
+              isSubmitting = false;
+            }
+          };
+        }}
         enctype="multipart/form-data"
       >
         <!-- Avatar and Name in single row -->
@@ -375,9 +396,39 @@
 
         <button
           type="submit"
-          class="btn w-full"
-          disabled={!!avatarError || !selectedRole}>Create Account</button
+          class="btn w-full flex items-center justify-center"
+          disabled={!!avatarError ||
+            !selectedRole ||
+            isSubmitting ||
+            registerSuccess}
         >
+          {#if isSubmitting && !registerSuccess}
+            <svg
+              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          {:else if registerSuccess}
+            Account Created
+          {:else}
+            Create Account
+          {/if}
+        </button>
 
         <p class="text-sm text-center mt-4">
           Already have an account?

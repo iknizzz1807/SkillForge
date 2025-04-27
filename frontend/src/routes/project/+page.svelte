@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invalidateAll } from "$app/navigation";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -20,6 +21,7 @@
   };
 
   const token = data.token;
+  const user_id = data.id;
 
   let projectsDisplay: ProjectDisplay[] = $state(data.projects);
   const applicationCount: number = data.applicationCount;
@@ -39,34 +41,42 @@
   // Thêm state cho modal sinh viên đang apply
   let showApplicantsModal: boolean = $state(false);
   let currentApplicants: any[] = $state([]);
+  let isLoadingApplicants: boolean = $state(false);
+  let applicantsError: string | null = $state(null);
 
-  // Mock data cho sinh viên đang apply
-  const mockApplicants = [
-    {
-      id: "user123",
-      name: "John Doe",
-      major: "Computer Science",
-      skills: ["JavaScript", "React"],
-      avatar: "https://avatars.githubusercontent.com/u/123456?v=4",
-      appliedDate: "2025-04-15",
-    },
-    {
-      id: "user456",
-      name: "Jane Smith",
-      major: "Data Science & Analytics",
-      skills: ["Python", "Data Science"],
-      avatar: "https://avatars.githubusercontent.com/u/234567?v=4",
-      appliedDate: "2025-04-18",
-    },
-    {
-      id: "user789",
-      name: "Robert Chen",
-      major: "Software Engineering",
-      skills: ["Java", "Spring Boot"],
-      avatar: "https://avatars.githubusercontent.com/u/345678?v=4",
-      appliedDate: "2025-04-20",
-    },
-  ];
+  // Hàm mở modal các sinh viên đang tham gia dự án
+  async function openApplicantsModal(projectId: string) {
+    try {
+      // Reset state
+      isLoadingApplicants = true;
+      applicantsError = null;
+      currentApplicants = [];
+      showApplicantsModal = true;
+
+      // Lưu lại project ID hiện tại cho modal này
+      currentProject = projectsDisplay.find((p) => p.id === projectId) || null;
+
+      // Gọi API để lấy danh sách thành viên
+      const response = await fetch(`/api/projects/${projectId}/students`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch project members");
+      }
+
+      // Parse kết quả
+      const data = await response.json();
+      currentApplicants = data;
+    } catch (error) {
+      console.error("Error fetching project members:", error);
+    } finally {
+      isLoadingApplicants = false;
+    }
+  }
 
   const availableSkills = [
     // Frontend
@@ -1245,20 +1255,23 @@
     if (!projectToLeave) return;
 
     try {
-      // TODO: Thay thế bằng API call thực tế
-      // const response = await fetch(`/api/projects/${projectToLeave.id}/leave`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
+      // Gọi API rời dự án
+      const response = await fetch(
+        `/api/projects/${projectToLeave.id}/students/${user_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.error || 'Failed to leave project');
-      // }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to leave project");
+      }
 
-      // Mock xử lý: Giả lập xóa dự án khỏi danh sách hiển thị hoặc thay đổi trạng thái
+      // Xóa dự án khỏi danh sách hiển thị
       projectsDisplay = projectsDisplay.filter(
         (p) => p.id !== projectToLeave?.id
       );
@@ -1267,11 +1280,9 @@
       // Đóng modal xác nhận
       closeLeaveProjectModal();
 
-      // Hiển thị thông báo thành công
-      alert(`You have successfully left the project "${projectToLeave.title}"`);
+      invalidateAll();
     } catch (error) {
       console.error("Error leaving project:", error);
-      alert("Failed to leave project: " + error);
     }
   };
 
@@ -1290,23 +1301,26 @@
 
   // Hàm xử lý xóa sinh viên khỏi dự án
   const removeStudentFromProject = async () => {
-    if (!studentToRemove) return;
+    if (!studentToRemove || !currentProject) return;
 
     try {
-      // TODO: Thay thế bằng API call thực tế
-      // const response = await fetch(`/api/projects/${studentToRemove.projectId}/students/${studentToRemove.id}`, {
-      //   method: 'DELETE',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
+      // Gọi API xóa sinh viên
+      const response = await fetch(
+        `/api/projects/${currentProject.id}/students/${studentToRemove.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.error || 'Failed to remove student');
-      // }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to remove student");
+      }
 
-      // Xóa sinh viên khỏi danh sách hiện tại
+      // Xóa sinh viên khỏi danh sách hiện tại trong UI
       currentApplicants = currentApplicants.filter(
         (a) => a.id !== studentToRemove.id
       );
@@ -1314,37 +1328,29 @@
       // Đóng modal xác nhận
       closeRemoveStudentModal();
 
+      // Cập nhật số lượng thành viên hiện tại trong dự án
+      if (currentProject) {
+        // Giảm số lượng thành viên trong dự án
+        projectsDisplay = projectsDisplay.map((p) => {
+          if (p.id === studentToRemove.projectId) {
+            return {
+              ...p,
+              current_member: p.current_member - 1,
+            };
+          }
+          return p;
+        });
+
+        // Cập nhật bản sao dữ liệu
+        projectsDisplayCopy = projectsDisplay;
+      }
+
       // Hiển thị thông báo thành công
       alert(`Removed ${studentToRemove.name} from the project successfully`);
     } catch (error) {
       console.error("Error removing student:", error);
-      alert("Failed to remove student: " + error);
     }
   };
-
-  // Hàm mở modal các sinh viên đang apply
-  function openApplicantsModal(projectId: string) {
-    // TODO: Thực tế cần fetch danh sách sinh viên đang apply từ API
-    // const fetchApplicants = async (projectId) => {
-    //   try {
-    //     const response = await fetch(`/api/projects/${projectId}/applicants`, {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`
-    //       }
-    //     });
-    //     if (!response.ok) throw new Error('Failed to fetch applicants');
-    //     const applicants = await response.json();
-    //     return applicants;
-    //   } catch (error) {
-    //     console.error('Error fetching applicants:', error);
-    //     return [];
-    //   }
-    // };
-
-    // Hiện tại dùng mock data
-    currentApplicants = mockApplicants;
-    showApplicantsModal = true;
-  }
 
   function closeApplicantsModal() {
     showApplicantsModal = false;
@@ -2141,7 +2147,7 @@
         class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Project Applicants</h2>
+          <h2 class="text-xl font-semibold">Project Members</h2>
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeApplicantsModal}
@@ -2163,53 +2169,85 @@
           </button>
         </div>
 
-        {#if currentApplicants.length > 0}
+        {#if isLoadingApplicants}
+          <div class="flex justify-center items-center py-12">
+            <div
+              class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#6b48ff]"
+            ></div>
+          </div>
+        {:else if applicantsError}
+          <div class="text-center py-8">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-12 w-12 mx-auto text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <p class="mt-4 text-red-600">Error: {applicantsError}</p>
+            <button
+              class="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              onclick={closeApplicantsModal}
+            >
+              Close
+            </button>
+          </div>
+        {:else if currentApplicants.length > 0}
           <div class="space-y-4">
-            {#each currentApplicants as applicant}
+            {#each currentApplicants as member}
               <div
-                class=" rounded-lg p-4 flex items-center justify-between bg-gray-100 hover:bg-gray-100 transition-colors"
+                class="rounded-lg p-4 flex items-center justify-between bg-gray-100 hover:bg-gray-100 transition-colors"
               >
                 <div class="flex items-center space-x-4">
                   <img
-                    src={applicant.avatar}
-                    alt={applicant.name}
+                    src={"api/avatars/" + member.id}
+                    alt={member.name}
                     class="w-12 h-12 rounded-full object-cover border-2 border-purple-200"
                   />
                   <div>
-                    <h3 class="font-medium">{applicant.name}</h3>
-                    <!-- Thêm hiển thị chuyên ngành -->
+                    <h3 class="font-medium">{member.name}</h3>
+                    <!-- Hiển thị title thay vì major -->
                     <p class="text-xs text-gray-600 mt-0.5">
-                      {applicant.major}
+                      {member.title || "No title"}
                     </p>
+                    <!-- Hiển thị skills -->
                     <p class="text-sm text-gray-500">
-                      Skills: {applicant.skills.join(", ")}
-                    </p>
-                    <p class="text-xs text-gray-400">
-                      Applied: {formatApplyDate(applicant.appliedDate)}
+                      Skills: {member.skills?.length > 0
+                        ? member.skills.join(", ")
+                        : "No skills listed"}
                     </p>
                   </div>
                 </div>
                 <div class="flex space-x-2">
-                  <!-- Nút xem hồ sơ sinh viên -->
+                  <!-- Nút xem hồ sơ thành viên -->
                   <a
-                    href={`/profile/${applicant.id}`}
+                    href={`/profile/${member.id}`}
                     class="px-3 py-1.5 bg-[#6b48ff] text-white text-sm rounded hover:bg-[#5a3dd3]"
                   >
                     View Profile
                   </a>
 
-                  <!-- Thêm nút xóa sinh viên -->
-                  <button
-                    class="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200"
-                    onclick={(e) =>
-                      openRemoveStudentModal(
-                        e,
-                        applicant,
-                        currentProject?.id || ""
-                      )}
-                  >
-                    Remove
-                  </button>
+                  <!-- Nút xóa thành viên - chỉ hiển thị nếu người dùng là business -->
+                  {#if data.role === "business"}
+                    <button
+                      class="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200"
+                      onclick={(e) =>
+                        openRemoveStudentModal(
+                          e,
+                          member,
+                          currentProject?.id || ""
+                        )}
+                    >
+                      Remove
+                    </button>
+                  {/if}
                 </div>
               </div>
             {/each}
@@ -2230,7 +2268,7 @@
                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
               />
             </svg>
-            <p class="mt-4 text-gray-600">No applicants yet</p>
+            <p class="mt-4 text-gray-600">No members in this project yet</p>
           </div>
         {/if}
       </div>
