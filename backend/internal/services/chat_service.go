@@ -22,7 +22,7 @@ func (c *ChatService) GetGroups(ctx context.Context, userID string) ([]*models.G
 	return c.chatRepo.GetGroups(ctx, userID)
 }
 
-func (c *ChatService) GetGroupInfo(ctx context.Context, groupID string) ([]*models.Message, []string, error) {
+func (c *ChatService) GetGroupInfo(ctx context.Context, groupID string) ([]*models.Message, []*models.User, error) {
 	// return messages and members of the group
 	Messages, err := c.chatRepo.GetGroupMessages(ctx, groupID)
 	if err != nil {

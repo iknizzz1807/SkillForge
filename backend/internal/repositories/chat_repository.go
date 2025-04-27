@@ -10,18 +10,18 @@ import (
 )
 
 type ChatRepository struct {
-	MessageCollection *mongo.Collection
-	GroupCollection   *mongo.Collection
+	MessageCollection        *mongo.Collection
+	GroupCollection          *mongo.Collection
 	ProjectStudentCollection *mongo.Collection
-	ProjectCollection *mongo.Collection
+	ProjectCollection        *mongo.Collection
 }
 
 func NewChatRepository(db *mongo.Database) *ChatRepository {
 	return &ChatRepository{
-		MessageCollection: db.Collection("messages"),
-		GroupCollection:   db.Collection("groups"),
+		MessageCollection:        db.Collection("messages"),
+		GroupCollection:          db.Collection("groups"),
 		ProjectStudentCollection: db.Collection("project_student"),
-		ProjectCollection: db.Collection("projects"),
+		ProjectCollection:        db.Collection("projects"),
 	}
 }
 
@@ -87,7 +87,7 @@ func (r *ChatRepository) GetGroupMessages(ctx context.Context, groupID string) (
 	return messages, nil
 }
 
-func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([]string, error) {
+func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([]*models.User, error) {
 	// Get all userID with groupID in project_student
 	cursor, err := r.ProjectStudentCollection.Find(ctx, bson.M{"project_id": groupID})
 	if err != nil {
@@ -100,10 +100,10 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 		return nil, err
 	}
 
-	// Get all userID 
-	users := []string{}
+	// Get all userID
+	usersID := []string{}
 	for _, projectStudent := range projectStudents {
-		users = append(users, projectStudent.Student_id)
+		usersID = append(usersID, projectStudent.Student_id)
 	}
 	// Get userID of the project creator
 	var project models.Project
@@ -111,7 +111,18 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 	if err != nil {
 		return nil, err
 	}
-	users = append(users, project.CreatedByID)
+	usersID = append(usersID, project.CreatedByID)
+
+	// Get all user with userID
+	users := []*models.User{}
+	for _, userID := range usersID {
+		var user models.User
+		err := r.MessageCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
 
 	return users, nil
 }
