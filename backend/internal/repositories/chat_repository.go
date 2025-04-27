@@ -57,7 +57,6 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 				Title:     project.Title,
 				CreatedAt: time.Now(),
 			}
-			groups = append(groups, &group)
 		} else if err != nil {
 			return nil, err
 		}
@@ -100,7 +99,7 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 		return nil, err
 	}
 
-	// Get all userID
+	// Get all userID 
 	usersID := []string{}
 	for _, projectStudent := range projectStudents {
 		usersID = append(usersID, projectStudent.Student_id)
