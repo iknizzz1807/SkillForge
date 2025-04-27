@@ -87,6 +87,7 @@ func RegisterRoutes(
 	{
 		// User routes
 		api.GET("/user", userHandler.GetCurrentUser)
+		api.GET("/user/:id", userHandler.GetUserByID)
 		api.PUT("/user", userHandler.UpdateCurrentUser)
 
 		// Project routes

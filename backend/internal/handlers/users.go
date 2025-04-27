@@ -44,6 +44,20 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (h *UserHandler) GetUserByID(c *gin.Context) {
+	userID := c.Param("id")
+
+	// Gọi service để lấy thông tin user
+	user, err := h.userService.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Trả về thông tin user
+	c.JSON(http.StatusOK, user)
+}
+
 // UpdateUser xử lý endpoint PUT /api/user
 // Cập nhật thông tin user và avatar (nếu có)
 // Return: Trả về JSON với thông tin user đã cập nhật và token JWT mới

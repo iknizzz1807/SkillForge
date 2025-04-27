@@ -1,5 +1,4 @@
 import type { PageServerLoad, Actions } from "./$types";
-import { type Cookies, fail } from "@sveltejs/kit";
 
 type ProjectDisplay = {
   id: string;
