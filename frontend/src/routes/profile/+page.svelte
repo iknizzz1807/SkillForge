@@ -963,29 +963,6 @@
           </div>
         </div>
 
-        <!-- Student Badges & Achievements -->
-        <div class="card p-4">
-          <h3 class="text-base font-semibold mb-3">Badges & Achievements</h3>
-          <div class="grid grid-cols-3 gap-3">
-            {#each studentBadges as badge}
-              <div
-                class="text-center p-3 rounded border {badge.achieved
-                  ? 'border-[#6b48ff] bg-purple-50'
-                  : 'border-gray-200 bg-gray-50 opacity-50'}"
-              >
-                <div class="text-2xl mb-1">{badge.icon}</div>
-                <p class="text-sm font-medium">{badge.name}</p>
-                <p class="text-xs text-gray-500">{badge.description}</p>
-                {#if badge.achieved}
-                  <p class="text-xs text-[#6b48ff] mt-1">Earned {badge.date}</p>
-                {:else}
-                  <p class="text-xs text-gray-400 mt-1">Locked</p>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        </div>
-
         <!-- Portfolio Generator -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Portfolio Generator</h3>
@@ -1223,12 +1200,106 @@
             </div>
           </div>
         </div>
+
+        <!-- Business Completed Projects -->
+        <div class="card p-4">
+          <h3 class="text-base font-semibold mb-3">Completed Projects</h3>
+          <div class="space-y-3">
+            <div
+              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
+            >
+              <div>
+                <p class="text-sm font-medium">Company Website Redesign</p>
+                <p class="text-xs text-gray-500">
+                  Completed: 10/03/2025 • 5 students
+                </p>
+              </div>
+              <div class="flex items-center">
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
+                  >Completed</span
+                >
+                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
+                  >View</a
+                >
+              </div>
+            </div>
+
+            <div
+              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
+            >
+              <div>
+                <p class="text-sm font-medium">CRM Integration</p>
+                <p class="text-xs text-gray-500">
+                  Completed: 25/02/2025 • 3 students
+                </p>
+              </div>
+              <div class="flex items-center">
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
+                  >Completed</span
+                >
+                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
+                  >View</a
+                >
+              </div>
+            </div>
+
+            <div
+              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
+            >
+              <div>
+                <p class="text-sm font-medium">Payment Gateway API</p>
+                <p class="text-xs text-gray-500">
+                  Completed: 15/01/2025 • 4 students
+                </p>
+              </div>
+              <div class="flex items-center">
+                <span
+                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
+                  >Completed</span
+                >
+                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
+                  >View</a
+                >
+              </div>
+            </div>
+          </div>
+          <div class="text-center mt-3">
+            <a href="#" class="text-sm text-[#6b48ff] hover:underline"
+              >View All Projects</a
+            >
+          </div>
+        </div>
       {/if}
     </div>
 
     <!-- Right Column -->
     <div class="space-y-4">
       {#if role === "student"}
+        <!-- Student Badges & Achievements -->
+        <div class="card p-4">
+          <h3 class="text-base font-semibold mb-3">Badges & Achievements</h3>
+          <div class="grid grid-cols-3 gap-3">
+            {#each studentBadges as badge}
+              <div
+                class="text-center p-3 rounded border {badge.achieved
+                  ? 'border-[#6b48ff] bg-purple-50'
+                  : 'border-gray-200 bg-gray-50 opacity-50'}"
+              >
+                <div class="text-2xl mb-1">{badge.icon}</div>
+                <p class="text-sm font-medium">{badge.name}</p>
+                <p class="text-xs text-gray-500">{badge.description}</p>
+                {#if badge.achieved}
+                  <p class="text-xs text-[#6b48ff] mt-1">Earned {badge.date}</p>
+                {:else}
+                  <p class="text-xs text-gray-400 mt-1">Locked</p>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+
         <!-- Certificates -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Certificates</h3>
@@ -1419,77 +1490,6 @@
           <div class="text-center mt-3">
             <a href="#" class="text-sm text-[#6b48ff] hover:underline"
               >View All Talent</a
-            >
-          </div>
-        </div>
-
-        <!-- Business Completed Projects -->
-        <div class="card p-4">
-          <h3 class="text-base font-semibold mb-3">Completed Projects</h3>
-          <div class="space-y-3">
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">Company Website Redesign</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 10/03/2025 • 5 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
-                >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
-                >
-              </div>
-            </div>
-
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">CRM Integration</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 25/02/2025 • 3 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
-                >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
-                >
-              </div>
-            </div>
-
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">Payment Gateway API</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 15/01/2025 • 4 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
-                >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
-                >
-              </div>
-            </div>
-          </div>
-          <div class="text-center mt-3">
-            <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-              >View All Projects</a
             >
           </div>
         </div>
