@@ -14,6 +14,7 @@ type ChatRepository struct {
 	GroupCollection          *mongo.Collection
 	ProjectStudentCollection *mongo.Collection
 	ProjectCollection        *mongo.Collection
+	UserCollection *mongo.Collection
 }
 
 func NewChatRepository(db *mongo.Database) *ChatRepository {
@@ -22,6 +23,7 @@ func NewChatRepository(db *mongo.Database) *ChatRepository {
 		GroupCollection:          db.Collection("groups"),
 		ProjectStudentCollection: db.Collection("project_student"),
 		ProjectCollection:        db.Collection("projects"),
+		UserCollection: db.Collection("users"),
 	}
 }
 
@@ -116,7 +118,7 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 	users := []*models.User{}
 	for _, userID := range usersID {
 		var user models.User
-		err := r.MessageCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+		err := r.UserCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 		if err != nil {
 			return nil, err
 		}
