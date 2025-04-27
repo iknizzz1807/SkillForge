@@ -38,5 +38,5 @@ async def root2(request: MatchingRequest2) -> any:
     match_score = generate_score_with_many_projects(
         request.student_infos, request.project_infos
     )
-    print("Match score: " + match_score)
+    print(match_score)
     return {"match_score": match_score}
