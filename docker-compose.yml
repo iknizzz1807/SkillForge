@@ -9,6 +9,8 @@ services:
       - ./ai:/app
     networks:
       - app-network
+    environment:
+      - NODE_ENV=production
   backend:
     build:
       context: ./backend
@@ -23,6 +25,7 @@ services:
       - app-network
     environment:
       - MONGO_URI=mongodb://mongodb:27017/skillforge
+      - NODE_ENV=production
 
   frontend:
     build:
@@ -44,6 +47,7 @@ services:
       # Thêm biến môi trường cho Vite
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - NODE_ENV=production
 
   mongodb:
     image: mongo:latest

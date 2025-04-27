@@ -75,8 +75,6 @@
       return;
     }
 
-    console.log(`Moving task: ${taskId} from ${fromStatus} to ${toStatus}`);
-
     // Temporarily remove the task from the local array to prevent duplication
     const taskToMove = tasks.find((t) => t.id === taskId);
     if (!taskToMove) {
