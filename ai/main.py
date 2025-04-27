@@ -27,12 +27,12 @@ app = FastAPI()
 # API endpoint
 # Input json: student_infos, project_infos
 # Output json: match_score
-@app.post("/matching/", response_model=MatchingResponse)
+@app.post("/matching", response_model=MatchingResponse)
 async def root(request: MatchingRequest) -> any:
     return {"match_score": generate_score(request.student_infos, request.project_infos)}
 
 
-@app.post("/matching2/", response_model=MatchingResponse2)
+@app.post("/matching2", response_model=MatchingResponse2)
 async def root2(request: MatchingRequest2) -> any:
     print("The AI service is called")
     match_score = generate_score_with_many_projects(
