@@ -185,6 +185,7 @@ func RegisterRoutes(
 		api.GET("/levels", levelHandler.GetUserLevel)
 
 		// Route cho chat
+		// :id là projectID
 		api.GET("/chats", chatHandler.GetGroups)
 		api.GET("/chats/:id", chatHandler.GetGroupInfo)
 

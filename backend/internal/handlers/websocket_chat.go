@@ -52,6 +52,9 @@ func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
 	wsh.handleMessages(room, userID, conn)
 }
 
+type ChatMessage struct {
+	Content string `json:"content"`
+}
 func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *websocket.Conn) {
 	for {
 		_, rawMessage, err := conn.ReadMessage()
@@ -60,12 +63,13 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 			break
 		}
 
-		var Content string
-		err = json.Unmarshal(rawMessage, &Content)
+		var PassedMessage ChatMessage
+		err = json.Unmarshal(rawMessage, &PassedMessage)
 		if err != nil {
 			log.Printf("Error unmarshaling message: %v", err)
 			continue
 		}
+		Content := PassedMessage.Content
 
 		Message, err := wsh.chatService.InsertMessage(context.Background(), room, userID, Content)
 		if err != nil {
