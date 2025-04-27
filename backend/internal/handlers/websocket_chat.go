@@ -84,7 +84,7 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 			continue
 		}
 
-		err = conn.WriteMessage(websocket.TextMessage, response)
+		err = wsh.realtimeClient.Broadcast(room, response)
 		if err != nil {
 			log.Printf("Error sending message: %v", err)
 			break
