@@ -195,7 +195,7 @@
               </div>
 
               <a
-                href={"/profile/business/" + project.created_by_id}
+                href={"/profile/user/" + project.created_by_id}
                 class="btn-secondary text-sm px-3 py-1.5 flex items-center shadow-sm hover:shadow transition-all"
               >
                 <svg

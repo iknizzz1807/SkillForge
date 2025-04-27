@@ -1,21 +1,38 @@
 <script lang="ts">
   import type { PageData } from "./$types";
   import { onMount, onDestroy } from "svelte";
-  import type { Socket } from "socket.io-client";
   import { browser } from "$app/environment";
+  import {
+    formatDate,
+    formatActivityDate,
+    formatActivityTime,
+    normalizeTaskStatus,
+    initSortable as initSortableJS,
+    setupWebSocket,
+    createTask as createTaskAPI,
+    updateTask as updateTaskAPI,
+    deleteTask as deleteTaskAPI,
+  } from "../../../components/taskUtils";
 
   let { data }: { data: PageData } = $props();
   const project = data.project;
   const userId = data.id;
   const token = data.token;
 
-  let socket: Socket;
+  let socket: any;
   let tasks = $state<
-    { id: string; title: string; status: string; assigned_to?: string }[]
+    {
+      id: string;
+      title: string;
+      status: string;
+      assigned_to?: string;
+      description?: string;
+      note?: string;
+    }[]
   >([]);
   let activities = $state<
     {
-      id: number;
+      id: string | number;
       user: string;
       action: string;
       item: string;
@@ -25,46 +42,27 @@
   >([]);
   let sortables: any[] = [];
 
+  // Find member name by id
+  function getMemberNameById(memberId: string | number | undefined): string {
+    if (!memberId) return "Unassigned";
+
+    // Check if this is the current user
+    if (memberId.toString() === userId?.toString()) return "You";
+
+    // Check if this is the company that created the project
+    if (memberId.toString() === project.created_by_id?.toString())
+      return project.created_by_name;
+
+    // Check if this is a team member
+    const member = teamMembers.find(
+      (m) => m.id.toString() === memberId.toString()
+    );
+    return member ? member.name : "Unknown User";
+  }
+
   // Khởi tạo SortableJS cho các cột trong Kanban
   async function initSortable() {
-    if (!browser) return;
-
-    try {
-      // Lazy load Sortable
-      const SortableModule = await import("sortablejs");
-      const Sortable = SortableModule.default;
-
-      // Xóa các instance cũ để tránh duplicate
-      sortables.forEach((sortable) => sortable.destroy());
-      sortables = [];
-
-      const columns = document.querySelectorAll(".kanban-column");
-      columns.forEach((column) => {
-        const status = column.getAttribute("data-status");
-        const sortable = new Sortable(column as HTMLElement, {
-          group: "tasks",
-          animation: 150,
-          ghostClass: "task-ghost",
-          chosenClass: "task-chosen",
-          dragClass: "task-drag",
-          filter: ".ignore-elements", // Phần tử không kéo được
-          onEnd: function (evt) {
-            const taskId = evt.item.getAttribute("data-id");
-            const fromStatus = evt.from.getAttribute("data-status");
-            const toStatus = evt.to.getAttribute("data-status");
-
-            // Nếu di chuyển sang cột khác
-            if (fromStatus !== toStatus) {
-              if (taskId && fromStatus && toStatus)
-                handleTaskMove(taskId, fromStatus, toStatus);
-            }
-          },
-        });
-        sortables.push(sortable);
-      });
-    } catch (error) {
-      console.error("Error loading Sortable:", error);
-    }
+    sortables = await initSortableJS(getTasksByStatus, handleTaskMove, socket);
   }
 
   function handleTaskMove(
@@ -72,52 +70,77 @@
     fromStatus: string,
     toStatus: string
   ) {
-    if (socket) {
-      console.log(`Moving task: ${taskId} from ${fromStatus} to ${toStatus}`);
+    if (!socket) {
+      console.error("Socket not connected");
+      return;
+    }
 
-      // Cập nhật local trước - Optimistic UI
-      updateTaskPosition(taskId, toStatus);
+    console.log(`Moving task: ${taskId} from ${fromStatus} to ${toStatus}`);
 
-      // Gửi yêu cầu cập nhật đến server
+    // Temporarily remove the task from the local array to prevent duplication
+    const taskToMove = tasks.find((t) => t.id === taskId);
+    if (!taskToMove) {
+      console.error("Task not found for movement:", taskId);
+      return;
+    }
+
+    // Important: Remove task from local array (prevents duplicate rendering)
+    tasks = tasks.filter((t) => t.id !== taskId);
+
+    // Then add it back with the new status
+    setTimeout(() => {
+      tasks = [...tasks, { ...taskToMove, status: toStatus }];
+
+      // Reinitialize sortable after state update
+      setTimeout(initSortable, 50);
+
+      // Send update to server
       socket.emit("message", {
         type: "update",
         content: {
           taskId: taskId,
           status: toStatus,
+          title: taskToMove.title,
+          description: taskToMove.description || "",
+          note: taskToMove.note || "",
+          assigned_to: taskToMove.assigned_to || "",
         },
       });
-    }
+    }, 10);
   }
 
   function updateTaskPosition(taskId: string, newStatus: string) {
-    // Cập nhật vị trí task trong UI
+    // Find task in the list
+    const taskToUpdate = tasks.find((task) => task.id === taskId);
+    if (!taskToUpdate) {
+      console.error("Cannot find task to update position:", taskId);
+      return;
+    }
+
+    // Update task status in the state array
+    // Using this approach to trigger proper Svelte reactivity
     tasks = tasks.map((task) => {
       if (task.id === taskId) {
         return { ...task, status: newStatus };
       }
       return task;
     });
+
+    // Important: Wait for next UI update before reinitializing SortableJS
+    setTimeout(() => {
+      // Reset all sortable instances to sync with new data state
+      initSortable();
+    }, 50);
   }
 
   // Lọc task theo trạng thái
   function getTasksByStatus(status: string) {
-    return tasks.filter((task) => task.status === status);
-  }
+    // Normalize status format
+    const normalizedStatus = normalizeTaskStatus(status);
 
-  // Format date function
-  function formatDate(dateString: string): string {
-    if (!dateString) return "N/A";
-
-    const date = new Date(dateString);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) return "Invalid date";
-
-    // Format: "Mar 24, 2025"
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+    return tasks.filter((task) => {
+      const taskStatus = normalizeTaskStatus(task.status);
+      return taskStatus === normalizedStatus;
     });
   }
 
@@ -219,6 +242,7 @@
       console.error("Error fetching team members:", error);
     }
   }
+
   // Gửi yêu cầu tạo task mới đến server
   function createTask(taskInput: {
     name: string;
@@ -227,23 +251,13 @@
     assignedTo?: string;
   }) {
     if (socket) {
-      const message = {
-        type: "create",
-        content: {
-          title: taskInput.name,
-          description: taskInput.description,
-          note: taskInput.note || "",
-          assigned_to: taskInput.assignedTo || "",
-        },
-      };
-      console.log("Sending create task message:", message);
-
-      try {
-        socket.emit("message", message);
-        console.log("Message sent successfully");
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
+      createTaskAPI(socket, {
+        title: taskInput.name,
+        description: taskInput.description,
+        note: taskInput.note || "",
+        assigned_to: taskInput.assignedTo || "",
+        status: "todo",
+      });
     } else {
       console.error("Socket not connected");
     }
@@ -251,90 +265,6 @@
 
   // Activities modal
   let showActivitiesModal = $state(false);
-
-  // Mock data for activities
-  const mockActivities = $state([
-    {
-      id: 1,
-      user: "Sarah",
-      action: "moved",
-      item: "Test Features",
-      targetStatus: "Review",
-      timestamp: "2025-04-24T14:32:00",
-    },
-    {
-      id: 2,
-      user: "John",
-      action: "moved",
-      item: "Code Backend",
-      targetStatus: "In Progress",
-      timestamp: "2025-04-24T13:45:00",
-    },
-    {
-      id: 3,
-      user: "Alex",
-      action: "completed",
-      item: "Login Screen UI",
-      targetStatus: "Done",
-      timestamp: "2025-04-24T11:20:00",
-    },
-    {
-      id: 4,
-      user: "Emma",
-      action: "created",
-      item: "New Feature Request",
-      targetStatus: "To-do",
-      timestamp: "2025-04-23T16:15:00",
-    },
-    {
-      id: 5,
-      user: "Michael",
-      action: "commented on",
-      item: "API Documentation",
-      targetStatus: "",
-      timestamp: "2025-04-23T14:32:00",
-    },
-    {
-      id: 6,
-      user: "Tran Le Minh Nhat",
-      action: "assigned",
-      item: "Wireframes",
-      targetStatus: "To-do",
-      timestamp: "2025-04-22T09:30:00",
-    },
-    {
-      id: 7,
-      user: "Nguyen My Thong",
-      action: "updated",
-      item: "Authentication Logic",
-      targetStatus: "",
-      timestamp: "2025-04-21T17:25:00",
-    },
-    {
-      id: 8,
-      user: "Tran Tuan Kiet",
-      action: "completed",
-      item: "Database Schema",
-      targetStatus: "Done",
-      timestamp: "2025-04-21T15:10:00",
-    },
-    {
-      id: 9,
-      user: "Tran Le Minh Nhat",
-      action: "created",
-      item: "Project Repository",
-      targetStatus: "",
-      timestamp: "2025-04-20T11:45:00",
-    },
-    {
-      id: 10,
-      user: "Sarah",
-      action: "added",
-      item: "New Team Member",
-      targetStatus: "",
-      timestamp: "2025-04-19T10:30:00",
-    },
-  ]);
 
   // Team Members modal
   let showTeamMembersModal = $state(false);
@@ -357,44 +287,10 @@
     }[]
   >([]);
 
-  // Function to format the date for grouping
-  function formatActivityDate(dateString: string): string {
-    const date = new Date(dateString);
-
-    // Get today and yesterday dates for comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Check if the date is today, yesterday, or earlier
-    if (date >= today) {
-      return "Today";
-    } else if (date >= yesterday) {
-      return "Yesterday";
-    } else {
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    }
-  }
-
-  // Function to format the time
-  function formatActivityTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
   // Function to get the grouped activities
   function getGroupedActivities() {
-    // Sử dụng activities từ server nếu có, nếu không dùng mockActivities
-    const activitiesData = activities.length > 0 ? activities : mockActivities;
+    // Activities are already sorted newest first from the server
+    const activitiesData = activities;
     const groups: Record<string, any[]> = {};
 
     activitiesData.forEach((activity) => {
@@ -407,44 +303,27 @@
       groups[dateGroup].push(activity);
     });
 
-    // Convert the groups object to an array of { date, activities } objects
-    return Object.entries(groups).map(([date, activities]) => {
-      return { date, activities };
+    // Sort the date groups chronologically (newest first)
+    const sortedDateGroups = Object.keys(groups).sort((a, b) => {
+      // Special handling for "Today" and "Yesterday"
+      if (a === "Today") return -1;
+      if (b === "Today") return 1;
+      if (a === "Yesterday") return -1;
+      if (b === "Yesterday") return 1;
+
+      // For other dates, compare them as dates
+      return new Date(b).getTime() - new Date(a).getTime();
+    });
+
+    // Return the sorted groups
+    return sortedDateGroups.map((date) => {
+      return {
+        date,
+        // Activities within each group are already sorted newest first
+        activities: groups[date],
+      };
     });
   }
-
-  // // Hàm xử lý activity từ server
-  // function formatActivityFromServer(activity) {
-  //   // Chuyển đổi cấu trúc activity từ server sang định dạng hiển thị
-  //   // Dạng activity từ server: {id, type, done_by, project_id, title, from, to, created_at}
-
-  //   let action = "";
-  //   switch (activity.type) {
-  //     case "create":
-  //       action = "created";
-  //       break;
-  //     case "update":
-  //       action = "updated";
-  //       break;
-  //     case "delete":
-  //       action = "deleted";
-  //       break;
-  //     case "move":
-  //       action = "moved";
-  //       break;
-  //     default:
-  //       action = activity.type;
-  //   }
-
-  //   return {
-  //     id: activity.id,
-  //     user: activity.done_by_name || activity.done_by,
-  //     action: action,
-  //     item: activity.title,
-  //     targetStatus: activity.to,
-  //     timestamp: activity.created_at,
-  //   };
-  // }
 
   function openActivitiesModal() {
     showActivitiesModal = true;
@@ -477,17 +356,7 @@
 
   function updateTask() {
     if (socket && currentEditingTask) {
-      socket.emit("message", {
-        type: "update",
-        content: {
-          taskId: currentEditingTask.id,
-          title: currentEditingTask.title,
-          description: currentEditingTask.description,
-          note: currentEditingTask.note || "",
-          status: currentEditingTask.status,
-          assigned_to: currentEditingTask.assigned_to || "",
-        },
-      });
+      updateTaskAPI(socket, currentEditingTask);
       closeEditTaskModal();
     }
   }
@@ -495,10 +364,7 @@
   function deleteTask() {
     if (socket && currentEditingTask) {
       if (confirm("Are you sure you want to delete this task?")) {
-        socket.emit("message", {
-          type: "delete",
-          content: currentEditingTask.id,
-        });
+        deleteTaskAPI(socket, currentEditingTask.id);
         closeEditTaskModal();
       }
     }
@@ -508,64 +374,27 @@
     if (browser) {
       try {
         await fetchTeamMembers();
-        // Sửa URL để khớp với API của backend
-        const wsUrl = `ws://${window.location.hostname}:8080/ws/task/${project.id}/${data.id}`;
-        console.log("Connecting with WebSocket to:", wsUrl);
 
-        // Tạo một webSocket
-        const ws = new WebSocket(wsUrl);
+        // Setup WebSocket connection with callback for data updates
+        socket = setupWebSocket(project.id, userId, (data: any) => {
+          if (data.tasks) {
+            // Update tasks and ensure UI reflects the changes
+            tasks = data.tasks;
 
-        ws.onopen = () => {
-          console.log("WebSocket connection established");
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            console.log("Received via WebSocket:", data);
-
-            if (data.tasks) {
-              tasks = data.tasks;
-              setTimeout(initSortable, 100);
-            }
-
-            if (data.activities) {
-              activities = data.activities;
-            }
-          } catch (e) {
-            console.error("Error parsing WebSocket data:", e);
+            // Important: Destroy and recreate sortable instances
+            // after task data changes to prevent duplicates
+            setTimeout(initSortable, 50);
           }
-        };
 
-        ws.onerror = (err) => {
-          console.error("WebSocket error:", err);
-        };
+          if (data.activities) {
+            activities = data.activities;
+          }
+        });
 
-        // Sửa hàm emit để gửi message đúng định dạng
-        socket = {
-          emit: (eventName: string, data: any) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              // Gửi tin nhắn trực tiếp theo định dạng backend yêu cầu
-              // Backend mong đợi { type: "...", content: {...} }
-              ws.send(
-                JSON.stringify({
-                  type: data.type, // lấy type từ data object
-                  content: data.content, // lấy content từ data object
-                })
-              );
-            } else {
-              console.error("WebSocket is not connected");
-            }
-          },
-          disconnect: () => {
-            ws.close();
-          },
-        } as any;
-
-        // Khởi tạo sortable
-        setTimeout(initSortable, 100);
+        // Initialize sortable for first render
+        setTimeout(initSortable, 50);
       } catch (error) {
-        console.error("Error setting up WebSocket:", error);
+        console.error("Error setting up project workspace:", error);
       }
     }
   });
@@ -576,7 +405,11 @@
     }
 
     // Dọn dẹp sortable instances
-    sortables.forEach((sortable) => sortable.destroy());
+    sortables.forEach((sortable) => {
+      if (sortable && typeof sortable.destroy === "function") {
+        sortable.destroy();
+      }
+    });
   });
 </script>
 
@@ -625,25 +458,42 @@
             </button>
           </div>
 
+          <!-- Company information -->
+          <div
+            class="flex items-center space-x-2 mb-3 pb-3 border-b border-gray-100"
+          >
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-[#e6e0ff]">
+              <img
+                src={`/api/avatars/${project.created_by_id}`}
+                alt={project.created_by_name}
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <p class="text-sm font-medium">{project.created_by_name}</p>
+              <p class="text-xs text-[#6b48ff]">Business</p>
+            </div>
+          </div>
+
+          <!-- Team members -->
           <div class="space-y-3">
-            {#each teamMembers.slice(0, 3) as member}
+            {#each teamMembers.slice(0, 2) as member}
               <div class="flex items-center space-x-2">
-                <div
-                  class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600"
-                >
-                  {member.name
-                    .split(" ")
-                    .map((name) => name[0])
-                    .join("")}
+                <div class="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+                  <img
+                    src={`/api/avatars/${member.id}`}
+                    alt={member.name}
+                    class="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <p class="text-sm font-medium">{member.name}</p>
-                  <p class="text-xs text-gray-500">Developer</p>
+                  <p class="text-xs text-gray-500">{member.role}</p>
                 </div>
               </div>
             {/each}
 
-            {#if teamMembers.length > 3}
+            {#if teamMembers.length > 2}
               <button
                 class="text-xs text-gray-500 hover:text-[#6b48ff]"
                 onclick={openTeamMembersModal}
@@ -684,17 +534,28 @@
           <div class="card p-3 w-1/2">
             <div class="flex justify-between items-center mb-2">
               <h3 class="text-base font-semibold">Tasks Progress</h3>
-              <span class="text-sm text-green-600">35%</span>
+              <span class="text-sm text-green-600">
+                {Math.round(
+                  (getTasksByStatus("done").length / (tasks.length || 1)) * 100
+                )}%
+              </span>
             </div>
             <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-500">Completed: 4</div>
+              <div class="text-xs text-gray-500">
+                Completed: {getTasksByStatus("done").length}
+              </div>
               <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
                 <div
                   class="absolute h-2 bg-green-500 rounded"
-                  style="width: 35%"
+                  style="width: {Math.round(
+                    (getTasksByStatus('done').length / (tasks.length || 1)) *
+                      100
+                  )}%"
                 ></div>
               </div>
-              <div class="text-xs text-gray-500">Total: 12</div>
+              <div class="text-xs text-gray-500">
+                Total: {tasks.length}
+              </div>
             </div>
           </div>
         </div>
@@ -702,43 +563,48 @@
         <!-- Recent Activities (Keep as is) -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-2">Recent Activities</h3>
-          <!-- Timeline -->
-          <div class="relative">
-            <!-- Timeline line -->
-            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
-            <!-- Activity items -->
-            <div class="space-y-6">
-              <!-- Today's activities -->
-              <div class="relative pl-8">
-                <!-- Timeline dot -->
-                <div
-                  class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
-                ></div>
-                <span class="text-xs font-semibold text-gray-500 mb-1 block"
-                  >18 Mar, 14:32</span
-                >
-                <p class="text-sm">
-                  <span class="font-medium text-[#6b48ff]">Sarah</span>
-                  moved <span class="font-medium">Test Features</span> to Review
-                </p>
-              </div>
+          {#if activities.length === 0}
+            <div class="text-center py-4 text-gray-500">No activities yet</div>
+          {:else}
+            <!-- Timeline -->
+            <div class="relative">
+              <!-- Timeline line -->
+              <div
+                class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"
+              ></div>
 
-              <div class="relative pl-8">
-                <!-- Timeline dot -->
-                <div
-                  class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
-                ></div>
-                <span class="text-xs font-semibold text-gray-500 mb-1 block"
-                  >18 Mar, 13:45</span
-                >
-                <p class="text-sm">
-                  <span class="font-medium text-[#6b48ff]">John</span> moved
-                  <span class="font-medium">Code Backend</span> to In Progress
-                </p>
+              <!-- Activity items - only show 2 latest -->
+              <div class="space-y-6">
+                {#each activities.slice(0, 2) as activity}
+                  <!-- This now shows the 2 newest activities since activities array is sorted newest first -->
+                  <div class="relative pl-8">
+                    <!-- Timeline dot -->
+                    <div
+                      class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
+                    ></div>
+                    <span
+                      class="text-xs font-semibold text-gray-500 mb-1 block"
+                    >
+                      {formatActivityTime(activity.timestamp)}
+                    </span>
+                    <p class="text-sm">
+                      <span class="font-medium text-[#6b48ff]"
+                        >{getMemberNameById(activity.user)}</span
+                      >
+                      {activity.action}
+                      <span class="font-medium">{activity.item}</span>
+                      {#if activity.targetStatus}
+                        to <span class="font-medium"
+                          >{activity.targetStatus}</span
+                        >
+                      {/if}
+                    </p>
+                  </div>
+                {/each}
               </div>
             </div>
-          </div>
+          {/if}
 
           <!-- View all button -->
           <button
@@ -794,13 +660,20 @@
               <div
                 class="card p-2 bg-white mb-2 shadow-sm cursor-move"
                 data-id={task.id}
+                data-status="todo"
+                data-title={task.title}
+                data-description={task.description || ""}
+                data-note={task.note || ""}
+                data-assigned={task.assigned_to || ""}
               >
                 <div class="flex justify-between items-center">
                   <div class="flex-1">
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Assign to:
-                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                      <a href="#" class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</a
+                      >
                     </p>
                   </div>
                   <button
@@ -863,13 +736,20 @@
               <div
                 class="card p-2 bg-white mb-2 shadow-sm cursor-move"
                 data-id={task.id}
+                data-status="in_progress"
+                data-title={task.title}
+                data-description={task.description || ""}
+                data-note={task.note || ""}
+                data-assigned={task.assigned_to || ""}
               >
                 <div class="flex justify-between items-center">
                   <div class="flex-1">
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Doing by:
-                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                      <a href="#" class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</a
+                      >
                     </p>
                   </div>
                   <button
@@ -937,7 +817,9 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Done by:
-                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                      <a href="#" class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</a
+                      >
                     </p>
                   </div>
                   <button
@@ -1004,7 +886,9 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Completed by:
-                      <a href="#" class="text-[#6b48ff]">{task.assigned_to}</a>
+                      <a href="#" class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</a
+                      >
                     </p>
                   </div>
                   <button
@@ -1070,55 +954,61 @@
 
         <!-- Content - phần này sẽ cuộn -->
         <div class="p-4 pb-6 overflow-y-auto flex-grow">
-          {#each getGroupedActivities() as group}
-            <div class="mb-6">
-              <h4 class="text-sm font-semibold text-gray-500 mb-3">
-                {group.date}
-              </h4>
+          {#if activities.length === 0}
+            <div class="text-center py-8">
+              <p class="text-gray-500">No activities recorded yet</p>
+            </div>
+          {:else}
+            {#each getGroupedActivities() as group}
+              <div class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-500 mb-3">
+                  {group.date}
+                </h4>
 
-              <!-- Timeline -->
-              <div class="relative">
-                <!-- Timeline line -->
-                <div
-                  class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"
-                ></div>
+                <!-- Timeline -->
+                <div class="relative">
+                  <!-- Timeline line -->
+                  <div
+                    class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"
+                  ></div>
 
-                <!-- Activity items -->
-                <div class="space-y-4">
-                  {#each group.activities as activity}
-                    <div class="relative pl-10">
-                      <!-- Timeline dot -->
-                      <div
-                        class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
-                      ></div>
+                  <!-- Activity items -->
+                  <div class="space-y-4">
+                    {#each group.activities as activity}
+                      <div class="relative pl-10">
+                        <!-- Timeline dot -->
+                        <div
+                          class="absolute left-[13px] top-1 w-3 h-3 rounded-full bg-[#6b48ff] border-2 border-white"
+                        ></div>
 
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <span
-                            class="text-xs font-semibold text-gray-500 mb-1 block"
-                          >
-                            {formatActivityTime(activity.timestamp)}
-                          </span>
-                          <p class="text-sm">
-                            <span class="font-medium text-[#6b48ff]"
-                              >{activity.user}</span
+                        <div class="flex justify-between items-start">
+                          <div>
+                            <span
+                              class="text-xs font-semibold text-gray-500 mb-1 block"
                             >
-                            {activity.action}
-                            <span class="font-medium">{activity.item}</span>
-                            {#if activity.targetStatus}
-                              to <span class="font-medium"
-                                >{activity.targetStatus}</span
+                              {formatActivityTime(activity.timestamp)}
+                            </span>
+                            <p class="text-sm">
+                              <span class="font-medium text-[#6b48ff]"
+                                >{getMemberNameById(activity.user)}</span
                               >
-                            {/if}
-                          </p>
+                              {activity.action}
+                              <span class="font-medium">{activity.item}</span>
+                              {#if activity.targetStatus}
+                                to <span class="font-medium"
+                                  >{activity.targetStatus}</span
+                                >
+                              {/if}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  {/each}
+                    {/each}
+                  </div>
                 </div>
               </div>
-            </div>
-          {/each}
+            {/each}
+          {/if}
         </div>
       </div>
     </div>
@@ -1128,10 +1018,10 @@
 <!-- Task Creation Modal -->
 {#if showTaskModal}
   <div
-    class="fixed inset-0 bg-black z-50 flex items-center justify-center modal"
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
   >
     <div
-      class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
+      class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg"
     >
       <div class="p-4 border-b border-gray-100">
         <div class="flex justify-between items-center">
@@ -1230,6 +1120,9 @@
                     bind:value={task.assignedTo}
                   >
                     <option value="">Unassigned</option>
+                    <option value={project.created_by_id}>
+                      {project.created_by_name} (Business)
+                    </option>
                     {#each teamMembers as member}
                       <option value={member.id}>{member.name}</option>
                     {/each}
@@ -1318,26 +1211,52 @@
 
       <!-- Content -->
       <div class="p-4 pb-6 overflow-y-auto flex-grow">
+        <!-- Company Card (highlighted) -->
+        <div class="mb-4 p-4 bg-[#f8f6ff] rounded-lg border border-[#e6e0ff]">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-full overflow-hidden bg-[#e6e0ff]">
+              <img
+                src={`/api/avatars/${project.created_by_id}`}
+                alt={project.created_by_name}
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <p class="text-md font-medium">{project.created_by_name}</p>
+              <p class="text-sm text-[#6b48ff]">Business</p>
+              <p class="text-xs text-gray-500">Project Creator</p>
+            </div>
+          </div>
+        </div>
+
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Team Members</h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {#each teamMembers as member}
-            <div class="card p-3 bg-white shadow-sm">
-              <div class="flex items-center space-x-3">
-                <div
-                  class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-medium text-gray-600"
-                >
-                  {member.name
-                    .split(" ")
-                    .map((name) => name[0])
-                    .join("")}
-                </div>
-                <div>
-                  <p class="text-sm font-medium">{member.name}</p>
-                  <p class="text-xs text-gray-500">{member.role}</p>
-                  <p class="text-xs text-gray-500">{member.email}</p>
+          {#if teamMembers.length === 0}
+            <div class="col-span-2 text-center py-8">
+              <p class="text-gray-500">No team members found</p>
+            </div>
+          {:else}
+            {#each teamMembers as member}
+              <div class="card p-3 bg-white shadow-sm">
+                <div class="flex items-center space-x-3">
+                  <div
+                    class="w-12 h-12 rounded-full overflow-hidden bg-gray-200"
+                  >
+                    <img
+                      src={`/api/avatars/${member.id}`}
+                      alt={member.name}
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">{member.name}</p>
+                    <p class="text-xs text-gray-500">{member.role}</p>
+                    <p class="text-xs text-gray-500">{member.email}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          {/each}
+            {/each}
+          {/if}
         </div>
       </div>
 
@@ -1359,7 +1278,7 @@
     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
   >
     <div
-      class="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
+      class="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
     >
       <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0">
         <div class="flex justify-between items-center">
@@ -1386,62 +1305,93 @@
         </div>
       </div>
 
-      <div class="p-4 overflow-y-auto flex-grow">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-1">Task Name*</label>
-            <input
-              type="text"
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              placeholder="Enter task name"
-              bind:value={currentEditingTask.title}
-            />
+      <div class="p-6 overflow-y-auto flex-grow">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left column -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Task Name*</label>
+              <input
+                type="text"
+                class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                placeholder="Enter task name"
+                bind:value={currentEditingTask.title}
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-1">Description</label>
+              <textarea
+                class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                placeholder="Enter task description"
+                rows="6"
+                bind:value={currentEditingTask.description}
+              ></textarea>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              placeholder="Enter task description"
-              rows="3"
-              bind:value={currentEditingTask.description}
-            ></textarea>
-          </div>
+          <!-- Right column -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Note</label>
+              <textarea
+                class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                placeholder="Additional notes"
+                rows="3"
+                bind:value={currentEditingTask.note}
+              ></textarea>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Note</label>
-            <textarea
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              placeholder="Additional notes"
-              rows="2"
-              bind:value={currentEditingTask.note}
-            ></textarea>
-          </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Status</label>
+              <select
+                class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+                bind:value={currentEditingTask.status}
+              >
+                <option value="todo">To-do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Status</label>
-            <select
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              bind:value={currentEditingTask.status}
-            >
-              <option value="todo">To-do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="review">Review</option>
-              <option value="done">Done</option>
-            </select>
-          </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Assigned To</label>
+              <div class="relative">
+                <select
+                  class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff] appearance-none"
+                  bind:value={currentEditingTask.assigned_to}
+                >
+                  <option value="">Unassigned</option>
+                  <option value={project.created_by_id}>
+                    {project.created_by_name} (Business)
+                  </option>
+                  {#each teamMembers as member}
+                    <option value={member.id}>{member.name}</option>
+                  {/each}
+                </select>
+                <div
+                  class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+                >
+                  <svg
+                    class="fill-current h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Assigned To</label>
-            <select
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-              bind:value={currentEditingTask.assigned_to}
-            >
-              <option value="">Unassigned</option>
-              {#each teamMembers as member}
-                <option value={member.id}>{member.name}</option>
-              {/each}
-            </select>
+            <!-- Task metadata - optional -->
+            <div class="mt-6 pt-4 border-t border-gray-100">
+              <div class="flex items-center text-xs text-gray-500">
+                <span>Created in "{project.title}"</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1481,5 +1431,19 @@
   .card {
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .fallback-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .bg-gray-200 .fallback-avatar {
+    color: #4b5563;
   }
 </style>

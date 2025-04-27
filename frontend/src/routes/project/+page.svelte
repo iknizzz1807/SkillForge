@@ -2228,7 +2228,7 @@
                 <div class="flex space-x-2">
                   <!-- Nút xem hồ sơ thành viên -->
                   <a
-                    href={`/profile/${member.id}`}
+                    href={`/profile/user/${member.id}`}
                     class="px-3 py-1.5 bg-[#6b48ff] text-white text-sm rounded hover:bg-[#5a3dd3]"
                   >
                     View Profile

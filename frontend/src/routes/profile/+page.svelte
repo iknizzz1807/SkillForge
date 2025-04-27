@@ -1295,17 +1295,12 @@
             <div class="p-3 bg-gray-50 rounded border border-gray-200">
               <div class="flex justify-between mb-1">
                 <p class="text-sm font-medium">Mobile Banking App</p>
-                <span
-                  class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                  >In Progress</span
-                >
               </div>
               <p class="text-xs text-gray-500 mb-2">
                 Skills: React Native, Node.js | Due: 25/05/2025
               </p>
               <div class="flex justify-between items-center text-xs">
                 <div>Students: <span class="font-medium">4/5</span></div>
-                <div>Budget: <span class="font-medium">$750</span></div>
                 <div>Progress: <span class="font-medium">65%</span></div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
@@ -1319,17 +1314,12 @@
             <div class="p-3 bg-gray-50 rounded border border-gray-200">
               <div class="flex justify-between mb-1">
                 <p class="text-sm font-medium">E-commerce Dashboard</p>
-                <span
-                  class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded"
-                  >Just Started</span
-                >
               </div>
               <p class="text-xs text-gray-500 mb-2">
                 Skills: React, MongoDB, Express | Due: 10/06/2025
               </p>
               <div class="flex justify-between items-center text-xs">
                 <div>Students: <span class="font-medium">3/4</span></div>
-                <div>Budget: <span class="font-medium">$600</span></div>
                 <div>Progress: <span class="font-medium">15%</span></div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
@@ -1343,17 +1333,12 @@
             <div class="p-3 bg-gray-50 rounded border border-gray-200">
               <div class="flex justify-between mb-1">
                 <p class="text-sm font-medium">AI Content Generator</p>
-                <span
-                  class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded"
-                  >Recruiting</span
-                >
               </div>
               <p class="text-xs text-gray-500 mb-2">
                 Skills: Python, ML/AI, JavaScript | Due: 30/07/2025
               </p>
               <div class="flex justify-between items-center text-xs">
                 <div>Students: <span class="font-medium">2/6</span></div>
-                <div>Budget: <span class="font-medium">$1,200</span></div>
                 <div>Progress: <span class="font-medium">0%</span></div>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
@@ -1385,7 +1370,7 @@
               <div>
                 <button
                   class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >Invite</button
+                  >View</button
                 >
               </div>
             </div>
@@ -1405,7 +1390,7 @@
               <div>
                 <button
                   class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >Invite</button
+                  >View</button
                 >
               </div>
             </div>
@@ -1425,7 +1410,7 @@
               <div>
                 <button
                   class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >Invite</button
+                  >View</button
                 >
               </div>
             </div>

@@ -38,100 +38,46 @@
         <div class="space-y-1">
           <!-- Active Chat Room -->
           <div
-            class="chat-room active p-2 rounded cursor-pointer hover:bg-gray-100"
+            class="chat-room active p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
           >
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">Build a Chat App</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Jane: Hey, how's the backend going?
-            </p>
+            <span class="text-sm font-medium">Build a Chat App</span>
           </div>
 
-          <!-- Chat Room with Unread Messages -->
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">E-commerce Dashboard</span>
-              </div>
-              <span
-                class="unread-badge flex items-center justify-center bg-red-500 text-white text-xs rounded-full h-5 w-5 font-medium"
-                >3</span
-              >
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Alex: Can we discuss the UI design?
-            </p>
+          <!-- Other Chat Rooms -->
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">E-commerce Dashboard</span>
           </div>
 
-          <!-- Inactive Chat Room -->
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">Portfolio Website</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Maria: Great job on the landing page!
-            </p>
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">Portfolio Website</span>
           </div>
 
-          <!-- More Chat Rooms -->
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">Mobile App Project</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              John: Let's review the wireframes tomorrow
-            </p>
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">Mobile App Project</span>
           </div>
 
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">AI Research Team</span>
-              </div>
-              <span
-                class="unread-badge flex items-center justify-center bg-red-500 text-white text-xs rounded-full h-5 w-5 font-medium"
-                >1</span
-              >
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Emma: Check out this new paper I found
-            </p>
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">AI Research Team</span>
           </div>
 
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">Database Design</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Robert: I've updated the schema diagram
-            </p>
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">Database Design</span>
           </div>
 
-          <div class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center">
-                <div class="w-2 h-2 bg-gray-300 rounded-full mr-2"></div>
-                <span class="text-sm font-medium">UI/UX Workshop</span>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1 truncate">
-              Sophie: Materials for tomorrow's session are ready
-            </p>
+          <div
+            class="chat-room p-2 rounded cursor-pointer hover:bg-gray-100 min-h-[48px] flex items-center"
+          >
+            <span class="text-sm font-medium">UI/UX Workshop</span>
           </div>
         </div>
       </div>
@@ -139,65 +85,46 @@
 
     <!-- Chat Window -->
     <div class="card p-4 flex-1 flex flex-col">
-      <div class="flex-1 overflow-y-auto bg-gray-100 p-3 rounded mb-4">
-        <!-- Message Bubbles -->
-        <div class="flex items-start mb-3">
-          <img
-            class="w-8 h-8 rounded-full mr-2"
-            src="https://avatars.githubusercontent.com/u/789012?v=4"
-            alt="Teammate Avatar"
-          />
-          <div>
-            <p class="text-sm font-medium">Jane (Teammate)</p>
-            <p class="text-sm bg-white p-2 rounded">
-              Hey, how's the backend going?
-            </p>
-            <p class="text-xs text-gray-500 mt-1">18/03/2025 10:30</p>
-          </div>
-        </div>
-        <div class="flex justify-end items-start mb-3">
-          <div class="text-right">
-            <p class="text-sm font-medium">You</p>
-            <p
-              class="text-sm bg-[#6b48ff] text-white p-2 rounded"
-              style="background-color: #6b48ff"
-            >
-              Good, almost done!
-            </p>
-            <p class="text-xs text-gray-500 mt-1">18/03/2025 10:32</p>
-          </div>
-          <img
-            class="w-8 h-8 rounded-full ml-2"
-            src="https://avatars.githubusercontent.com/u/123456?v=4"
-            alt="User Avatar"
-          />
-        </div>
-        <div class="flex items-start mb-3">
-          <img
-            class="w-8 h-8 rounded-full mr-2"
-            src="https://avatars.githubusercontent.com/u/345678?v=4"
-            alt="Business Avatar"
-          />
-          <div>
-            <p class="text-sm font-medium">TechCorp (Business)</p>
-            <img
-              class="w-32 rounded"
-              src="https://via.placeholder.com/150"
-              alt="Uploaded Image"
-            />
-            <p class="text-xs text-gray-500 mt-1">18/03/2025 10:35</p>
-          </div>
+      <!-- No room selected state -->
+      <div
+        class="flex-1 flex items-center justify-center bg-gray-100 p-3 rounded mb-4"
+      >
+        <div class="text-center p-6">
+          <svg
+            class="w-16 h-16 mx-auto text-gray-400 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            ></path>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-700 mb-2">
+            No conversation selected
+          </h3>
+          <p class="text-gray-500 mb-4">
+            Choose a room from the list to start chatting
+          </p>
         </div>
       </div>
-      <!-- Input Area -->
+
+      <!-- Message Input Area (disabled when no room selected) -->
       <div class="flex space-x-2">
         <input
           type="text"
-          class="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
-          placeholder="Type a message..."
+          class="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff] disabled:bg-gray-100 disabled:cursor-not-allowed"
+          placeholder="Select a room to start messaging..."
+          disabled
         />
-        <button class="btn">Send</button>
-        <label class="btn-secondary flex items-center cursor-pointer">
+        <button class="btn opacity-50 cursor-not-allowed" disabled>Send</button>
+        <label
+          class="btn-secondary flex items-center cursor-not-allowed opacity-50"
+        >
           <svg
             class="w-5 h-5"
             fill="none"
@@ -212,11 +139,12 @@
               d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
             ></path>
           </svg>
-          <input type="file" class="hidden" accept="image/*" />
+          <input type="file" class="hidden" accept="image/*" disabled />
         </label>
       </div>
       <button
-        class="btn-secondary mt-2 w-full flex items-center justify-center"
+        class="btn-secondary mt-2 w-full flex items-center justify-center opacity-50 cursor-not-allowed"
+        disabled
       >
         <svg
           class="w-5 h-5 mr-1"
