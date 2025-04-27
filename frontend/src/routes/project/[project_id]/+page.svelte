@@ -21,26 +21,6 @@
     });
   }
 
-  // Format date and time function (with time)
-  function formatDateTime(dateString: string): string {
-    if (!dateString) return "N/A";
-
-    const date = new Date(dateString);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) return "Invalid date";
-
-    // Format: "Mar 24, 2025, 2:30 PM"
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    });
-  }
-
   // Calculate project progress based on start and end dates
   function calculateProgress(start: string, end: string): number {
     const startDate = new Date(start);
@@ -81,12 +61,6 @@
 
   let newTasks = $state([
     { name: "", description: "", note: "", assignedTo: "" },
-  ]);
-  let teamMembers = $state([
-    { id: 1, name: "John Doe" },
-    { id: 2, name: "Sarah Smith" },
-    { id: 3, name: "Alex Johnson" },
-    { id: 4, name: "Emma Wilson" },
   ]);
 
   function addAnotherTask() {
@@ -213,6 +187,57 @@
     },
   ]);
 
+  // Team Members modal
+  let showTeamMembersModal = $state(false);
+
+  function openTeamMembersModal() {
+    showTeamMembersModal = true;
+  }
+
+  function closeTeamMembersModal() {
+    showTeamMembersModal = false;
+  }
+
+  // Extend the team members data with more info
+  let teamMembers = $state([
+    {
+      id: 1,
+      name: "John Doe",
+      role: "Frontend Developer",
+      email: "john@example.com",
+    },
+    {
+      id: 2,
+      name: "Sarah Smith",
+      role: "UI/UX Designer",
+      email: "sarah@example.com",
+    },
+    {
+      id: 3,
+      name: "Alex Johnson",
+      role: "Backend Developer",
+      email: "alex@example.com",
+    },
+    {
+      id: 4,
+      name: "Emma Wilson",
+      role: "Project Manager",
+      email: "emma@example.com",
+    },
+    {
+      id: 5,
+      name: "Tran Le Minh Nhat",
+      role: "Full Stack Developer",
+      email: "nhat@example.com",
+    },
+    {
+      id: 6,
+      name: "Nguyen My Thong",
+      role: "QA Engineer",
+      email: "thong@example.com",
+    },
+  ]);
+
   // Function to format the date for grouping
   function formatActivityDate(dateString: string): string {
     const date = new Date(dateString);
@@ -272,6 +297,37 @@
   function closeActivitiesModal() {
     showActivitiesModal = false;
   }
+
+  // Task edit modal
+  let showEditTaskModal = $state(false);
+  let currentEditingTask = $state(null);
+
+  function openEditTaskModal(task: any) {
+    currentEditingTask = { ...task };
+    showEditTaskModal = true;
+  }
+
+  function closeEditTaskModal() {
+    showEditTaskModal = false;
+    currentEditingTask = null;
+  }
+
+  function updateTask() {
+    // Gửi thông tin task đã cập nhật lên server
+    // Code xử lý cập nhật task ở đây
+
+    // Đóng modal sau khi cập nhật
+    closeEditTaskModal();
+  }
+
+  function deleteTask() {
+    if (confirm("Are you sure you want to delete this task?")) {
+      // Code xử lý xóa task ở đây
+
+      // Đóng modal sau khi xóa
+      closeEditTaskModal();
+    }
+  }
 </script>
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
@@ -305,64 +361,96 @@
   <div class="space-y-4">
     <!-- Top section: Timeline, Progression, and Recent Activities -->
     <div class="flex space-x-4">
-      <!-- Timeline and Progression -->
-      <div class="flex-1 space-y-4">
-        <!-- Timeline Bar -->
-        <div class="card p-3 w-full">
-          <h3 class="text-base font-semibold mb-2">Timeline</h3>
-          <div class="flex items-center justify-between">
-            <div class="text-center">
-              <p class="text-sm font-medium">Start</p>
-              <p class="text-xs text-gray-500">
-                {formatDate(project.start_time.toString())}
-              </p>
-            </div>
-            <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
-              <div
-                class="absolute h-2 bg-[#6b48ff] rounded"
-                style="width: {progressPercentage}%"
-              ></div>
-            </div>
-            <div class="text-center">
-              <p class="text-sm font-medium">End</p>
-              <p class="text-xs text-gray-500">
-                {formatDate(project.end_time.toString())}
-              </p>
-            </div>
+      <!-- NEW: Project Info & Team Members Card -->
+      <div class="w-72">
+        <!-- NEW: Team Members Card -->
+        <div class="card p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-base font-semibold">Team Members</h3>
+            <button
+              class="text-xs text-blue-600 hover:underline"
+              onclick={openTeamMembersModal}
+            >
+              View all
+            </button>
           </div>
-          <p class="text-sm mt-2">
-            Progress: <span class="accent-color">{progressPercentage}%</span>
-          </p>
-        </div>
 
-        <!-- New Progression Bar -->
-        <div class="card p-3 w-full">
-          <h3 class="text-base font-semibold mb-2">Progression</h3>
-          <div class="flex items-center justify-between">
-            <div class="text-center">
-              <p class="text-sm font-medium">Tasks</p>
-              <p class="text-xs text-gray-500">Completed</p>
-            </div>
-            <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
-              <div
-                class="absolute h-2 bg-green-500 rounded"
-                style="width: 35%"
-              ></div>
-            </div>
-            <div class="text-center">
-              <p class="text-sm font-medium">Total</p>
-              <p class="text-xs text-gray-500">4/12</p>
-            </div>
+          <div class="space-y-3">
+            {#each teamMembers.slice(0, 3) as member}
+              <div class="flex items-center space-x-2">
+                <div
+                  class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600"
+                >
+                  {member.name
+                    .split(" ")
+                    .map((name) => name[0])
+                    .join("")}
+                </div>
+                <div>
+                  <p class="text-sm font-medium">{member.name}</p>
+                  <p class="text-xs text-gray-500">Developer</p>
+                </div>
+              </div>
+            {/each}
+
+            {#if teamMembers.length > 3}
+              <button
+                class="text-xs text-gray-500 hover:text-[#6b48ff]"
+                onclick={openTeamMembersModal}
+              >
+                +{teamMembers.length - 3} more members
+              </button>
+            {/if}
           </div>
-          <p class="text-sm mt-2">
-            Tasks completed: <span class="text-green-600">35%</span>
-          </p>
         </div>
       </div>
 
-      <!-- Right sidebar - Recent Activities -->
-      <div class="w-72">
-        <div class="card p-4 sticky top-4">
+      <!-- Timeline and Progression (made smaller and compact) -->
+      <div class="flex-1 space-y-4">
+        <div class="flex space-x-4">
+          <!-- Timeline Bar (smaller) -->
+          <div class="card p-3 w-1/2">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-base font-semibold">Timeline</h3>
+              <span class="text-sm accent-color">{progressPercentage}%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-gray-500">
+                {formatDate(project.start_time.toString())}
+              </div>
+              <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
+                <div
+                  class="absolute h-2 bg-[#6b48ff] rounded"
+                  style="width: {progressPercentage}%"
+                ></div>
+              </div>
+              <div class="text-xs text-gray-500">
+                {formatDate(project.end_time.toString())}
+              </div>
+            </div>
+          </div>
+
+          <!-- Progression Bar (smaller) -->
+          <div class="card p-3 w-1/2">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-base font-semibold">Tasks Progress</h3>
+              <span class="text-sm text-green-600">35%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-gray-500">Completed: 4</div>
+              <div class="flex-1 h-2 bg-gray-200 rounded mx-2 relative">
+                <div
+                  class="absolute h-2 bg-green-500 rounded"
+                  style="width: 35%"
+                ></div>
+              </div>
+              <div class="text-xs text-gray-500">Total: 12</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activities (Keep as is) -->
+        <div class="card p-4">
           <h3 class="text-base font-semibold mb-2">Recent Activities</h3>
           <!-- Timeline -->
           <div class="relative">
@@ -459,6 +547,15 @@
                 </div>
                 <button
                   class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0"
+                  onclick={() =>
+                    openEditTaskModal({
+                      id: 1,
+                      name: "Create Wireframes",
+                      description:
+                        "Create wireframes for the main screens of the application",
+                      assignedTo: 5,
+                      status: "To-do",
+                    })}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -906,6 +1003,188 @@
         >
           Create Tasks
         </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Team Members Modal -->
+{#if showTeamMembersModal}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
+  >
+    <div
+      class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
+    >
+      <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Team Members</h3>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeTeamMembersModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="p-4 pb-6 overflow-y-auto flex-grow">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {#each teamMembers as member}
+            <div class="card p-3 bg-white shadow-sm">
+              <div class="flex items-center space-x-3">
+                <div
+                  class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-medium text-gray-600"
+                >
+                  {member.name
+                    .split(" ")
+                    .map((name) => name[0])
+                    .join("")}
+                </div>
+                <div>
+                  <p class="text-sm font-medium">{member.name}</p>
+                  <p class="text-xs text-gray-500">{member.role}</p>
+                  <p class="text-xs text-gray-500">{member.email}</p>
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex justify-end">
+        <button
+          class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+          onclick={closeTeamMembersModal}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Edit Task Modal -->
+{#if showEditTaskModal && currentEditingTask}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center modal"
+  >
+    <div
+      class="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-lg"
+    >
+      <div class="p-4 border-b border-gray-100 bg-white flex-shrink-0">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Edit Task</h3>
+          <button
+            class="text-gray-500 hover:text-gray-700"
+            onclick={closeEditTaskModal}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Task Edit Form -->
+      <div class="p-4 overflow-y-auto flex-grow">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Task Name*</label>
+            <input
+              type="text"
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              placeholder="Enter task name"
+              bind:value={currentEditingTask.name}
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Description*</label>
+            <textarea
+              class="w-full p-2 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              placeholder="Enter task description"
+              rows="3"
+              bind:value={currentEditingTask.description}
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Assigned To</label>
+            <select
+              class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              bind:value={currentEditingTask.assignedTo}
+            >
+              <option value="">Unassigned</option>
+              {#each teamMembers as member}
+                <option value={member.id}>{member.name}</option>
+              {/each}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Status</label>
+            <select
+              class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
+              bind:value={currentEditingTask.status}
+            >
+              <option value="To-do">To-do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Review">Review</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 flex justify-between">
+        <!-- Delete Button -->
+        <button
+          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          onclick={deleteTask}
+        >
+          Delete Task
+        </button>
+
+        <div class="space-x-2">
+          <button
+            class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+            onclick={closeEditTaskModal}
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 bg-[#6b48ff] text-white rounded-lg hover:bg-[#5a3dd4]"
+            onclick={updateTask}
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   </div>
