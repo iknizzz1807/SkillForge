@@ -6,7 +6,7 @@ export async function GET({ fetch, locals, params }) {
     const token = locals.token;
     const id = params.id;
 
-    const response = await fetch("http://localhost:8080/api/chats/" + id, {
+    const response = await fetch("http://backend:8080/api/chats/" + id, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -22,6 +22,7 @@ export async function GET({ fetch, locals, params }) {
     }
 
     const chatGroups = await response.json();
+
     return json(chatGroups);
   } catch (error) {
     console.error("Error fetching chat groups:", error);

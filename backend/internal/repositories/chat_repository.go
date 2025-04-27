@@ -10,18 +10,18 @@ import (
 )
 
 type ChatRepository struct {
-	MessageCollection *mongo.Collection
-	GroupCollection   *mongo.Collection
+	MessageCollection        *mongo.Collection
+	GroupCollection          *mongo.Collection
 	ProjectStudentCollection *mongo.Collection
-	ProjectCollection *mongo.Collection
+	ProjectCollection        *mongo.Collection
 }
 
 func NewChatRepository(db *mongo.Database) *ChatRepository {
 	return &ChatRepository{
-		MessageCollection: db.Collection("messages"),
-		GroupCollection:   db.Collection("groups"),
+		MessageCollection:        db.Collection("messages"),
+		GroupCollection:          db.Collection("groups"),
 		ProjectStudentCollection: db.Collection("project_student"),
-		ProjectCollection: db.Collection("projects"),
+		ProjectCollection:        db.Collection("projects"),
 	}
 }
 
@@ -57,7 +57,6 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 				Title:     project.Title,
 				CreatedAt: time.Now(),
 			}
-			groups = append(groups, &group)
 		} else if err != nil {
 			return nil, err
 		}
@@ -100,7 +99,7 @@ func (r *ChatRepository) GetGroupMembers(ctx context.Context, groupID string) ([
 		return nil, err
 	}
 
-	// Get all userID 
+	// Get all userID
 	users := []string{}
 	for _, projectStudent := range projectStudents {
 		users = append(users, projectStudent.Student_id)
