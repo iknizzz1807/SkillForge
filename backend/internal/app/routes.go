@@ -71,7 +71,7 @@ func RegisterRoutes(
 	r.POST("/auth/register", authHandler.Register) // Tạo user mới
 	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
 	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
-	r.GET("/ws/chats/:id/userID", websocketChatHandler.HandleConnection)
+	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
 	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
 	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
 	r.Use(middleware.AuthMiddleware())

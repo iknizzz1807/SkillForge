@@ -15,7 +15,7 @@ import (
 type WebSocketChatHandler struct {
 	upgrader       websocket.Upgrader
 	realtimeClient *integrations.RealtimeClient
-	chatService *services.ChatService
+	chatService    *services.ChatService
 }
 
 func NewWebSocketChatHandler(chatService *services.ChatService, realtimeClient *integrations.RealtimeClient) *WebSocketChatHandler {
@@ -26,13 +26,13 @@ func NewWebSocketChatHandler(chatService *services.ChatService, realtimeClient *
 			},
 		},
 		realtimeClient: realtimeClient,
-		chatService: chatService,
+		chatService:    chatService,
 	}
 }
 
 func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
-	userID := c.GetString("userID")
-	projectID := c.Param("projectID")
+	userID := c.Param("userID")
+	projectID := c.Param("id")
 	conn, err := wsh.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -55,6 +55,7 @@ func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
 type ChatMessage struct {
 	Content string `json:"content"`
 }
+
 func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *websocket.Conn) {
 	for {
 		_, rawMessage, err := conn.ReadMessage()
