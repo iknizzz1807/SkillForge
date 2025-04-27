@@ -311,9 +311,22 @@ function setupWebSocket(projectId: any, userId: any, onDataReceived: any) {
   if (typeof window === "undefined") return null;
 
   try {
+    // Get the base URL from the current window location
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.hostname;
-    const wsUrl = `${protocol}//${host}:8080/ws/task/${projectId}/${userId}`;
+    const host = window.location.host; // This will include port if present
+
+    // Determine the correct WebSocket URL based on environment
+    let wsUrl;
+
+    // Check if we're in production (deployed to skillforge.ikniz.id.vn)
+    if (host.includes("skillforge.ikniz.id.vn")) {
+      // For production: Use the same host but with WS protocol
+      wsUrl = `${protocol}//${host}/ws/task/${projectId}/${userId}`;
+    } else {
+      // For development: Use explicitly defined backend server (likely on port 8080)
+      const devHost = window.location.hostname;
+      wsUrl = `${protocol}//${devHost}:8080/ws/task/${projectId}/${userId}`;
+    }
 
     console.log("Connecting with WebSocket to:", wsUrl);
 

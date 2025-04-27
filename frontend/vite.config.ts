@@ -10,6 +10,18 @@ export default defineConfig({
       // ...existing allowed hosts...
       "skillforge.ikniz.id.vn",
     ],
+    hmr:
+      process.env.NODE_ENV === "production"
+        ? false
+        : {
+            // Development settings
+            host: "localhost",
+            protocol: "ws",
+          },
+    // Additional server settings
+    watch: {
+      usePolling: false,
+    },
   },
   ssr: {
     noExternal: ["sortablejs", "socket.io-client"],
