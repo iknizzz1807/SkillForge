@@ -46,7 +46,7 @@
           end_time: project.EndTime || project.end_time,
           created_by_id: project.CreatorID || project.created_by_id,
           created_by_name: project.CreatorName || project.created_by_name,
-          match_score: project.MatchScore || 90, // Default if not provided
+          match_score: project.match_score,
         }));
       }
     } catch (err) {
@@ -1054,7 +1054,7 @@
               <span
                 class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5"
               >
-                90% Match
+                {Math.round(project.match_score)}
               </span>
             </div>
 

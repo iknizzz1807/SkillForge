@@ -42,7 +42,7 @@ func NewWebSocketNotificationHandler(
 
 // GET /ws/notifi
 func (h *WebSocketNotificationHandler) HandleNotificationConnection(c *gin.Context) {
-	userID := c.Query("userId")
+	userID := c.Param("userID")
 	room := "notification"
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user ID"})
