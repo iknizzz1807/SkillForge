@@ -9,7 +9,7 @@ package repositories
 
 import (
 	"context"
-
+	"time"
 	"errors"
 
 	"github.com/iknizzz1807/SkillForge/internal/models"
@@ -20,6 +20,7 @@ import (
 type TaskRepository struct {
 	// collection để truy cập collection "tasks" trong MongoDB
 	collection *mongo.Collection
+	activityCollection *mongo.Collection
 }
 
 // NewTaskRepository khởi tạo TaskRepository với database
@@ -28,6 +29,7 @@ type TaskRepository struct {
 func NewTaskRepository(db *mongo.Database) *TaskRepository {
 	return &TaskRepository{
 		collection: db.Collection("tasks"),
+		activityCollection: db.Collection("activities"),
 	}
 }
 
@@ -143,6 +145,45 @@ func (r *TaskRepository) DeleteTask(ctx context.Context, taskID string) error {
 	// Kiểm tra xem có bản ghi nào bị xóa không
 	if result.DeletedCount == 0 {
 		return errors.New("there is no task to delete")
+	}
+
+	return nil
+}
+
+func (r *TaskRepository) FindActivitiesByProjectID(ctx context.Context, projectID string) ([]*models.Activity, error) {
+	// Tạo filter để tìm các hoạt động thuộc về project
+	filter := bson.M{"project_id": projectID}
+
+	// Tạo mảng lưu kết quả
+	var activities []*models.Activity
+
+	// Truy vấn database
+	cursor, err := r.activityCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	// Đọc tất cả các hoạt động tìm được vào mảng
+	if err := cursor.All(ctx, &activities); err != nil {
+		return nil, err
+	}
+
+	// Nếu không tìm thấy hoạt động nào, trả về slice rỗng
+	if len(activities) == 0 {
+		return []*models.Activity{}, nil
+	}
+
+	// Trả về danh sách hoạt động
+	return activities, nil
+}
+
+func (r *TaskRepository) InsertActivity(ctx context.Context, activity *models.Activity) error {
+	// Chèn hoạt động vào collection
+	activity.CreatedAt = time.Now()
+	_, err := r.activityCollection.InsertOne(ctx, activity)
+	if err != nil {
+		return err
 	}
 
 	return nil

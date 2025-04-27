@@ -100,15 +100,21 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 	tasks, err := h.taskService.GetTasksByProjectID(projectID)
 	if err != nil {
 		log.Printf("Error fetching tasks: %v", err)
+		sendErrorMessage(conn, "Failed to fetch tasks")
 		return
 	}
-	response := tasks
-	respBytes, err := json.Marshal(response)
+	activities, err := h.taskService.GetActivityByProjectID(userID, projectID)
 	if err != nil {
-		log.Printf("Error marshalling tasks: %v", err)
+		log.Printf("Error fetching activities: %v", err)
+		sendErrorMessage(conn, "Failed to fetch activities")
 		return
 	}
-	conn.WriteMessage(websocket.TextMessage, respBytes)
+	response := map[string]interface{}{
+		"tasks":    tasks,
+		"activities": activities,
+	}
+	respBytes, _ := json.Marshal(response)
+	h.realtimeClient.Broadcast(room, respBytes)
 
 	for {
 		// Đọc message từ WebSocket
@@ -126,6 +132,22 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 			return
 		}
 
+		if message.Type == "create" {
+			// Xử lý tạo task mới
+			var req *models.TaskInput
+			err = json.Unmarshal(message.Content, &req)
+			if err != nil {
+				log.Printf("Error unmarshalling task input: %v", err)
+				sendErrorMessage(conn, "Failed to unmarshal task input")
+				return
+			}
+			_, err = h.taskService.CreateTasks(projectID, userID, []models.TaskInput{*req})
+			if err != nil {
+				log.Printf("Error creating task: %v", err)
+				sendErrorMessage(conn, "Failed to create task")
+				return
+			}
+		}
 		if message.Type != "update" {
 			var req *models.TaskUpdate
 			err = json.Unmarshal(message.Content, &req)
@@ -134,7 +156,7 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 				sendErrorMessage(conn, "Failed to unmarshal task update")
 				return
 			}
-			_, err = h.taskService.UpdateTask(req.TaskID, req)
+			_, err = h.taskService.UpdateTask(req.TaskID, userID, req)
 			if err != nil {
 				log.Printf("Error updating task: %v", err)
 				sendErrorMessage(conn, "Failed to update task")
@@ -150,7 +172,7 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 				sendErrorMessage(conn, "Failed to unmarshal task ID")
 				return
 			}
-			err := h.taskService.DeleteTask(req)
+			err := h.taskService.DeleteTask(req, userID)
 			if err != nil {
 				log.Printf("Error deleting task: %v", err)
 				sendErrorMessage(conn, "Failed to delete task")
@@ -163,7 +185,16 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 			sendErrorMessage(conn, "Failed to fetch tasks")
 			return
 		}
-		response := tasks
+		activities, err := h.taskService.GetActivityByProjectID(userID, projectID)
+		if err != nil {
+			log.Printf("Error fetching activities: %v", err)
+			sendErrorMessage(conn, "Failed to fetch activities")
+			return
+		}
+		response := map[string]interface{}{
+			"tasks":    tasks,
+			"activities": activities,
+		}
 		respBytes, _ := json.Marshal(response)
 		h.realtimeClient.Broadcast(room, respBytes)
 	}

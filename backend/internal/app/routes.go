@@ -25,7 +25,7 @@ func RegisterRoutes(
 	applicationService *services.ApplicationService,
 	taskService *services.TaskService,
 	reviewService *services.ReviewService,
-	messageService *services.MessageService,
+	// messageService *services.MessageService,
 	portfolioService *services.PortfolioService,
 	analyticsService *services.AnalyticsService,
 	authService *services.AuthService,
@@ -39,6 +39,7 @@ func RegisterRoutes(
 	matchingService *services.MatchingService,
 	realtimeClient *integrations.RealtimeClient,
 	// paymentClient *integrations.PaymentClient,
+	chatService *services.ChatService,
 ) {
 	// Khởi tạo integrations ở đây
 	// realtimeClient := integrations.NewRealtimeClient()
@@ -48,9 +49,9 @@ func RegisterRoutes(
 	authHandler := handlers.NewAuthHandler(authService)
 	projectHandler := handlers.NewProjectHandler(projectService)
 	applicationHandler := handlers.NewApplicationHandler(applicationService)
-	taskHandler := handlers.NewTaskHandler(taskService)
+	// taskHandler := handlers.NewTaskHandler(taskService)
 	reviewHandler := handlers.NewReviewHandler(reviewService)
-	messageHandler := handlers.NewMessageHandler(messageService)
+	// messageHandler := handlers.NewMessageHandler(messageService)
 	portfolioHandler := handlers.NewPortfolioHandler(portfolioService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	badgeHandler := handlers.NewBadgeHandler(badgeService)
@@ -62,6 +63,8 @@ func RegisterRoutes(
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 	matchingHandler := handlers.NewMatchingHandler(matchingService)
 	levelHandler := handlers.NewLevelHandler(gamificationService)
+	chatHandler := handlers.NewChatHandler(chatService)
+	websocketChatHandler := handlers.NewWebSocketChatHandler(chatService, realtimeClient)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
@@ -122,21 +125,21 @@ func RegisterRoutes(
 		// ID truyền vào ở đây là application id, còn userID thì truyền vào context
 		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
 
-		// Task routes
-		api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
-		api.POST("/tasks", taskHandler.CreateTasks)
-		api.PUT("/tasks/:id", taskHandler.UpdateTask)
-		api.PUT("/tasks/:id/assign", taskHandler.AssignTask)
-		api.PUT("/tasks/:id/finish", taskHandler.FinishTask)
-		api.DELETE("/tasks/:id", taskHandler.DeleteTask)
+		// // Task routes
+		// api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
+		// api.POST("/tasks", taskHandler.CreateTasks)
+		// api.PUT("/tasks/:id", taskHandler.UpdateTask)
+		// api.PUT("/tasks/:id/assign", taskHandler.AssignTask)
+		// api.PUT("/tasks/:id/finish", taskHandler.FinishTask)
+		// api.DELETE("/tasks/:id", taskHandler.DeleteTask)
 
 		// Review routes
 		api.POST("/reviews", reviewHandler.SubmitReview)
 		api.GET("/reviews/:id", reviewHandler.GetReview)
 
 		// Message routes
-		api.POST("/messages", messageHandler.SendMessage)
-		api.GET("/messages/:id", messageHandler.GetMessages)
+		// api.POST("/messages", messageHandler.SendMessage)
+		// api.GET("/messages/:id", messageHandler.GetMessages)
 
 		// Portfolio routes
 		api.GET("/portfolios/:userID", portfolioHandler.GetPortfolio)
@@ -176,9 +179,14 @@ func RegisterRoutes(
 		// Route để server web socket client
 		api.GET("/ws/task/:projectID", websocketTaskHanlder.HandleConnection)
 		api.GET("/ws/notifi", websocketNotificationHandler.HandleNotificationConnection)
+		api.GET("/ws/chats/:id", websocketChatHandler.HandleConnection)
 
 		//Route cho level
 		api.GET("/levels", levelHandler.GetUserLevel)
+
+		// Route cho chat
+		api.GET("/chats", chatHandler.GetGroups)
+		api.GET("/chats/:id", chatHandler.GetGroupInfo)
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {

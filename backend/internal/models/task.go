@@ -58,3 +58,14 @@ type TaskUpdate struct {
 	Note        string `json:"note"`
 	Assigned_to string `json:"assigned_to"`
 }
+
+type Activity struct {
+	ID        string    `json:"id" bson:"_id"`
+	Type      string    `json:"type" bson:"type"`             // Loại hoạt động: "create", "update", "delete", "move"
+	DoneBy    string    `json:"done_by" bson:"done_by"`       // ID của người thực hiện hoạt động
+	ProjectID string    `json:"project_id" bson:"project_id"` // ID của dự án liên quan đến hoạt động
+	Title     string    `json:"title" bson:"title"`
+	From      string    `json:"from" bson:"from"`             // Trước khi đổi
+	To        string    `json:"to" bson:"to"`                 // Sau khi đổi
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+}

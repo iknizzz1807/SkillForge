@@ -45,7 +45,7 @@ func Run() {
 	aiClient := integrations.NewAIClient(cfg.AIURL)
 	githubClient := integrations.NewGitHubClient(cfg.GitHubToken)
 	// paymentClient := integrations.NewPaymentClient(cfg.StripeKey)
-	webrtcClient := integrations.NewWebRTCClient()
+	// webrtcClient := integrations.NewWebRTCClient()
 
 	// Khởi tạo các services
 	notificationService := services.NewNotificationService(realtimeClient, db, emailClient)
@@ -54,7 +54,7 @@ func Run() {
 	applicationService := services.NewApplicationService(db, notificationService)
 	taskService := services.NewTaskService(db, notificationService)
 	reviewService := services.NewReviewService(db)
-	messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
+	// messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
 	portfolioService := services.NewPortfolioService(db)
 	analyticsService := services.NewAnalyticsService(db)
 	authService := services.NewAuthService(repositories.NewUserRepository(db), services.NewFileService(repositories.NewUserRepository(db)))
@@ -65,6 +65,7 @@ func Run() {
 	feedbackService := services.NewFeedbackService(repositories.NewFeedbackRepository(db))
 	gamificationService := services.NewGamificationService(repositories.NewGamificationRepository(db), userService)
 	matchingService := services.NewMatchingService(db, aiClient)
+	chatService := services.NewChatService(repositories.NewChatRepository(db))
 	// Khởi tạo Gin router
 	r := gin.Default()
 
@@ -72,7 +73,7 @@ func Run() {
 	// Ví dụ: r.Use(middleware.LogMiddleware())
 
 	// Đăng ký các route từ routes.go
-	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, messageService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeClient)
+	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeClient, chatService)
 
 	// Chạy server
 	if err := r.Run(":8080"); err != nil {
