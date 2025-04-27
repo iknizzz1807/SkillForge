@@ -32,7 +32,7 @@ func NewWebSocketChatHandler(chatService *services.ChatService, realtimeClient *
 
 func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
 	userID := c.Param("userID")
-	projectID := c.Param("id")
+	projectID := c.Param("projectID")
 	conn, err := wsh.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)

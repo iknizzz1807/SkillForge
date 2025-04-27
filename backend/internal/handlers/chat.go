@@ -33,7 +33,7 @@ func (ch *ChatHandler) GetGroups(c *gin.Context) {
 }
 
 func (ch *ChatHandler) GetGroupInfo(c *gin.Context) {
-	groupID := c.Param("group_id")
+	groupID := c.Param("id")
 	if groupID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Group ID is required"})
 		return

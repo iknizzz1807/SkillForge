@@ -77,7 +77,7 @@
       socket.close();
     }
 
-    const projectID = selectedRoom.id;
+    const projectID = selectedRoom.project_id;
     const userID = data.id; // Assuming user ID is in page data
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -85,7 +85,7 @@
       ? window.location.host
       : "localhost:8080";
 
-    const wsUrl = `${protocol}://${host}/ws/chat/${projectID}/${userID}`;
+    const wsUrl = `${protocol}://${host}/ws/chats/${projectID}/${userID}`;
 
     socket = new WebSocket(wsUrl);
 
@@ -127,9 +127,8 @@
       const response = await fetch(`/api/chat/${room.project_id}`);
       if (response.ok) {
         const data = await response.json();
-        messages = data.messages || [];
-        teamMembers = data.members || [];
-        sharedFiles = data.files || [];
+        messages = data.messages;
+        teamMembers = data.members;
 
         // Auto-scroll to bottom when loading messages
         setTimeout(() => {
@@ -432,13 +431,13 @@
         {:else}
           {#each teamMembers as member}
             <div class="flex items-center">
-              <img
+              <!-- <img
                 class="w-8 h-8 rounded-full mr-2"
                 src={`/api/avatars/${member.id}`}
                 alt={member.name}
-              />
+              /> -->
               <div>
-                <p class="text-sm font-medium">{member.name}</p>
+                <p class="text-sm font-medium">{member}</p>
                 <p class="text-xs text-gray-500">
                   {member.id === data.id ? "You | " : ""}{member.role ||
                     "Member"}
