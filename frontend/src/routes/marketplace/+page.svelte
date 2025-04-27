@@ -1041,49 +1041,51 @@
     </div>
 
     <!-- Suggested Projects -->
-    <div class="card p-3">
-      <h3 class="text-base font-semibold mb-2">Suggested Projects</h3>
-      <div class="space-y-2">
-        {#each projectsSuggest as project}
-          <div
-            class="flex flex-col p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-          >
-            <!-- Match rate ở đầu card, căn trái -->
-            <div class="flex justify-start mb-2">
-              <span
-                class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5"
-              >
-                {Math.round(project.match_score)}
-              </span>
-            </div>
-
-            <div class="flex justify-between items-start">
-              <div class="flex-grow">
-                <p class="text-sm font-medium">{project.title}</p>
-                <p class="text-xs text-gray-500 mt-1">
-                  Skills: {project.skills.join(", ")}
-                </p>
-                <p class="text-xs text-gray-500">
-                  Timeline: {formatDate(project.start_time.toString())} - {formatDate(
-                    project.end_time.toString()
-                  )} | By
-                  <a
-                    href="/marketplace"
-                    class="text-xs text-[#6b48ff] hover:underline"
-                  >
-                    {project.created_by_name}
-                  </a>
-                </p>
+    {#if data.role === "student"}
+      <div class="card p-3">
+        <h3 class="text-base font-semibold mb-2">Suggested Projects</h3>
+        <div class="space-y-2">
+          {#each projectsSuggest as project}
+            <div
+              class="flex flex-col p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+            >
+              <!-- Match rate ở đầu card, căn trái -->
+              <div class="flex justify-start mb-2">
+                <span
+                  class="text-xs font-bold bg-[#6b48ff] text-white rounded-full px-2 py-0.5"
+                >
+                  {Math.round(project.match_score)}
+                </span>
               </div>
-              <a
-                href={"/marketplace/" + project.id}
-                class="btn text-xs ml-2 flex-shrink-0 self-start">View</a
-              >
+
+              <div class="flex justify-between items-start">
+                <div class="flex-grow">
+                  <p class="text-sm font-medium">{project.title}</p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Skills: {project.skills.join(", ")}
+                  </p>
+                  <p class="text-xs text-gray-500">
+                    Timeline: {formatDate(project.start_time.toString())} - {formatDate(
+                      project.end_time.toString()
+                    )} | By
+                    <a
+                      href="/marketplace"
+                      class="text-xs text-[#6b48ff] hover:underline"
+                    >
+                      {project.created_by_name}
+                    </a>
+                  </p>
+                </div>
+                <a
+                  href={"/marketplace/" + project.id}
+                  class="btn text-xs ml-2 flex-shrink-0 self-start">View</a
+                >
+              </div>
             </div>
-          </div>
-        {/each}
+          {/each}
+        </div>
       </div>
-    </div>
+    {/if}
   </div>
 
   <!-- Project List -->
