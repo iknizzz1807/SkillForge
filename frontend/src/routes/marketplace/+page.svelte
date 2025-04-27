@@ -1033,7 +1033,13 @@
       <div class="card p-3">
         <h3 class="text-base font-semibold mb-2">Suggested Projects</h3>
         <div class="space-y-2">
-          {#if projectsSuggest.length === 0}
+          {#if data.projects.length === 0}
+            <div class="text-center py-4">
+              <p class="text-sm text-gray-600">
+                No projects are available in the marketplace.
+              </p>
+            </div>
+          {:else if projectsSuggest.length === 0}
             <div class="flex justify-center items-center py-4">
               <div
                 class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6b48ff]"
@@ -1141,7 +1147,7 @@
           {/if}
         </p>
         {#if data.role === "business"}
-          <a href="/projects/new" class="btn">Create Project</a>
+          <a href="/project/create" class="btn">Create Project</a>
         {/if}
       </div>
     {:else if filteredProjects.length === 0}
