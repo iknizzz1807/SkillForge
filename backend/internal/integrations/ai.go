@@ -25,14 +25,33 @@ func NewAIClient(url string) *AIClient {
 	return &AIClient{url}
 }
 
+type MatchingRequest struct {
+    Student_infos string `json:"student_infos"`
+    Project_infos string `json:"project_infos"`
+}
+
+type MatchingResponse struct {
+	MatchScore float64 `json:"match_score"`
+}
+
+
+type MatchingRequest2 struct {
+    Student_infos string `json:"student_infos"`
+    Project_infos []string `json:"project_infos"`
+}
+
+type MatchingResponse2 struct {
+	MatchScore []float64 `json:"match_score"`
+}
+
 // MatchSkills gọi API AI để match skills
 // Input: userInfo (string), projectInfo (string)
 // Return: float64 (độ phù hợp), error (nếu có lỗi)
 func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	// Tạo payload JSON
-	payload := map[string]string{
-		"user_skills":    userInfo,
-		"project_skills": projectInfo,
+	payload := MatchingRequest{
+		Student_infos: userInfo,
+		Project_infos: projectInfo,	
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -47,9 +66,7 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	defer resp.Body.Close()
 
 	// Decode response
-	var result struct {
-		MatchScore float64 `json:"match_score"`
-	}
+	var result MatchingResponse
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		return 0, err
@@ -61,29 +78,25 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 
 func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string) ([]float64, error) {
 	// Tạo payload JSON
-	payload := map[string]interface{}{
-		"user_skills":    userInfo,
-		"project_skills": projectInfos,
+	payload := &MatchingRequest2{
+		Student_infos: userInfo,
+		Project_infos: projectInfos,	
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
-
 	// Gửi POST request tới FastAPI
 	resp, err := http.Post(c.url+"/matching2", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	// Decode response
-	var result struct {
-		MatchScores []float64 `json:"match_score"`
-	}
+	var result MatchingResponse2
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
-	return result.MatchScores, nil
+	return result.MatchScore, nil
 }

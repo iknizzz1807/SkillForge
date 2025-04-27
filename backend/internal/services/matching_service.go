@@ -73,6 +73,7 @@ func (s *MatchingService) GetScore(userID string, projectID string) (float64, er
 }
 
 func (s *MatchingService) GetScoreUserProjects(userID string) ([]float64, error) {
+	fmt.Println("GetScoreUserProjects")
 	userRepo := repositories.NewUserRepository(s.db)
 	projectRepo := repositories.NewProjectRepository(s.db)
 
@@ -111,6 +112,7 @@ func (s *MatchingService) GetScoreUserProjects(userID string) ([]float64, error)
 }
 
 func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]ProjectMatchInfo, error) {
+	fmt.Println("GetTopProjectMatchesForStudent")
 	userRepo := repositories.NewUserRepository(s.db)
 	projectRepo := repositories.NewProjectRepository(s.db)
 
