@@ -17,6 +17,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type UserRepository struct {
@@ -28,8 +29,17 @@ type UserRepository struct {
 // Input: db (*mongo.Database)
 // Return: *UserRepository - con trỏ đến UserRepository
 func NewUserRepository(db *mongo.Database) *UserRepository {
+	collection := db.Collection("users")
+	
+	// Create unique index for email
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: "email", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+	_, _ = collection.Indexes().CreateOne(context.Background(), indexModel)
+
 	return &UserRepository{
-		collection: db.Collection("users"),
+		collection: collection,
 	}
 }
 

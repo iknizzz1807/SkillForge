@@ -32,15 +32,13 @@ type ProjectService struct {
 	notificationService *NotificationService
 	// aiClient để gọi API AI
 	aiClient *integrations.AIClient
-	// githubClient để tạo repository GitHub
-	githubClient *integrations.GitHubClient
 }
 
 // NewProjectService khởi tạo ProjectService với các dependency
-// Input: db (*mongo.Database), notificationService (*NotificationService), aiClient (*integrations.AIClient), githubClient (*integrations.GitHubClient)
+// Input: db (*mongo.Database), notificationService (*NotificationService), aiClient (*integrations.AIClient)
 // Return: *ProjectService - con trỏ đến ProjectService
-func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient, githubClient *integrations.GitHubClient) *ProjectService {
-	return &ProjectService{db, notificationService, aiClient, githubClient}
+func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient) *ProjectService {
+	return &ProjectService{db, notificationService, aiClient}
 }
 
 // GetAllProjects lấy danh sách tất cả dự án

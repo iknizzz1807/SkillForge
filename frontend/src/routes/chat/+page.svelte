@@ -1,156 +1,57 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  // Mock data cho chat rooms (giữ nguyên nhưng giảm số lượng)
-  const chatRooms = [
-    {
-      id: "1",
-      title: "Mobile Banking App Team",
-      unread: 3,
-      lastMessage: "Let's discuss the new UI design",
-      lastMessageTime: "10:45 AM",
-      isActive: true,
-    },
-    {
-      id: "2",
-      title: "E-commerce Dashboard",
-      unread: 0,
-      lastMessage: "Updated the API documentation",
-      lastMessageTime: "Yesterday",
-    },
-    {
-      id: "3",
-      title: "Machine Learning Project",
-      unread: 5,
-      lastMessage: "The model is ready for testing",
-      lastMessageTime: "Yesterday",
-    },
-    {
-      id: "4",
-      title: "Frontend Team",
-      unread: 0,
-      lastMessage: "Weekly progress meeting tomorrow",
-      lastMessageTime: "Apr 24",
-    },
-    {
-      id: "5",
-      title: "Backend Development",
-      unread: 0,
-      lastMessage: "New database schema approved",
-      lastMessageTime: "Apr 23",
-    },
-  ];
+  let chatRooms: any[] = [];
+  let messages: any[] = [];
+  let teamMembers: any[] = [];
+  let sharedFiles: any[] = [];
 
-  // Giảm số lượng tin nhắn hiện thị để đủ vừa màn hình
-  const messages = [
-    {
-      id: "m3",
-      content:
-        "I've shared the API documentation for the transaction endpoints.",
-      sender_id: "user3",
-      user_name: "Michael Chen",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      timestamp: "2025-04-25T09:36:00Z",
-      isFile: true,
-      fileName: "api_documentation.pdf",
-      fileSize: "2.4 MB",
-    },
-    {
-      id: "m4",
-      content: "Thanks Michael. I'll review it today and get back to you.",
-      sender_id: "current_user",
-      user_name: "You",
-      avatar: "/images/avatar.jpg",
-      timestamp: "2025-04-25T09:40:00Z",
-      isFile: false,
-    },
-    {
-      id: "m5",
-      content:
-        "I've added some comments to the wireframes. Could we discuss the flow?",
-      sender_id: "current_user",
-      user_name: "You",
-      avatar: "/images/avatar.jpg",
-      timestamp: "2025-04-25T10:15:00Z",
-      isFile: false,
-    },
-    {
-      id: "m9",
-      content:
-        "Let's discuss the new UI design for the analytics dashboard during our call.",
-      sender_id: "user2",
-      user_name: "Sarah Johnson",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      timestamp: "2025-04-25T10:45:00Z",
-      isFile: false,
-    },
-  ];
-
-  // Giảm số lượng team members hiển thị
-  const teamMembers = [
-    {
-      id: "current_user",
-      name: "John Smith",
-      title: "Project Manager",
-      avatar: "/images/avatar.jpg",
-      status: "online",
-      isCurrentUser: true,
-    },
-    {
-      id: "user2",
-      name: "Sarah Johnson",
-      title: "UI/UX Designer",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      status: "online",
-    },
-    {
-      id: "user3",
-      name: "Michael Chen",
-      title: "Backend Developer",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      status: "online",
-    },
-    {
-      id: "user4",
-      name: "Alex Rivera",
-      title: "Frontend Developer",
-      avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-      status: "away",
-    },
-  ];
-
-  // Giảm số lượng shared files
-  const sharedFiles = [
-    {
-      id: "f1",
-      name: "banking_app_mockups_v2.fig",
-      type: "design",
-      size: "8.7 MB",
-      shared_by_name: "Alex Rivera",
-      date: "Today at 10:25 AM",
-    },
-    {
-      id: "f2",
-      name: "api_documentation.pdf",
-      type: "document",
-      size: "2.4 MB",
-      shared_by_name: "Michael Chen",
-      date: "Today at 9:36 AM",
-    },
-    {
-      id: "f3",
-      name: "project_timeline.xlsx",
-      type: "spreadsheet",
-      size: "1.2 MB",
-      shared_by_name: "Emily Wilson",
-      date: "Yesterday at 4:15 PM",
-    },
-  ];
-
-  let selectedRoom = chatRooms[0]; // Set first room as active by default
+  let selectedRoom: any = null;
   let messageInput = "";
   let searchQuery = "";
-  let filteredRooms = chatRooms;
+  let filteredRooms: any[] = [];
+
+  import { PUBLIC_WS_URL } from '$env/static/public';
+  import { get } from 'svelte/store';
+  import { user } from '$lib/stores/auth'; // assuming standard auth store or just get token from localStorage
+
+  onMount(async () => {
+    try {
+      const token = localStorage.getItem('token') || "";
+      // The API path is on the backend, usually prefixed with PUBLIC_API_URL or it's directly proxy.
+      // Let's assume there is a fetch wrapper or we just call the full URL or relative.
+      const API_URL = "http://localhost:8080"; // fallback if no env
+      const res = await fetch(`${API_URL}/api/chats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        chatRooms = await res.json() || [];
+        filteredRooms = chatRooms;
+        if (chatRooms.length > 0) {
+          selectRoom(chatRooms[0]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch chat rooms", e);
+    }
+  });
+
+  async function loadRoomDetails(roomId: string) {
+    try {
+      const token = localStorage.getItem('token') || "";
+      const API_URL = "http://localhost:8080";
+      const res = await fetch(`${API_URL}/api/chats/${roomId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        messages = data.messages || [];
+        teamMembers = data.members || [];
+      }
+    } catch(e) {
+      console.error("Failed to load room details", e);
+    }
+  }
 
   // Filter rooms based on search
   $effect(() => {
@@ -164,17 +65,14 @@
   });
 
   // Select a room
-  function selectRoom(room: {
-    id: string;
-    title: string;
-    unread: number;
-    lastMessage: string;
-    lastMessageTime: string;
-    isActive?: boolean;
-  }) {
+  function selectRoom(room: any) {
     selectedRoom = room;
     // Mark room as read by resetting unread count
-    room.unread = 0;
+    if (room.unread !== undefined) {
+        room.unread = 0;
+    }
+
+    loadRoomDetails(room.id);
 
     // Auto-scroll to bottom when changing rooms
     setTimeout(() => {
@@ -190,7 +88,7 @@
     if (!messageInput.trim()) return;
 
     // Add message to the chat
-    messages.push({
+    messages = [...messages, {
       id: `m${messages.length + 1}`,
       content: messageInput.trim(),
       sender_id: "current_user",
@@ -198,7 +96,7 @@
       avatar: "/images/avatar.jpg",
       timestamp: new Date().toISOString(),
       isFile: false,
-    });
+    }];
 
     // Clear input
     messageInput = "";
@@ -254,10 +152,10 @@
   });
 </script>
 
-<main class="flex-1 flex flex-col ml-64 pr-4 pl-4 h-[calc(100vh-8px)] py-1">
-  <div class="flex space-x-2 flex-1 h-full">
+<main class="flex-1 flex flex-col ml-64 p-4 h-screen">
+  <div class="flex gap-4 flex-1 h-full overflow-hidden">
     <!-- Chat Rooms List - Thu gọn -->
-    <div class="card p-2 w-64 flex flex-col">
+    <div class="card p-3 w-64 flex flex-col flex-shrink-0">
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-sm font-semibold text-gray-800">Conversations</h3>
         <div class="flex space-x-1">
@@ -305,8 +203,8 @@
         <div class="space-y-1">
           {#each filteredRooms as room}
             <div
-              class={`chat-room p-1.5 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center ${
-                selectedRoom.id === room.id ? "active" : ""
+              class={`p-2 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center transition-colors ${
+                selectedRoom.id === room.id ? "bg-[#6b48ff] bg-opacity-10 border-l-2 border-[#6b48ff]" : "border-l-2 border-transparent"
               }`}
               on:click={() => selectRoom(room)}
             >
@@ -584,7 +482,7 @@
           />
 
           <button
-            class="btn-rounded"
+            class="bg-[#6b48ff] text-white p-1.5 rounded-full transition-colors hover:bg-[#5a3de6] disabled:bg-gray-300 disabled:cursor-not-allowed"
             on:click={sendMessage}
             disabled={!messageInput.trim()}
           >
@@ -604,7 +502,7 @@
     </div>
 
     <!-- Team Members & Files Panel - Thu gọn -->
-    <div class="card p-2 w-60 flex flex-col">
+    <div class="card p-3 w-64 flex flex-col flex-shrink-0">
       <!-- Team Members Section -->
       <div class="mb-2">
         <h3
@@ -769,7 +667,7 @@
 
         <div class="mt-2">
           <button
-            class="btn-secondary-outline w-full flex items-center justify-center text-xs py-1"
+            class="btn-secondary w-full flex items-center justify-center text-xs py-1.5"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -790,58 +688,3 @@
     </div>
   </div>
 </main>
-
-<style>
-  .chat-room.active {
-    background-color: rgba(107, 72, 255, 0.1);
-    border-left: 2px solid #6b48ff;
-    font-weight: 500;
-  }
-
-  .chat-room.active:hover {
-    background-color: rgba(107, 72, 255, 0.15);
-  }
-
-  .btn-rounded {
-    background-color: #6b48ff;
-    color: white;
-    padding: 0.25rem;
-    border-radius: 9999px;
-    transition: all 0.15s ease;
-  }
-
-  .btn-rounded:hover {
-    background-color: #5a3cd9;
-  }
-
-  .btn-rounded:disabled {
-    background-color: #d1d5db;
-    cursor: not-allowed;
-  }
-
-  .btn-secondary-outline {
-    background-color: transparent;
-    color: #6b48ff;
-    padding: 0.25rem;
-    border: 1px solid #6b48ff;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    transition: all 0.15s ease;
-  }
-
-  .btn-secondary-outline:hover {
-    background-color: rgba(107, 72, 255, 0.05);
-  }
-
-  .card {
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-
-  /* Đảm bảo toàn bộ nội dung vừa khít trong viewport */
-  main {
-    max-height: 100vh;
-    overflow: hidden;
-  }
-</style>

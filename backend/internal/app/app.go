@@ -43,14 +43,13 @@ func Run() {
 	realtimeClient := integrations.NewRealtimeClient()
 	// storageClient := integrations.NewStorageClient(cfg.StorageConfig)
 	aiClient := integrations.NewAIClient(cfg.AIURL)
-	githubClient := integrations.NewGitHubClient(cfg.GitHubToken)
 	// paymentClient := integrations.NewPaymentClient(cfg.StripeKey)
 	// webrtcClient := integrations.NewWebRTCClient()
 
 	// Khởi tạo các services
 	notificationService := services.NewNotificationService(realtimeClient, db, emailClient)
 	userService := services.NewUserService(db)
-	projectService := services.NewProjectService(db, notificationService, aiClient, githubClient)
+	projectService := services.NewProjectService(db, notificationService, aiClient)
 	applicationService := services.NewApplicationService(db, notificationService)
 	taskService := services.NewTaskService(db, notificationService)
 	reviewService := services.NewReviewService(db)

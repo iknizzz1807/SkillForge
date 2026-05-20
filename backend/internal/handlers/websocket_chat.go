@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/services"
+	"github.com/iknizzz1807/SkillForge/internal/utils"
 )
 
 type WebSocketChatHandler struct {
@@ -31,7 +32,24 @@ func NewWebSocketChatHandler(chatService *services.ChatService, realtimeClient *
 }
 
 func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
-	userID := c.Param("userID")
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+		return
+	}
+
+	claims, err := utils.ParseToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user in token"})
+		return
+	}
+
 	projectID := c.Param("projectID")
 	conn, err := wsh.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {

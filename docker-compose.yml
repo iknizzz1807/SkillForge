@@ -19,6 +19,7 @@ services:
       - "8080:8080"
     volumes:
       - ./backend:/app
+      - ./backend/storage:/app/storage
     depends_on:
       - mongodb
     networks:
@@ -50,7 +51,7 @@ services:
       - NODE_ENV=production
 
   mongodb:
-    image: mongo:latest
+    image: mongo:6.0
     ports:
       - "27017:27017"
     volumes:

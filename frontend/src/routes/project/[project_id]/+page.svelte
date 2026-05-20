@@ -265,7 +265,7 @@
     const validTasks = newTasks.filter((task) => task.name.trim() !== "");
 
     if (validTasks.length === 0) {
-      alert("Please add at least one task with a name");
+      console.log("Please add at least one task with a name");
       return;
     }
 

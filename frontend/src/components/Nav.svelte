@@ -197,11 +197,11 @@
   };
 
   const toggleAccountForm = () => {
-    //
+    goto("/account");
   };
 
   const toggleSettingForm = () => {
-    //
+    goto("/settings");
   };
 </script>
 

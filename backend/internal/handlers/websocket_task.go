@@ -10,6 +10,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
+	"github.com/iknizzz1807/SkillForge/internal/utils"
 )
 
 // WebSocketHandler xử lý các kết nối WebSocket
@@ -44,9 +45,21 @@ func NewWebSocketTaskHandler(
 // Return: Trả về JSON danh sách các task của projectID theo dạng task_model hoặc thông báo lỗi nếu có
 // HandleConnection xử lý kết nối WebSocket từ client
 func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
-	userID := c.Param("userID")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user identification"})
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+		return
+	}
+
+	claims, err := utils.ParseToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user in token"})
 		return
 	}
 

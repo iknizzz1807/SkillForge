@@ -11,6 +11,7 @@ package utils
 import (
 	"os"
 	"time"
+	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -32,7 +33,7 @@ func GenerateJWT(userID, email, name, role string) (string, error) {
 		"email":   email,
 		"name":    name,
 		"role":    role,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(), // Hết hạn sau 24 giờ
+		"exp":     time.Now().Add(time.Minute * 15).Unix(), // Hết hạn sau 15 phút (Task 4)
 		"iat":     time.Now().Unix(),                     // Thời gian phát hành
 	}
 
@@ -60,4 +61,24 @@ func GetJWTSecret() string {
 	}
 	// Trả về secret từ biến môi trường
 	return secret
+}
+
+// ParseToken parses and validates a JWT token string
+func ParseToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(GetJWTSecret()), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid token claims")
 }

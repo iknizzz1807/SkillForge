@@ -1,0 +1,7 @@
+- hoàn thiện chức năng chat, có khả năng upload file, chat nhóm thôi không có chat riêng
+- thêm chatbot với RAG là thông tin về user, thông tin về các dự án trên marketplace
+- AI hoàn thiện viết proposal
+- chức năng xem profile lẫn nhau
+- tự động tạo suggestion task list cho dự án bằng AI, cho phép confirm suggestion
+- cho phép Business duyệt qua hồ sơ các sinh viên (hoặc trong Talent Pool của họ) 
+và gửi lời mời trực tiếp để tham gia một dự án thay vì chỉ trông chờ vào marketplace

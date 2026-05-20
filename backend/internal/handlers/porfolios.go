@@ -25,6 +25,34 @@ func NewPortfolioHandler(portfolioService *services.PortfolioService) *Portfolio
 	return &PortfolioHandler{portfolioService}
 }
 
+// GeneratePortfolio xử lý endpoint POST /api/portfolios
+func (h *PortfolioHandler) GeneratePortfolio(c *gin.Context) {
+	// Lấy userID từ context hoặc body (giả định từ Auth middleware)
+	userID := c.GetString("userID")
+	if userID == "" {
+		// Dùng userID truyền lên từ body nếu có, hoặc trả lỗi
+		var requestBody struct {
+			UserID string `json:"user_id"`
+		}
+		if err := c.ShouldBindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+		userID = requestBody.UserID
+	}
+
+	url, err := h.portfolioService.GeneratePortfolio(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Portfolio generated successfully",
+		"url": url,
+	})
+}
+
 // GetPortfolio xử lý endpoint GET /api/portfolios/:userID
 // Return: Trả về JSON portfolio hoặc lỗi
 func (h *PortfolioHandler) GetPortfolio(c *gin.Context) {

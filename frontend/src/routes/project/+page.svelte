@@ -1346,7 +1346,7 @@
       }
 
       // Hiển thị thông báo thành công
-      alert(`Removed ${studentToRemove.name} from the project successfully`);
+      console.log(`Removed ${studentToRemove.name} from the project successfully`);
     } catch (error) {
       console.error("Error removing student:", error);
     }
@@ -1490,7 +1490,7 @@
       closeDeleteModal();
     } catch (error) {
       console.error("Error deleting project:", error);
-      alert("Failed to delete project: " + error);
+      console.log("Failed to delete project: " + error);
     }
   };
 
@@ -1543,7 +1543,7 @@
       closeEditModal();
     } catch (error) {
       console.error("Error updating project:", error);
-      alert("Failed to update project: " + error);
+      console.log("Failed to update project: " + error);
     }
   };
 

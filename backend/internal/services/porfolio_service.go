@@ -28,6 +28,17 @@ func NewPortfolioService(db *mongo.Database) *PortfolioService {
 	return &PortfolioService{db}
 }
 
+// GeneratePortfolio tạo portfolio giả cho sinh viên
+// Input: userID (string)
+// Return: url (string), error (nếu có lỗi)
+func (s *PortfolioService) GeneratePortfolio(userID string) (string, error) {
+	// Trả về một link portfolio cho đến khi có logic thực tế
+	if userID == "" {
+		return "", errors.New("user ID cannot be empty")
+	}
+	return "https://skillforge.example.com/portfolio/" + userID, nil
+}
+
 // GetPortfolio lấy portfolio của sinh viên
 // Input: userID (string)
 // Return: *models.Portfolio (portfolio), error (nếu có lỗi)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,11 +53,27 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 		return "", errors.New("invalid file type. Only JPG, PNG, GIF allowed")
 	}
 
+	// 1.1 Kiểm tra file signature (Magic bytes)
+	buffer := make([]byte, 512)
+	_, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", errors.New("failed to read file content")
+	}
+	contentType := http.DetectContentType(buffer)
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
+		return "", errors.New("invalid file content type. Only JPG, PNG, GIF allowed")
+	}
+
+	// Rewind the file pointer after reading the header
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return "", errors.New("failed to reset file pointer")
+	}
+
 	// 2. Tạo tên file mới
 	newFilename := userID + ext
 
 	// 3. Đảm bảo thư mục lưu trữ tồn tại
-	err := os.MkdirAll(AvatarStoragePath, os.ModePerm)
+	err = os.MkdirAll(AvatarStoragePath, os.ModePerm)
 	if err != nil {
 		fmt.Printf("Error creating storage directory %s: %v\n", AvatarStoragePath, err)
 		return "", errors.New("could not create storage directory")

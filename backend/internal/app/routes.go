@@ -145,6 +145,7 @@ func RegisterRoutes(
 
 		// Portfolio routes
 		api.GET("/portfolios/:userID", portfolioHandler.GetPortfolio)
+		api.POST("/portfolios", portfolioHandler.GeneratePortfolio)
 
 		// TalentPool route
 		// id là id của user, còn id của business thì được nhận vào bằng context

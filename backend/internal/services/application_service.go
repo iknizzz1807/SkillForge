@@ -106,13 +106,33 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 	// Gửi thông báo đến doanh nghiệp (người tạo project)
 	if project != nil && s.notificationService != nil { // Kiểm tra nil safety
 		go func() { // Gửi bất đồng bộ để không block response
-			// Lấy thông tin business user nếu cần (ví dụ: email)
-			// userRepo := repositories.NewUserRepository(s.db)
-			// businessUser, _ := userRepo.FindUserByID(ctx, project.CreatedByID)
-			// if businessUser != nil {
-			// s.notificationService.SendEmail(businessUser.Email, "New Application Received", fmt.Sprintf("A student has applied to your project '%s'.", project.Title))
-			// s.notificationService.SendNotification(project.CreatedByID, "New Application", fmt.Sprintf("New application for project: %s", project.Title), true) // Gửi realtime notification
-			// }
+			defer func() {
+				if r := recover(); r != nil {
+					// Log the panic instead of crashing the app
+					// Ideally use a proper logger like logrus or zap here
+					println("Recovered from panic in notification goroutine:", r)
+				}
+			}()
+
+			// Lấy thông tin business user để gửi email
+			userRepo := repositories.NewUserRepository(s.db)
+			businessUser, err := userRepo.FindUserByID(ctx, project.CreatedByID)
+			if err != nil {
+				println("Failed to fetch business user for notification:", err.Error())
+				return
+			}
+			
+			if businessUser != nil {
+				err := s.notificationService.SendEmail(businessUser.Email, "New Application Received", "A student has applied to your project '"+project.Title+"'.")
+				if err != nil {
+					println("Failed to send email:", err.Error())
+				}
+				
+				err = s.notificationService.SendNotification(project.CreatedByID, "New application for project: "+project.Title, "application") // Gửi realtime notification
+				if err != nil {
+					println("Failed to send realtime notification:", err.Error())
+				}
+			}
 		}()
 	}
 
@@ -254,7 +274,7 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 	// Nếu status là "approved":
 	if status == "approved" && application.Status != "approved" { // Chỉ xử lý khi chuyển sang approved
 		// Thêm student vào project (cần inject ProjectService hoặc gọi trực tiếp repo)
-		projectService := NewProjectService(s.db, s.notificationService, nil, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
+			projectService := NewProjectService(s.db, s.notificationService, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
 		errAdd := projectService.AddStudentToProject(updatedApplication.ProjectID, updatedApplication.UserID)
 		if errAdd != nil {
 			// Xử lý lỗi khi thêm student vào project (quan trọng)

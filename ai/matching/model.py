@@ -4,18 +4,21 @@
 from sentence_transformers import SentenceTransformer, util
 
 # Khởi tạo mô hình
-
+MODEL_NAME = 'all-MiniLM-L6-v2'
+try:
+    global_model = SentenceTransformer('./matching/matching-model')
+except:
+    global_model = SentenceTransformer(MODEL_NAME)
 
 def generate_score_with_many_projects(student_text, enterprise_texts):
     """
     hàm này trả về list các công việc theo thứ tự giảm dần của độ tương đồng cosine giữa văn bản của sinh viên và văn bản của doanh nghiệp 
     """
     # Tính embedding cho từng văn bản
-    model = SentenceTransformer('./matching/matching-model')
-    embedding_student = model.encode(student_text, convert_to_tensor=True)
+    embedding_student = global_model.encode(student_text, convert_to_tensor=True)
     cosine_similarity_list = [] 
     for enterprise_text in enterprise_texts: 
-        embedding_enterprise = model.encode(enterprise_text, convert_to_tensor=True) 
+        embedding_enterprise = global_model.encode(enterprise_text, convert_to_tensor=True) 
         cosine_sim = util.cos_sim(embedding_student, embedding_enterprise).item()
         cosine_similarity_list.append(cosine_sim * 100) # Chuyển đổi sang phần trăm
 
@@ -25,9 +28,8 @@ def generate_score_with_many_projects(student_text, enterprise_texts):
 # Ví dụ: nhập văn bản của sinh viên và doanh nghiệp
 
 def generate_score(student_text, enterprise_text):
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    embedding_student = model.encode(student_text, convert_to_tensor=True)
-    embedding_enterprise = model.encode(enterprise_text, convert_to_tensor=True)
+    embedding_student = global_model.encode(student_text, convert_to_tensor=True)
+    embedding_enterprise = global_model.encode(enterprise_text, convert_to_tensor=True)
 
     return util.cos_sim(embedding_student, embedding_enterprise).item() * 100
 

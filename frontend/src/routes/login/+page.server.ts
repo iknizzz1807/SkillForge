@@ -63,7 +63,7 @@ export const actions = {
       // Store token in an HTTP-only cookie
       cookies.set("auth_token", token, {
         path: "/",
-        httpOnly: false,
+        httpOnly: true,
         secure: false,
         maxAge: 60 * 60 * 24, // 1 day
         // sameSite: "strict",
