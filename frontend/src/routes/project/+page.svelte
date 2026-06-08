@@ -39,8 +39,16 @@
   let editProjectError: string | null = $state(null);
 
   // Thêm state cho modal sinh viên đang apply
+  interface Applicant {
+    id: string;
+    student_id: string;
+    student_name?: string;
+    message: string;
+    status: string;
+    [key: string]: any;
+  }
   let showApplicantsModal: boolean = $state(false);
-  let currentApplicants: any[] = $state([]);
+  let currentApplicants: Applicant[] = $state([]);
   let isLoadingApplicants: boolean = $state(false);
   let applicantsError: string | null = $state(null);
 

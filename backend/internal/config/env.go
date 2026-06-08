@@ -33,6 +33,11 @@ type Env struct {
 
 	// StorageConfig: Cấu hình lưu trữ file (AWS S3)
 	StorageConfig StorageConfig
+
+	// JWTSecret: Secret key dùng để ký và xác thực JWT token
+	JWTSecret string
+	// JWTExpiryHours: Số giờ token JWT có hiệu lực (mặc định 24h)
+	JWTExpiryHours int
 }
 
 // StorageConfig chứa thông tin cấu hình cho AWS S3

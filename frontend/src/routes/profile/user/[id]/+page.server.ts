@@ -1,13 +1,43 @@
 import type { PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 
-// Cái này là get thông tin của user khác để phục vụ cho trang profile của người dùng khác
-// Tuy nhiên nếu current_user_id trùng với target_user_id thì redirect về /profile
 export const load = (async ({ params, locals, fetch }) => {
   const current_user_id = locals.user?.id;
   const target_user_id = params.id;
+  const token = locals.token;
 
   if (current_user_id === target_user_id) {
     throw redirect(302, "/profile");
-  } else throw redirect(302, "/dashboard");
+  }
+
+  let userName = "";
+  let userTitle = "";
+  let userAvatar = "";
+
+  try {
+    const response = await fetch(
+      `/api/users/${target_user_id}/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      const u = data.user || {};
+      userName = u.name || "";
+      userTitle = u.title || "";
+      userAvatar = u.avatar_name || "";
+    }
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error);
+  }
+
+  return {
+    id: target_user_id,
+    name: userName,
+    title: userTitle,
+    avatarUrl: userAvatar,
+  };
 }) satisfies PageServerLoad;

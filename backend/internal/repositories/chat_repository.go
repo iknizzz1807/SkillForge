@@ -118,13 +118,16 @@ func (r *ChatRepository) GetGroupMembers(groupID string) ([]*models.User, error)
 
 	// Get all user with userID
 	users := []*models.User{}
-	for _, userID := range usersID {
-		var user models.User
-		err := r.UserCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	if len(usersID) > 0 {
+		filter := bson.M{"_id": bson.M{"$in": usersID}}
+		cursor, err := r.UserCollection.Find(ctx, filter)
 		if err != nil {
 			return nil, err
 		}
-		users = append(users, &user)
+		defer cursor.Close(ctx)
+		if err := cursor.All(ctx, &users); err != nil {
+			return nil, err
+		}
 	}
 
 	return users, nil
@@ -139,4 +142,29 @@ func (r *ChatRepository) InsertMessage(message *models.Message) (*models.Message
 		return nil, err
 	}
 	return message, nil
+}
+
+
+func (r *ChatRepository) DeleteGroupMessages(ctx context.Context, groupID string) error {
+	filter := bson.M{"group_id": groupID}
+	_, err := r.MessageCollection.DeleteMany(ctx, filter)
+	if err != nil {
+		return err // avoid importing fmt if not present, will add later
+	}
+	return nil
+}
+
+func (r *ChatRepository) DeleteGroupByProjectID(ctx context.Context, projectID string) error {
+	filter := bson.M{"project_id": projectID}
+	// delete messages
+	err := r.DeleteGroupMessages(ctx, projectID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.GroupCollection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	return nil
 }

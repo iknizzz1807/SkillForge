@@ -40,12 +40,13 @@ func RegisterRoutes(
 	realtimeClient *integrations.RealtimeClient,
 	// paymentClient *integrations.PaymentClient,
 	chatService *services.ChatService,
+	invitationService *services.InvitationService,
 ) {
 	// Khởi tạo integrations ở đây
 	// realtimeClient := integrations.NewRealtimeClient()
 
 	// Khởi tạo các handler với service tương ứng
-	userHandler := handlers.NewUserHandler(userService)
+	userHandler := handlers.NewUserHandler(userService, portfolioService)
 	authHandler := handlers.NewAuthHandler(authService)
 	projectHandler := handlers.NewProjectHandler(projectService)
 	applicationHandler := handlers.NewApplicationHandler(applicationService)
@@ -65,6 +66,7 @@ func RegisterRoutes(
 	levelHandler := handlers.NewLevelHandler(gamificationService)
 	chatHandler := handlers.NewChatHandler(chatService)
 	websocketChatHandler := handlers.NewWebSocketChatHandler(chatService, realtimeClient)
+	invitationHandler := handlers.NewInvitationHandler(invitationService)
 
 	// Định nghĩa các route
 	// Nhóm route không cần auth
@@ -73,10 +75,7 @@ func RegisterRoutes(
 	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
 	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
 	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
-	// Comment cái này nếu cần test api nhanh bằng postman hay thunder client
-	r.Use(middleware.AuthMiddleware())
-
-	// CORS type shit
+	// CORS - must be before auth so preflight OPTIONS requests don't get 401
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.id.vn"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -84,7 +83,20 @@ func RegisterRoutes(
 		AllowCredentials: true,
 	}))
 
+	// Public static file routes (before auth, so anyone can access)
 	r.Static("/storage", "./storage")
+	r.Static("/portfolios", "./storage/portfolios")
+
+	// Public avatar routes
+	r.GET("/avatars", avatarHandler.ServeAvatar)
+	r.GET("/avatars/:id", avatarHandler.ServeAvatarByUserID)
+
+	// Global middleware
+	r.Use(middleware.RateLimitMiddleware())
+	r.Use(middleware.LoggingMiddleware())
+
+	// Auth middleware - applied after CORS so preflight passes
+	r.Use(middleware.AuthMiddleware())
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")
@@ -94,16 +106,18 @@ func RegisterRoutes(
 		api.GET("/user", userHandler.GetCurrentUser)
 		api.GET("/user/:id", userHandler.GetUserByID)
 		api.PUT("/user", userHandler.UpdateCurrentUser)
+		api.GET("/users/students", middleware.RoleMiddleware("business"), userHandler.GetAllStudents)
+		api.GET("/users/:id/profile", userHandler.GetUserProfile)
 
 		// Project routes
 		api.GET("/projects", projectHandler.GetProjects)                       // này là route dành cho marketplace để get tất cả các dự án trên thị trường
 		api.GET("/projects/:id", projectHandler.GetProjectMarketplace)         // dùng vào việc xem chi tiết một project nào đó trong marketplace
 		api.GET("/projects/students/:id", projectHandler.GetStudentsByProject) // dùng để get các thành viên tham gia dự án hiện tại, id là projectID
-		api.GET("/projects/business", projectHandler.GetProjectByBusiness)     // id của business được truyền qua context
-		api.GET("/projects/student", projectHandler.GetProjectByStudent)       // id của student được truyền qua context
-		api.POST("/projects", projectHandler.CreateProject)
-		api.PUT("/projects/:id", projectHandler.UpdateProject)
-		api.DELETE("/projects/:id", projectHandler.DeleteProject)
+		api.GET("/projects/business", middleware.RoleMiddleware("business"), projectHandler.GetProjectByBusiness)     // id của business được truyền qua context
+		api.GET("/projects/student", middleware.RoleMiddleware("student"), projectHandler.GetProjectByStudent)       // id của student được truyền qua context
+		api.POST("/projects", middleware.RoleMiddleware("business"), projectHandler.CreateProject)
+		api.PUT("/projects/:id", middleware.RoleMiddleware("business"), projectHandler.UpdateProject)
+		api.DELETE("/projects/:id", middleware.RoleMiddleware("business"), projectHandler.DeleteProject)
 
 		// Cần thêm một nhóm route để get, delete students trong project cụ thể nào đó
 		// Route này để get tất cả các students trong một dự án để có thể dẫn tới profile của họ
@@ -114,7 +128,7 @@ func RegisterRoutes(
 		api.DELETE("/projects/students/:studentID/:projectID", projectHandler.RemoveStudentFromProject)
 
 		// Application routes
-		api.POST("/applications", applicationHandler.ApplyProject)
+		api.POST("/applications", middleware.RoleMiddleware("student"), applicationHandler.ApplyProject)
 		api.GET("/applications/:id", applicationHandler.GetApplication)
 
 		// Cái route này dùng để:
@@ -123,9 +137,9 @@ func RegisterRoutes(
 		api.GET("/applications/me", applicationHandler.GetApplicationsByCurrentUser)
 		api.GET("/applications/count", applicationHandler.GetApplicationCount)
 		// This update for status is used for accept or reject an application, if accept add the student to the project
-		api.PUT("/applications/status/:id", applicationHandler.UpdateApplicationStatus)
+		api.PUT("/applications/status/:id", middleware.RoleMiddleware("business"), applicationHandler.UpdateApplicationStatus)
 		// ID truyền vào ở đây là application id, còn userID thì truyền vào context
-		api.DELETE("/applications/:id", applicationHandler.DeleteApplication)
+		api.DELETE("/applications/:id", middleware.RoleMiddleware("student"), applicationHandler.DeleteApplication)
 
 		// // Task routes
 		// api.GET("/tasks/:id", taskHandler.GetTasksByProjectID) // Get task bằng projectID, id ở đây là projectID chứ không phải taskID
@@ -149,18 +163,23 @@ func RegisterRoutes(
 
 		// TalentPool route
 		// id là id của user, còn id của business thì được nhận vào bằng context
-		api.GET("/talenpool", talentPoolHandler.GetTalentPool)
-		api.POST("/talentpool:id", talentPoolHandler.AddStudentToTalentPool)
-		api.DELETE("/talentpool/:id", talentPoolHandler.RemoveFromTalentPool)
-		api.GET("/talentpool/:id/check", talentPoolHandler.CheckStudentInTalentPool)
+		api.GET("/talentpool", middleware.RoleMiddleware("business"), talentPoolHandler.GetTalentPool)
+		api.POST("/talentpool/:id", middleware.RoleMiddleware("business"), talentPoolHandler.AddStudentToTalentPool)
+		api.DELETE("/talentpool/:id", middleware.RoleMiddleware("business"), talentPoolHandler.RemoveFromTalentPool)
+		api.GET("/talentpool/:id/check", middleware.RoleMiddleware("business"), talentPoolHandler.CheckStudentInTalentPool)
 
 		// Analytics routes
 		api.GET("/analytics/skills/:userID", analyticsHandler.GetSkillAnalytics)
 		api.GET("/analytics/projects/:projectID", analyticsHandler.GetProjectAnalytics)
 
 		// Matching routes
-		api.GET("/matches", matchingHandler.GetTopMatches)             // Get top 10 matches for authenticated user
-		api.GET("/matches/:project_id", matchingHandler.GetMatchScore) // Get specific match score
+		api.GET("/matches", middleware.RoleMiddleware("student"), matchingHandler.GetTopMatches)             // Get top 10 matches for authenticated user
+		api.GET("/matches/:project_id", middleware.RoleMiddleware("student"), matchingHandler.GetMatchScore) // Get specific match score
+
+		// Invitation routes
+		api.POST("/invitations", middleware.RoleMiddleware("business"), invitationHandler.CreateInvitation)
+		api.GET("/invitations/me", invitationHandler.GetMyInvitations)
+		api.PUT("/invitations/:id/respond", middleware.RoleMiddleware("student"), invitationHandler.RespondToInvitation)
 
 		// Badges routes
 		api.GET("/badges/:userID", badgeHandler.GetUserBadges)
@@ -171,13 +190,9 @@ func RegisterRoutes(
 		api.GET("/feedbacks/student/:userID", feedbackHandler.GetStudentFeedbacks)
 		api.GET("/feedbacks/business/:userID", feedbackHandler.GetBusinessFeedbacks)
 
-		// === Route phục vụ file avatar ===
-		r.GET("/avatars", avatarHandler.ServeAvatar)
-		r.GET("/avatars/:id", avatarHandler.ServeAvatarByUserID)
-
 		// === Route phục vụ business info
 		api.GET("/business-info", businessInfoHandler.GetBusinessInfo)
-		api.PUT("/business-info", businessInfoHandler.UpdateBusinessInfo)
+		api.PUT("/business-info", middleware.RoleMiddleware("business"), businessInfoHandler.UpdateBusinessInfo)
 
 		//Route cho level
 		api.GET("/levels", levelHandler.GetUserLevel)
@@ -186,6 +201,7 @@ func RegisterRoutes(
 		// :id là projectID
 		api.GET("/chats", chatHandler.GetGroups)
 		api.GET("/chats/:id", chatHandler.GetGroupInfo)
+		api.POST("/chats/upload", chatHandler.UploadChatFile)
 
 		// Payment routes (ví dụ)
 		api.POST("/payments", func(c *gin.Context) {

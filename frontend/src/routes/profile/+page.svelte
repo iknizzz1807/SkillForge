@@ -5,6 +5,10 @@
   const userData = data.userData;
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
+  let portfolioUrl: string | null = $state(null);
+  let portfolioLoading: boolean = $state(false);
+  let portfolioError: string | null = $state(null);
+  let portfolioCopied: boolean = $state(false);
 
   // Form data state
   let name: string = $state(data.name || "");
@@ -108,6 +112,12 @@
   };
 
   const toggleGeneratePorfolioModal = () => {
+    if (!generatePortfolioModalOpen) {
+      portfolioUrl = null;
+      portfolioLoading = false;
+      portfolioError = null;
+      portfolioCopied = false;
+    }
     generatePortfolioModalOpen = !generatePortfolioModalOpen;
   };
 
@@ -218,6 +228,52 @@
       businessInfoErrorMessage = "An unexpected error occurred";
     } finally {
       isSubmittingBusinessInfo = false;
+    }
+  };
+
+  const generatePortfolio = async () => {
+    portfolioLoading = true;
+    portfolioError = null;
+    portfolioUrl = null;
+
+    try {
+      const response = await fetch("/api/portfolios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: data.id }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to generate portfolio");
+      }
+
+      const result = await response.json();
+      portfolioUrl = result.url;
+    } catch (error) {
+      portfolioError = error instanceof Error ? error.message : "An unexpected error occurred";
+    } finally {
+      portfolioLoading = false;
+    }
+  };
+
+  const copyPortfolioLink = async () => {
+    if (portfolioUrl) {
+      try {
+        await navigator.clipboard.writeText(window.location.origin + portfolioUrl);
+        portfolioCopied = true;
+        setTimeout(() => (portfolioCopied = false), 2000);
+      } catch {
+        // fallback
+        const input = document.createElement("input");
+        input.value = window.location.origin + portfolioUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+        portfolioCopied = true;
+        setTimeout(() => (portfolioCopied = false), 2000);
+      }
     }
   };
 
@@ -664,55 +720,64 @@
 {#if generatePortfolioModalOpen}
   <!-- Portfolio Generation Modal -->
   <div id="portfolioModal" class="modal">
-    <div class="bg-white rounded-lg w-1/2 max-w-2xl shadow-lg text-center">
+    <div class="bg-white rounded-lg w-full max-w-lg shadow-lg text-center mx-4">
       <div class="p-6">
-        <svg
-          class="w-16 h-16 text-[#6b48ff] mx-auto mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          ></path>
-        </svg>
-        <h3 class="text-xl font-semibold mb-2">Portfolio Generated!</h3>
-        <p class="text-gray-600 mb-4">
-          Your portfolio website has been generated successfully.
-        </p>
-        <div class="bg-gray-100 p-4 rounded mb-4 text-left">
-          <p class="text-sm font-mono break-all">
-            https://skillforge.example.com/portfolio/johndoe
-          </p>
-        </div>
-        <div class="flex space-x-2 justify-center">
-          <button
-            id="closePortfolioBtn"
-            class="btn-secondary"
-            onclick={toggleGeneratePorfolioModal}>Close</button
-          >
-          <button class="btn flex items-center">
-            <svg
-              class="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              ></path>
-            </svg>
-            Visit Site
-          </button>
-        </div>
+        {#if portfolioLoading}
+          <!-- Loading State -->
+          <svg class="animate-spin w-12 h-12 text-[#6b48ff] mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">Generating Portfolio...</h3>
+          <p class="text-gray-600">Building your professional portfolio website.</p>
+        {:else if portfolioError}
+          <!-- Error State -->
+          <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">Generation Failed</h3>
+          <p class="text-red-600 mb-4">{portfolioError}</p>
+          <div class="flex space-x-2 justify-center">
+            <button class="btn-secondary" onclick={toggleGeneratePorfolioModal}>Close</button>
+            <button class="btn" onclick={generatePortfolio}>Try Again</button>
+          </div>
+        {:else if portfolioUrl}
+          <!-- Success State -->
+          <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">Portfolio Generated!</h3>
+          <p class="text-gray-600 mb-4">Your portfolio website has been created successfully.</p>
+          <div class="bg-gray-100 p-4 rounded mb-4 text-left">
+            <p class="text-sm font-mono break-all">{window.location.origin}{portfolioUrl}</p>
+          </div>
+          <div class="flex flex-wrap gap-2 justify-center">
+            <button class="btn-secondary" onclick={toggleGeneratePorfolioModal}>Close</button>
+            <button class="btn flex items-center" onclick={() => window.open(window.location.origin + portfolioUrl, "_blank")}>
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+              Visit Site
+            </button>
+            <button class="btn flex items-center" onclick={copyPortfolioLink}>
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+              </svg>
+              {portfolioCopied ? "Copied!" : "Copy Link"}
+            </button>
+          </div>
+        {:else}
+          <!-- Initial State -->
+          <svg class="w-16 h-16 text-[#6b48ff] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">Generate Portfolio</h3>
+          <p class="text-gray-600 mb-4">Create a professional portfolio website based on your SkillForge profile data.</p>
+          <div class="flex space-x-2 justify-center">
+            <button class="btn-secondary" onclick={toggleGeneratePorfolioModal}>Cancel</button>
+            <button class="btn" onclick={generatePortfolio}>Generate Now</button>
+          </div>
+        {/if}
       </div>
     </div>
   </div>

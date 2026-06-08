@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,4 +49,25 @@ func (ch *ChatHandler) GetGroupInfo(c *gin.Context) {
 		"members":  members,
 	}
 	c.JSON(http.StatusOK, info)
+}
+
+func (ch *ChatHandler) UploadChatFile(c *gin.Context) {
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
+		return
+	}
+	defer file.Close()
+
+	filename, originalName, err := ch.chatService.SaveChatFile(file, header)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	fileURL := fmt.Sprintf("/storage/chat_files/%s", filename)
+	c.JSON(http.StatusOK, gin.H{
+		"url":  fileURL,
+		"name": originalName,
+	})
 }

@@ -16,6 +16,15 @@ type Message struct {
 	// Content là nội dung tin nhắn
 	Content string `json:"content" bson:"content"`
 
+	// Type là loại tin nhắn: "text" hoặc "file"
+	Type string `json:"type" bson:"type"`
+
+	// FileURL là đường dẫn file (nếu type là "file")
+	FileURL string `json:"file_url,omitempty" bson:"file_url,omitempty"`
+
+	// FileName là tên file gốc (nếu type là "file")
+	FileName string `json:"file_name,omitempty" bson:"file_name,omitempty"`
+
 	// CreatedAt là thời gian gửi tin nhắn
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 }

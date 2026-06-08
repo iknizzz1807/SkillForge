@@ -88,6 +88,10 @@ func (h *WebSocketNotificationHandler) handleMessages(userID string, conn *webso
 	}
 
 	for {
-
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			log.Printf("WebSocket read error for user %s: %v", userID, err)
+			break
+		}
 	}
 }

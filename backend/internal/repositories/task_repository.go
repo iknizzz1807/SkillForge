@@ -188,3 +188,12 @@ func (r *TaskRepository) InsertActivity(ctx context.Context, activity *models.Ac
 
 	return nil
 }
+
+func (r *TaskRepository) DeleteTasksByProjectID(ctx context.Context, projectID string) error {
+	filter := bson.M{"project_id": projectID}
+	_, err := r.collection.DeleteMany(ctx, filter)
+	if err != nil {
+		return err
+	}
+	return nil
+}

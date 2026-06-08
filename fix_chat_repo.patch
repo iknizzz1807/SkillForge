@@ -1,0 +1,49 @@
+--- backend/internal/repositories/chat_repository.go
++++ backend/internal/repositories/chat_repository.go
+@@ -3,6 +3,7 @@
+ import (
+ 	"context"
++	"fmt"
+ 	"time"
++	"errors"
+ 
+ 	"github.com/iknizzz1807/SkillForge/internal/models"
+@@ -141,31 +142,30 @@
+ 
+ func (r *ChatRepository) DeleteGroupMessages(ctx context.Context, groupID string) error {
+ 	filter := bson.M{"group_id": groupID}
+-	_, err := r.messageCollection.DeleteMany(ctx, filter)
++	_, err := r.MessageCollection.DeleteMany(ctx, filter)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to delete group messages: %w", err)
+ 	}
+ 	return nil
+ }
+ 
+ func (r *ChatRepository) DeleteGroupByProjectID(ctx context.Context, projectID string) error {
+ 	filter := bson.M{"project_id": projectID}
+ 	// find group first to delete messages
+ 	var group models.Group
+-	err := r.groupCollection.FindOne(ctx, filter).Decode(&group)
++	err := r.GroupCollection.FindOne(ctx, filter).Decode(&group)
+ 	if err != nil {
+ 		if errors.Is(err, mongo.ErrNoDocuments) {
+-			return nil // no group found, nothing to delete
++			// no group found, but we should still delete messages with group_id = project_id
++			return r.DeleteGroupMessages(ctx, projectID)
+ 		}
+ 		return fmt.Errorf("failed to find group by project id: %w", err)
+ 	}
+ 	
+ 	// delete messages
+-	err = r.DeleteGroupMessages(ctx, group.ID.Hex())
++	err = r.DeleteGroupMessages(ctx, projectID)
+ 	if err != nil {
+ 		return err
+ 	}
+ 
+-	_, err = r.groupCollection.DeleteOne(ctx, filter)
++	_, err = r.GroupCollection.DeleteOne(ctx, filter)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to delete group by project id: %w", err)
+ 	}

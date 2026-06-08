@@ -65,6 +65,7 @@ func Run() {
 	gamificationService := services.NewGamificationService(repositories.NewGamificationRepository(db), userService)
 	matchingService := services.NewMatchingService(db, aiClient)
 	chatService := services.NewChatService(repositories.NewChatRepository(db))
+	invitationService := services.NewInvitationService(db)
 	// Khởi tạo Gin router
 	r := gin.Default()
 
@@ -72,7 +73,7 @@ func Run() {
 	// Ví dụ: r.Use(middleware.LogMiddleware())
 
 	// Đăng ký các route từ routes.go
-	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeClient, chatService)
+	RegisterRoutes(r, userService, projectService, applicationService, taskService, reviewService, portfolioService, analyticsService, authService, notificationService, badgeService, talentPoolService, fileService, businessInfoService, feedbackService, gamificationService, matchingService, realtimeClient, chatService, invitationService)
 
 	// Chạy server
 	if err := r.Run(":8080"); err != nil {

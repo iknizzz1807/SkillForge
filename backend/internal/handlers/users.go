@@ -9,6 +9,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/models"
@@ -18,14 +19,18 @@ import (
 
 type UserHandler struct {
 	// userService xử lý logic liên quan đến user
-	userService *services.UserService
+	userService      *services.UserService
+	portfolioService *services.PortfolioService
 }
 
 // NewUserHandler khởi tạo handler với userService
 // Input: userService (*services.UserService)
 // Return: *UserHandler - con trỏ đến UserHandler
-func NewUserHandler(userService *services.UserService) *UserHandler {
-	return &UserHandler{userService}
+func NewUserHandler(userService *services.UserService, portfolioService *services.PortfolioService) *UserHandler {
+	return &UserHandler{
+		userService:      userService,
+		portfolioService: portfolioService,
+	}
 }
 
 // GetUser xử lý endpoint GET /api/user
@@ -107,6 +112,13 @@ func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 		return
 	}
 
+	// Regenerate portfolio in the background
+	go func(uid string) {
+		if _, err := h.portfolioService.GeneratePortfolio(uid); err != nil {
+			println("Failed to regenerate portfolio for user:", uid, err.Error())
+		}
+	}(userID)
+
 	// Generate a new JWT token with updated user information
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name, user.Role)
 	if err != nil {
@@ -123,4 +135,39 @@ func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 		"user":  user,
 		"token": token,
 	})
+}
+
+func (h *UserHandler) GetAllStudents(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "12")
+	skill := c.DefaultQuery("skill", "")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 12
+	}
+
+	students, err := h.userService.GetAllStudents(page, limit, skill)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if students == nil {
+		students = []*models.User{}
+	}
+	c.JSON(http.StatusOK, students)
+}
+
+func (h *UserHandler) GetUserProfile(c *gin.Context) {
+	userID := c.Param("id")
+	profile, err := h.userService.GetUserProfile(userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, profile)
 }

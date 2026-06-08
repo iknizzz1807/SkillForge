@@ -43,10 +43,10 @@ func NewProjectService(db *mongo.Database, notificationService *NotificationServ
 
 // GetAllProjects lấy danh sách tất cả dự án
 // Return: []*models.Project (danh sách project), error (nếu có lỗi)
-func (s *ProjectService) GetAllProjects() ([]*models.Project, error) {
+func (s *ProjectService) GetAllProjects(page, limit int) ([]*models.Project, error) {
 	// Tạo repository và lấy danh sách project
 	projectRepo := repositories.NewProjectRepository(s.db)
-	projects, err := projectRepo.FindAllProjects(context.Background())
+	projects, err := projectRepo.FindAllProjects(context.Background(), page, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +164,20 @@ func (s *ProjectService) DeleteProject(projectID string, userID string) error {
 	if err != nil {
 		// Log error but continue
 		// utils.GetLogger().Warnf("Failed to get students for project %s: %v", projectID, err)
+	}
+
+	// Xóa tasks liên quan
+	taskRepo := repositories.NewTaskRepository(s.db)
+	err = taskRepo.DeleteTasksByProjectID(ctx, projectID)
+	if err != nil {
+		// continue
+	}
+
+	// Xóa chat groups và messages
+	chatRepo := repositories.NewChatRepository(s.db)
+	err = chatRepo.DeleteGroupByProjectID(ctx, projectID)
+	if err != nil {
+		// continue
 	}
 
 	// 5. Xóa tất cả quan hệ giữa project và student
@@ -430,9 +444,9 @@ func (s *ProjectService) UpdateProjectMemberCount(projectID string) error {
 func (s *ProjectService) SyncAllProjectMemberCounts() error {
 	ctx := context.Background()
 
-	// Lấy tất cả project
+	// Lấy tất cả project (giới hạn lớn để cập nhật)
 	projectRepository := repositories.NewProjectRepository(s.db)
-	projects, err := projectRepository.FindAllProjects(ctx)
+	projects, err := projectRepository.FindAllProjects(ctx, 1, 100000)
 	if err != nil {
 		return err
 	}
@@ -530,10 +544,13 @@ func (s *ProjectService) GetStudentsByProjectID(projectID string) ([]models.User
 	userRepo := repositories.NewUserRepository(s.db)
 	var students []models.User
 
-	for _, studentID := range studentIDs {
-		student, err := userRepo.FindUserByID(ctx, studentID)
-		if err == nil && student != nil {
-			// Loại bỏ các thông tin nhạy cảm trước khi trả về
+	userPointers, err := userRepo.FindUsersByIDs(ctx, studentIDs)
+	if err != nil {
+		return nil, errors.New("failed to get students data: " + err.Error())
+	}
+	
+	for _, student := range userPointers {
+		if student != nil {
 			student.Password = ""
 			students = append(students, *student)
 		}

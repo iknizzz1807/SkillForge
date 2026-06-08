@@ -1,0 +1,13 @@
+--- backend/internal/repositories/project_repository.go
++++ backend/internal/repositories/project_repository.go
+@@ -82,9 +82,14 @@
+ // Output: []models.Project, error
+-func (r *ProjectRepository) FindAllProjects(ctx context.Context) ([]*models.Project, error) {
+-	// Tạo cursor để lấy tất cả document
+-	cursor, err := r.collection.Find(ctx, bson.M{})
++func (r *ProjectRepository) FindAllProjects(ctx context.Context, page, limit int) ([]*models.Project, error) {
++	skip := (page - 1) * limit
++	if skip < 0 { skip = 0 }
++	
++	opts := options.Find().SetSkip(int64(skip)).SetLimit(int64(limit))
++	cursor, err := r.collection.Find(ctx, bson.M{}, opts)

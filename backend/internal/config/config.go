@@ -54,6 +54,10 @@ func Load() *Env {
 			AWSRegion:    getEnv("AWS_REGION", "us-east-1"),
 			AWSBucket:    getEnv("AWS_BUCKET", "skillforge-storage"),
 		},
+
+		// JWT config
+		JWTSecret:      getEnv("JWT_SECRET", "skillforge-secret-key"),
+		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", "24"),
 	}
 }
 
@@ -67,4 +71,15 @@ func getEnv(key, defaultValue string) string {
 	}
 	// Trả về giá trị mặc định nếu không tìm thấy
 	return defaultValue
+}
+
+// getEnvInt lấy giá trị biến môi trường dạng số nguyên, trả về giá trị mặc định nếu không tồn tại hoặc không phải số
+// Input: key (tên biến), defaultValue (giá trị mặc định dạng string)
+// Return: int - giá trị số của biến môi trường
+func getEnvInt(key, defaultValue string) int {
+	val, err := strconv.Atoi(getEnv(key, defaultValue))
+	if err != nil {
+		val, _ = strconv.Atoi(defaultValue)
+	}
+	return val
 }

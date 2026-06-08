@@ -8,7 +8,7 @@ package handlers
 
 import (
 	"net/http"
-
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,8 +31,15 @@ func NewProjectHandler(projectService *services.ProjectService) *ProjectHandler 
 // GetProjects xử lý endpoint GET /api/projects
 // Return: Trả về JSON danh sách project hoặc lỗi
 func (h *ProjectHandler) GetProjects(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 { page = 1 }
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 { limit = 10 }
+
 	// Gọi service để lấy danh sách project
-	projects, err := h.projectService.GetAllProjects()
+	projects, err := h.projectService.GetAllProjects(page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -123,14 +130,8 @@ func (h *ProjectHandler) GetProjectByBusiness(c *gin.Context) {
 // CreateProject xử lý endpoint POST /api/projects
 // Return: Trả về JSON project vừa tạo hoặc lỗi
 func (h *ProjectHandler) CreateProject(c *gin.Context) {
-	// Chỉ business mới đuọc tạo project
-	if c.GetString("role") != "business" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Only businesses can create project"})
-		return
-	}
-
 	var req struct {
-		Title       string    `json:"title" binding:"required"`
+		Title       string   `json:"title" binding:"required"`
 		Description string    `json:"description" binding:"required"`
 		Skills      []string  `json:"skills" binding:"required"`
 		StartTime   time.Time `json:"start_time" binding:"required"`

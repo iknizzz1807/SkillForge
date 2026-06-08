@@ -159,3 +159,46 @@ func (r *UserRepository) UpdateUserSkills(ctx context.Context, userID string, sk
 	}
 	return nil
 }
+
+func (r *UserRepository) FindAllStudents(ctx context.Context, page, limit int, skill string) ([]*models.User, error) {
+	skip := int64((page - 1) * limit)
+	if skip < 0 {
+		skip = 0
+	}
+	filter := bson.M{"role": "student"}
+	if skill != "" {
+		filter["skills"] = bson.M{"$regex": skill, "$options": "i"}
+	}
+	opts := options.Find().SetSkip(skip).SetLimit(int64(limit)).SetSort(bson.D{{Key: "created_at", Value: -1}})
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.User
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (r *UserRepository) FindUsersByIDs(ctx context.Context, userIDs []string) ([]*models.User, error) {
+	if len(userIDs) == 0 {
+		return []*models.User{}, nil
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": userIDs}}
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var users []*models.User
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

@@ -80,9 +80,15 @@ func (r *ProjectRepository) FindProjectByID(ctx context.Context, projectID strin
 // FindAllProjects lấy tất cả project
 // Input: ctx (context.Context)
 // Return: []*models.Project (danh sách project), error (nếu có lỗi)
-func (r *ProjectRepository) FindAllProjects(ctx context.Context) ([]*models.Project, error) {
-	// Tạo cursor để lấy tất cả document
-	cursor, err := r.collection.Find(ctx, bson.M{})
+func (r *ProjectRepository) FindAllProjects(ctx context.Context, page, limit int) ([]*models.Project, error) {
+	skip := int64((page - 1) * limit)
+	if skip < 0 {
+		skip = 0
+	}
+	opts := options.Find().SetSkip(skip).SetLimit(int64(limit))
+	
+	// Tạo cursor để lấy document
+	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return nil, err
 	}

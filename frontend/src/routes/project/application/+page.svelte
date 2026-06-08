@@ -93,7 +93,7 @@
       }
     } catch (error) {
       console.error("Error approving application:", error);
-      alert("Failed to approve application. Please try again.");
+      console.error("Failed to approve application. Please try again.");
     }
   }
 
@@ -123,7 +123,7 @@
       }
     } catch (error) {
       console.error("Error rejecting application:", error);
-      alert("Failed to reject application. Please try again.");
+      console.error("Failed to reject application. Please try again.");
     }
   }
 

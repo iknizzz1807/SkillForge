@@ -71,7 +71,10 @@ func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
 }
 
 type ChatMessage struct {
-	Content string `json:"content"`
+	Content  string `json:"content"`
+	Type     string `json:"type"`
+	FileURL  string `json:"file_url"`
+	FileName string `json:"file_name"`
 }
 
 func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *websocket.Conn) {
@@ -88,16 +91,32 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 			log.Printf("Error unmarshaling message: %v", err)
 			continue
 		}
-		Content := PassedMessage.Content
 
-		// Tại đây cần kiểm tra xem Message có thông tin user_name không
-		Message, err := wsh.chatService.InsertMessage(context.Background(), room, userID, Content)
+		msgType := PassedMessage.Type
+		if msgType == "" {
+			msgType = "text"
+		}
+
+		// Extract projectID from room name (room format is "message" + projectID)
+		projectID := room
+		if len(room) > 7 && room[:7] == "message" {
+			projectID = room[7:]
+		}
+
+		Message, err := wsh.chatService.InsertMessage(
+			context.Background(),
+			userID,
+			projectID,
+			PassedMessage.Content,
+			msgType,
+			PassedMessage.FileURL,
+			PassedMessage.FileName,
+		)
 		if err != nil {
 			log.Printf("Error inserting message: %v", err)
 			continue
 		}
 
-		// Thêm log để xem tin nhắn được lưu và trả về
 		log.Printf("Message inserted and broadcast: %+v", Message)
 
 		response, err := json.Marshal(Message)

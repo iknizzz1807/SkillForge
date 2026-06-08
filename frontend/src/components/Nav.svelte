@@ -2,17 +2,21 @@
   import { onMount, type Snippet } from "svelte";
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
+  import { PUBLIC_WS_URL } from '$env/static/public';
+
   let {
     url,
     role,
     name,
     avatarUrl,
+    userId,
     children,
   }: {
     url: string;
     role: string;
     name: string;
     avatarUrl: string;
+    userId: string;
     children: Snippet;
   } = $props();
 
@@ -27,84 +31,11 @@
   let userMenuContainer: HTMLDivElement | null = $state(null);
   let notificationContainer: HTMLDivElement | null = $state(null);
 
-  // Danh sách thông báo mẫu
-  const notifications = [
-    {
-      id: 1,
-      type: "task",
-      title: "Task submitted!",
-      message: 'Your task "Frontend UI" has been reviewed and approved.',
-      time: "Today, 10:30 AM",
-      read: false,
-      colorClass: "border-[#896DFF]",
-      bgClass: "bg-[#896DFF] bg-opacity-10",
-      textClass: "text-[#896DFF]",
-      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
-    },
-    {
-      id: 2,
-      type: "project",
-      title: "Project updated",
-      message:
-        'Project "E-commerce App" has been updated with new requirements.',
-      time: "Yesterday, 3:45 PM",
-      read: false,
-      colorClass: "border-green-500",
-      bgClass: "bg-green-100",
-      textClass: "text-green-500",
-      icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-    },
-    {
-      id: 3,
-      type: "message",
-      title: "New message",
-      message: "You have a new message from John in the project chat.",
-      time: "2 days ago",
-      read: false,
-      colorClass: "border-blue-500",
-      bgClass: "bg-blue-100",
-      textClass: "text-blue-500",
-      icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-    },
-    {
-      id: 4,
-      type: "application",
-      title: "Application approved",
-      message:
-        'Your application for "Mobile App Development" project has been approved.',
-      time: "3 days ago",
-      read: true,
-      colorClass: "border-purple-500",
-      bgClass: "bg-purple-100",
-      textClass: "text-purple-500",
-      icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-    },
-    {
-      id: 5,
-      type: "payment",
-      title: "Payment received",
-      message:
-        "You received payment of $250 for your work on Web Application project.",
-      time: "1 week ago",
-      read: true,
-      colorClass: "border-yellow-500",
-      bgClass: "bg-yellow-100",
-      textClass: "text-yellow-500",
-      icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-    },
-    {
-      id: 6,
-      type: "account",
-      title: "Profile updated",
-      message: "Your profile information has been updated successfully.",
-      time: "2 weeks ago",
-      read: true,
-      colorClass: "border-gray-500",
-      bgClass: "bg-gray-100",
-      textClass: "text-gray-500",
-      icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-    },
-  ];
+  // Danh sách thông báo
+  let notifications: any[] = $state([]);
+  let ws: WebSocket | null = null;
+  // Invitations count
+  let invitationCount: number = $state(0);
 
   // Toggle user dropdown
   function toggleUserMenu() {
@@ -150,9 +81,75 @@
     // Add global click listener when component mounts
     document.addEventListener("click", handleClickOutside);
 
+    if (browser && userId) {
+      const connectWs = () => {
+        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}`);
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (Array.isArray(data)) {
+              notifications = data.map(item => ({
+                id: item.id || Date.now(),
+                type: item.type || "system",
+                title: item.title || "Notification",
+                message: item.message || item.content || "",
+                time: item.created_at ? new Date(item.created_at).toLocaleString() : new Date().toLocaleString(),
+                read: item.is_read || false,
+                colorClass: "border-[#896DFF]",
+                bgClass: "bg-[#896DFF] bg-opacity-10",
+                textClass: "text-[#896DFF]",
+                icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              }));
+            } else if (data) {
+              const newNotification = {
+                id: data.id || Date.now(),
+                type: data.type || "system",
+                title: data.title || "New Notification",
+                message: data.message || data.content || "",
+                time: data.created_at ? new Date(data.created_at).toLocaleString() : new Date().toLocaleString(),
+                read: data.is_read || false,
+                colorClass: "border-[#896DFF]",
+                bgClass: "bg-[#896DFF] bg-opacity-10",
+                textClass: "text-[#896DFF]",
+                icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              };
+              notifications = [newNotification, ...notifications];
+            }
+          } catch (e) {
+            console.error("Error parsing notification:", e);
+          }
+        };
+
+        ws.onclose = () => {
+          setTimeout(connectWs, 5000); // Try to reconnect
+        };
+      };
+      connectWs();
+    }
+
+    // Fetch invitation count for students
+    const fetchInvitations = async () => {
+      try {
+        const res = await fetch("/api/invitations/me");
+        if (res.ok) {
+          const data = await res.json();
+          invitationCount = Array.isArray(data) ? data.length : 0;
+        }
+      } catch (e) {
+        // Silent fail
+      }
+    };
+    if (role === "student") {
+      fetchInvitations();
+    }
+
     // Clean up listener when component is destroyed
     return () => {
       document.removeEventListener("click", handleClickOutside);
+      if (ws) {
+        ws.close();
+      }
     };
   });
 
@@ -343,6 +340,27 @@
             Profile
           </div>
         </a>
+
+        {#if role === "student"}
+          <a
+            href="/invitations"
+            class={url.startsWith("/invitations")
+              ? "block text-base font-bold bg-[#896DFF] rounded px-2 py-1"
+              : "block text-base hover:bg-[#896DFF] hover:bg-opacity-20 rounded px-2 py-1"}
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Invitations
+              </div>
+              {#if invitationCount > 0}
+                <span class="bg-[#ff6f61] text-white text-xs font-bold px-2 py-0.5 rounded-full">{invitationCount}</span>
+              {/if}
+            </div>
+          </a>
+        {/if}
       </nav>
     </div>
 

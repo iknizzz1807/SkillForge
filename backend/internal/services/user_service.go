@@ -135,6 +135,80 @@ func (s *UserService) UpdateUserSkills(userID string, skills []string) (*models.
 	return s.GetUserByID(userID)
 }
 
+func (s *UserService) GetAllStudents(page, limit int, skill string) ([]*models.User, error) {
+	userRepo := repositories.NewUserRepository(s.db)
+	students, err := userRepo.FindAllStudents(context.Background(), page, limit, skill)
+	if err != nil {
+		return nil, err
+	}
+	for _, student := range students {
+		student.Password = ""
+	}
+	return students, nil
+}
+
+type UserProfile struct {
+	User       *models.User          `json:"user"`
+	Badges     []*models.UserBadge   `json:"badges"`
+	Feedbacks  []*models.Feedback    `json:"feedbacks"`
+	Projects   []*models.Project     `json:"projects"`
+}
+
+func (s *UserService) GetUserProfile(userID string) (*UserProfile, error) {
+	if userID == "" {
+		return nil, errors.New("user ID cannot be empty")
+	}
+	ctx := context.Background()
+
+	userRepo := repositories.NewUserRepository(s.db)
+	user, err := userRepo.FindUserByID(ctx, userID)
+	if err != nil || user == nil {
+		return nil, errors.New("user not found")
+	}
+	user.Password = ""
+
+	badgeRepo := repositories.NewBadgeRepository(s.db)
+	badges, err := badgeRepo.FindUserBadges(ctx, userID)
+	if err != nil {
+		badges = []*models.UserBadge{}
+	}
+	if badges == nil {
+		badges = []*models.UserBadge{}
+	}
+
+	feedbackRepo := repositories.NewFeedbackRepository(s.db)
+	feedbacks, err := feedbackRepo.GetFeedbacksForUser(ctx, userID, "student")
+	if err != nil {
+		feedbacks = []*models.Feedback{}
+	}
+	if feedbacks == nil {
+		feedbacks = []*models.Feedback{}
+	}
+
+	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+	projectIDs, err := projectStudentRepo.FindProjectsByStudentID(ctx, userID)
+	projects := []*models.Project{}
+	if err == nil {
+		projectRepo := repositories.NewProjectRepository(s.db)
+		for _, pid := range projectIDs {
+			p, err := projectRepo.FindProjectByID(ctx, pid)
+			if err == nil && p != nil {
+				projects = append(projects, p)
+			}
+		}
+	}
+	if projects == nil {
+		projects = []*models.Project{}
+	}
+
+	return &UserProfile{
+		User:      user,
+		Badges:    badges,
+		Feedbacks: feedbacks,
+		Projects:  projects,
+	}, nil
+}
+
 // GetUserRepository returns the user repository instance
 // This is a helper to allow FileService to access the user repository
 func (s *UserService) GetUserRepository() *repositories.UserRepository {

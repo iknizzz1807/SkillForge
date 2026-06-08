@@ -87,7 +87,7 @@ func (s *MatchingService) GetScoreUserProjects(userID string) ([]float64, error)
 	}
 	userInfo += user.Title
 
-	projects, err := projectRepo.FindAllProjects(context.Background())
+	projects, err := projectRepo.FindAllProjects(context.Background(), 1, 100000)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]Proje
 	projectRepo := repositories.NewProjectRepository(s.db)
 
 	// Lấy danh sách dự án
-	projects, err := projectRepo.FindAllProjects(context.Background())
+	projects, err := projectRepo.FindAllProjects(context.Background(), 1, 100000)
 	if err != nil {
 		return nil, err
 	}

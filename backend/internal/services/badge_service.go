@@ -132,6 +132,23 @@ func (s *BadgeService) AwardBadgeToUser(
 
 // CheckAndAwardProjectCompletionBadges kiểm tra và trao badge hoàn thành dự án
 func (s *BadgeService) CheckAndAwardProjectCompletionBadges(userID string, projectID string) error {
+	ctx := context.Background()
+
+	// Get badges of type "project" or "project_completion"
+	badges, err := s.badgeRepo.FindBadgesByType(ctx, "project")
+	if err != nil || len(badges) == 0 {
+		return err
+	}
+
+	// Just award the first project badge found as a placeholder logic
+	// Ideally we check conditions
+	badge := badges[0]
+	_, err = s.AwardBadgeToUser(userID, badge.ID, projectID)
+	
+	if err != nil {
+		return err
+	}
+	
 	println("Gamification badge awarded for user:", userID, "on project:", projectID)
 	return nil
 }

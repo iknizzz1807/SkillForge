@@ -5,9 +5,23 @@
 
   let { data }: { data: PageData } = $props();
 
+  interface Project {
+    id: string;
+    title: string;
+    description: string;
+    skills: string[];
+    price?: number;
+    timeline?: string;
+    project_id?: string;
+    ProjectID?: string;
+    score?: number;
+    match_score?: number;
+    [key: string]: any;
+  }
+
   // Đảm bảo skills là mảng
-  let projectsDisplay = $state(
-    data.projects.map((project) => ({
+  let projectsDisplay = $state<Project[]>(
+    data.projects.map((project: any) => ({
       ...project,
       skills:
         typeof project.skills === "string"
@@ -16,7 +30,7 @@
     }))
   );
 
-  let projectsSuggest: any[] = $state([]);
+  let projectsSuggest: Project[] = $state([]);
 
   onMount(async () => {
     if (data.role !== "student") return;

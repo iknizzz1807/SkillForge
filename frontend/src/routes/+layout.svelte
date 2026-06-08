@@ -12,12 +12,14 @@
   let role: string = $state("");
   let name: string = $state("");
   let avatarUrl: string = $state("");
+  let userId: string = $state("");
 
   $effect(() => {
     if (data.role && data.userName && data.avatarUrl) {
       role = data.role;
       name = data.userName;
       avatarUrl = data.avatarUrl;
+      userId = data.id || "";
     }
   });
 
@@ -50,6 +52,6 @@
   <title>{header}</title>
 </svelte:head>
 
-<Nav url={page.url.pathname} {role} {name} {avatarUrl}>
+<Nav url={page.url.pathname} {role} {name} {avatarUrl} {userId}>
   {@render children()}
 </Nav>
