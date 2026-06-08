@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    restart: unless-stopped
     volumes:
       - ./ai:/app
     networks:
@@ -17,6 +18,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    restart: unless-stopped
     volumes:
       - ./backend:/app
       - ./backend/storage:/app/storage
@@ -28,6 +30,8 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/skillforge
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET:-}
+      - AI_URL=http://ai:5000
+      - JWT_EXPIRY_HOURS=24
 
   frontend:
     build:
@@ -35,26 +39,25 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
+    restart: unless-stopped
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      # Loại trừ rõ ràng node_modules từ mount để tránh xung đột
     depends_on:
       - backend
     networks:
       - app-network
-    # Để Next.js, Vite, hoặc các dev server khác nhận connections từ bên ngoài container
     environment:
       - HOST=0.0.0.0
-      # Thêm biến môi trường cho Vite
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
-      - NODE_ENV=production
+      - NODE_ENV=development
 
   mongodb:
     image: mongo:6.0
     ports:
       - "27017:27017"
+    restart: unless-stopped
     volumes:
       - mongodb_data:/data/db
     networks:

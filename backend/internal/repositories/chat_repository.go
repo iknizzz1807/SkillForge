@@ -19,10 +19,24 @@ type ChatRepository struct {
 }
 
 func NewChatRepository(db *mongo.Database) *ChatRepository {
+	messageCollection := db.Collection("messages")
+	groupCollection := db.Collection("groups")
+	projectStudentCollection := db.Collection("project_student")
+
+	_, _ = messageCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "group_id", Value: 1}},
+	})
+	_, _ = groupCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "project_id", Value: 1}},
+	})
+	_, _ = projectStudentCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "student_id", Value: 1}},
+	})
+
 	return &ChatRepository{
-		MessageCollection:        db.Collection("messages"),
-		GroupCollection:          db.Collection("groups"),
-		ProjectStudentCollection: db.Collection("project_student"),
+		MessageCollection:        messageCollection,
+		GroupCollection:          groupCollection,
+		ProjectStudentCollection: projectStudentCollection,
 		ProjectCollection:        db.Collection("projects"),
 		UserCollection:           db.Collection("users"),
 	}
@@ -34,29 +48,51 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
 
 	var projectStudents []models.Project_student
 	if err := cursor.All(ctx, &projectStudents); err != nil {
+		cursor.Close(ctx)
+		return nil, err
+	}
+	cursor.Close(ctx)
+
+	// Collect project IDs from project_student
+	projectIDSet := make(map[string]bool)
+	for _, ps := range projectStudents {
+		projectIDSet[ps.Project_id] = true
+	}
+
+	// Also query projects where user is the creator (business users)
+	projectCursor, err := r.ProjectCollection.Find(ctx, bson.M{"created_by_id": userID})
+	if err != nil {
 		return nil, err
 	}
 
-	// Get all group with projectID
+	var projects []models.Project
+	if err := projectCursor.All(ctx, &projects); err != nil {
+		projectCursor.Close(ctx)
+		return nil, err
+	}
+	projectCursor.Close(ctx)
+
+	for _, p := range projects {
+		projectIDSet[p.ID] = true
+	}
+
+	// Get or create group for each project ID
 	groups := []*models.Group{}
-	for _, projectStudent := range projectStudents {
-		// Find one group with projectID
+	for projectID := range projectIDSet {
 		var group models.Group
-		err := r.GroupCollection.FindOne(ctx, bson.M{"project_id": projectStudent.Project_id}).Decode(&group)
+		err := r.GroupCollection.FindOne(ctx, bson.M{"project_id": projectID}).Decode(&group)
 		if err == mongo.ErrNoDocuments {
-			// Create new group
-			// Get title
+			// Get project title
 			var project models.Project
-			err := r.ProjectCollection.FindOne(ctx, bson.M{"_id": projectStudent.Project_id}).Decode(&project)
+			err := r.ProjectCollection.FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
 			if err != nil {
 				return nil, err
 			}
-			group = *&models.Group{
-				ProjectID: projectStudent.Project_id,
+			group = models.Group{
+				ProjectID: projectID,
 				Title:     project.Title,
 				CreatedAt: time.Now(),
 			}

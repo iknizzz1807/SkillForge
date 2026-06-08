@@ -62,6 +62,10 @@ func (s *GamificationService) GetUserLevel(userID string) (*models.UserLevel, er
 	return level, nil
 }
 
+// NOTE: AddXP uses a read-modify-write pattern with $set, which has a race condition
+// under concurrent requests (e.g., two AddXP calls for the same user could overwrite
+// each other's updates). A production fix should use MongoDB $inc for XP counters
+// and handle level-up logic atomically.
 func (s *GamificationService) AddXP(userID string, xp int) (*models.UserLevel, error) {
 	ctx := context.Background()
 	level, err := s.GetUserLevel(userID)

@@ -91,7 +91,7 @@ export const load = (async ({ locals, fetch, url, parent }) => {
     email: user?.email,
     role: user?.role,
     title: title,
-    avatarUrl: `${origin}/api/avatars` || null,
+    avatarUrl: user?.id ? `${origin}/api/avatars/${user.id}` : null,
     userData,
     businessInfo,
   };

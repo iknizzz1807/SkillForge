@@ -12,11 +12,17 @@ import (
 )
 
 type InvitationService struct {
-	db *mongo.Database
+	db                  *mongo.Database
+	badgeService        *BadgeService
+	gamificationService *GamificationService
 }
 
-func NewInvitationService(db *mongo.Database) *InvitationService {
-	return &InvitationService{db}
+func NewInvitationService(db *mongo.Database, badgeService *BadgeService, gamificationService *GamificationService) *InvitationService {
+	return &InvitationService{
+		db:                  db,
+		badgeService:        badgeService,
+		gamificationService: gamificationService,
+	}
 }
 
 func (s *InvitationService) CreateInvitation(studentID, projectID, businessID string) (*models.Invitation, error) {
@@ -75,14 +81,31 @@ func (s *InvitationService) GetInvitationsByStudent(studentID string) ([]*models
 	projectRepo := repositories.NewProjectRepository(s.db)
 	userRepo := repositories.NewUserRepository(s.db)
 
+	projectIDs := make([]string, 0, len(invitations))
+	businessIDs := make([]string, 0, len(invitations))
 	for _, inv := range invitations {
-		project, err := projectRepo.FindProjectByID(context.Background(), inv.ProjectID)
-		if err == nil && project != nil {
-			inv.ProjectTitle = project.Title
+		projectIDs = append(projectIDs, inv.ProjectID)
+		businessIDs = append(businessIDs, inv.BusinessID)
+	}
+
+	projects, _ := projectRepo.FindProjectsByIDs(context.Background(), projectIDs)
+	projectMap := make(map[string]string, len(projects))
+	for _, p := range projects {
+		projectMap[p.ID] = p.Title
+	}
+
+	businesses, _ := userRepo.FindUsersByIDs(context.Background(), businessIDs)
+	businessMap := make(map[string]string, len(businesses))
+	for _, b := range businesses {
+		businessMap[b.ID] = b.Name
+	}
+
+	for _, inv := range invitations {
+		if title, ok := projectMap[inv.ProjectID]; ok {
+			inv.ProjectTitle = title
 		}
-		business, err := userRepo.FindUserByID(context.Background(), inv.BusinessID)
-		if err == nil && business != nil {
-			inv.BusinessName = business.Name
+		if name, ok := businessMap[inv.BusinessID]; ok {
+			inv.BusinessName = name
 		}
 	}
 
@@ -119,6 +142,13 @@ func (s *InvitationService) RespondToInvitation(invitationID, studentID, status 
 		projectService := NewProjectService(s.db, nil, nil, nil, nil)
 		if err := projectService.AddStudentToProject(invitation.ProjectID, studentID); err != nil {
 			return err
+		}
+
+		if s.badgeService != nil {
+			go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, invitation.ProjectID)
+		}
+		if s.gamificationService != nil {
+			go s.gamificationService.AddXP(studentID, 50)
 		}
 	}
 

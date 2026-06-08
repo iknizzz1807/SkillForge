@@ -19,29 +19,6 @@ func NewAvatarHandler(fileService *services.FileService) *AvatarHandler {
 	}
 }
 
-// ServeAvatar phục vụ file avatar tĩnh dựa trên ID
-// Được gọi bởi route GET /avatars
-func (h *AvatarHandler) ServeAvatar(c *gin.Context) {
-	userID := c.GetString("userID")
-	if userID == "" {
-		userID = c.Query("user_id")
-	}
-	if userID == "" {
-		c.String(http.StatusBadRequest, "User ID is required")
-		return
-	}
-
-	// Sử dụng service để tìm avatar, không thực hiện logic tìm file trong handler
-	avatarPath, err := h.fileService.FindAvatarByUserID(userID)
-	if err != nil {
-		c.String(http.StatusNotFound, "Avatar not found")
-		return
-	}
-
-	// Phục vụ file bằng Gin
-	c.File(avatarPath)
-}
-
 // ServeAvatarByUserID phục vụ file avatar tĩnh dựa trên user ID được truyền vào
 // Được gọi bởi route GET /avatars/:id
 func (h *AvatarHandler) ServeAvatarByUserID(c *gin.Context) {

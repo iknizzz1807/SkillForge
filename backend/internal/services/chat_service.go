@@ -50,7 +50,11 @@ func (c *ChatService) GetGroupInfo(groupID, userID string) ([]*models.Message, [
 	return Messages, Members, nil
 }
 
-func (c *ChatService) InsertMessage(ctx context.Context, userID, projectID, content, msgType, fileURL, fileName string) (*models.Message, error) {
+func (c *ChatService) CheckProjectAccess(projectID, userID string) (bool, error) {
+	return c.chatRepo.CheckProjectAccess(projectID, userID)
+}
+
+func (c *ChatService) InsertMessage(ctx context.Context, userID, projectID, content, msgType, fileURL, fileName, clientID string) (*models.Message, error) {
 	message := &models.Message{
 		ID:       utils.GenerateUUID(),
 		SenderID: userID,
@@ -59,6 +63,7 @@ func (c *ChatService) InsertMessage(ctx context.Context, userID, projectID, cont
 		Type:     msgType,
 		FileURL:  fileURL,
 		FileName: fileName,
+		ClientID: clientID,
 	}
 	return c.chatRepo.InsertMessage(message)
 }

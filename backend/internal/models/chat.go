@@ -25,6 +25,9 @@ type Message struct {
 	// FileName là tên file gốc (nếu type là "file")
 	FileName string `json:"file_name,omitempty" bson:"file_name,omitempty"`
 
+	// ClientID là ID phía client gửi lên (dùng để khớp optimistic message, không lưu DB)
+	ClientID string `json:"client_id,omitempty" bson:"-"`
+
 	// CreatedAt là thời gian gửi tin nhắn
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 }

@@ -30,8 +30,17 @@ type ProjectRepository struct {
 // Input: db (*mongo.Database)
 // Return: *ProjectRepository - con trỏ đến ProjectRepository
 func NewProjectRepository(db *mongo.Database) *ProjectRepository {
+	collection := db.Collection("projects")
+
+	indexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "created_by_id", Value: 1}}},
+		{Keys: bson.D{{Key: "status", Value: 1}}},
+		{Keys: bson.D{{Key: "skills", Value: 1}}},
+	}
+	_, _ = collection.Indexes().CreateMany(context.Background(), indexes)
+
 	return &ProjectRepository{
-		collection: db.Collection("projects"),
+		collection: collection,
 	}
 }
 

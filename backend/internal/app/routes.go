@@ -93,8 +93,8 @@ func RegisterRoutes(
 	r.Static("/storage", "./storage")
 	r.Static("/portfolios", "./storage/portfolios")
 
-	// Public avatar routes
-	r.GET("/avatars", avatarHandler.ServeAvatar)
+	// Public avatar routes (only :id variant; no-ID variant removed because it
+	// cannot resolve a user without auth middleware)
 	r.GET("/avatars/:id", avatarHandler.ServeAvatarByUserID)
 
 	// Logout - clears auth cookie (no auth needed)

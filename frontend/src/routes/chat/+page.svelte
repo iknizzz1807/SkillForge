@@ -67,8 +67,7 @@
   onMount(async () => {
     currentUserId = data?.id || "";
     currentUserName = data?.userName || "";
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    currentUserAvatar = data?.avatarUrl || `${origin}/api/avatars`;
+    currentUserAvatar = data?.avatarUrl || `${PUBLIC_API_URL}/avatars/${data?.id}`;
 
     try {
       const token = localStorage.getItem('token') || "";
@@ -194,8 +193,8 @@
 
           const fileUrl = msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "";
 
-          if (msg.sender_id === currentUserId) {
-            const optIndex = messages.findIndex(m => m.id.startsWith("opt_") && m.sender_id === msg.sender_id);
+          if (msg.sender_id === currentUserId && msg.client_id) {
+            const optIndex = messages.findIndex(m => m.id === msg.client_id);
             if (optIndex !== -1) {
               const newMessages = [...messages];
               newMessages[optIndex] = {
@@ -266,7 +265,7 @@
       };
       messages = [...messages, optMsg];
 
-      ws.send(JSON.stringify({ content: messageInput.trim(), type: "text" }));
+      ws.send(JSON.stringify({ content: messageInput.trim(), type: "text", client_id: optimisticId }));
 
       setTimeout(() => {
         const container = document.getElementById("chat-messages");
@@ -335,6 +334,7 @@
             type: "file",
             file_url: result.url,
             file_name: result.name,
+            client_id: optimisticId,
           }));
 
           setTimeout(() => {

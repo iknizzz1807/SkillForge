@@ -1,22 +1,23 @@
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ fetch, locals }) => {
-  const token = locals.token; // Get auth token from locals
+export const GET: RequestHandler = async ({ fetch, locals, url }) => {
+  const token = locals.token;
+  const userId = url.searchParams.get("user_id");
+
+  let backendUrl = `http://backend:8080/avatars`;
+  if (userId) {
+    backendUrl += `?user_id=${encodeURIComponent(userId)}`;
+  }
 
   try {
-    // Add Authorization header with token if available
     const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`http://backend:8080/avatars`, {
-      headers,
-    });
+    const response = await fetch(backendUrl, { headers });
 
     if (!response.ok) {
-      // Instead of throwing an error, serve a default avatar
-      // You can either redirect to a static asset or generate one
       return new Response(null, {
         status: 302,
         headers: {
@@ -36,7 +37,6 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
     });
   } catch (err) {
     console.error("Error fetching avatar:", err);
-    // Serve default avatar on error too
     return new Response(null, {
       status: 302,
       headers: {

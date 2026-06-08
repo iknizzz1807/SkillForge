@@ -65,7 +65,7 @@ func Run() {
 	feedbackService := services.NewFeedbackService(repositories.NewFeedbackRepository(db))
 	matchingService := services.NewMatchingService(db, aiClient)
 	chatService := services.NewChatService(repositories.NewChatRepository(db))
-	invitationService := services.NewInvitationService(db)
+	invitationService := services.NewInvitationService(db, badgeService, gamificationService)
 	// Khởi tạo Gin router
 	r := gin.Default()
 

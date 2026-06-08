@@ -51,6 +51,13 @@ func (wsh *WebSocketChatHandler) HandleConnection(c *gin.Context) {
 	}
 
 	projectID := c.Param("projectID")
+
+	hasAccess, err := wsh.chatService.CheckProjectAccess(projectID, userID)
+	if err != nil || !hasAccess {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
+
 	conn, err := wsh.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -75,6 +82,7 @@ type ChatMessage struct {
 	Type     string `json:"type"`
 	FileURL  string `json:"file_url"`
 	FileName string `json:"file_name"`
+	ClientID string `json:"client_id"`
 }
 
 func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *websocket.Conn) {
@@ -111,6 +119,7 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 			msgType,
 			PassedMessage.FileURL,
 			PassedMessage.FileName,
+			PassedMessage.ClientID,
 		)
 		if err != nil {
 			log.Printf("Error inserting message: %v", err)
@@ -128,7 +137,7 @@ func (wsh *WebSocketChatHandler) handleMessages(room, userID string, conn *webso
 		err = wsh.realtimeClient.Broadcast(room, response)
 		if err != nil {
 			log.Printf("Error sending message: %v", err)
-			break
+			continue
 		}
 	}
 }

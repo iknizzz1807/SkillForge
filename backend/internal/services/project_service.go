@@ -11,6 +11,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"context"
@@ -174,22 +175,21 @@ func (s *ProjectService) DeleteProject(projectID string, userID string) error {
 	taskRepo := repositories.NewTaskRepository(s.db)
 	err = taskRepo.DeleteTasksByProjectID(ctx, projectID)
 	if err != nil {
-		// continue
+		log.Printf("failed to delete tasks for project %s: %v", projectID, err)
 	}
 
 	// Xóa chat groups và messages
 	chatRepo := repositories.NewChatRepository(s.db)
 	err = chatRepo.DeleteGroupByProjectID(ctx, projectID)
 	if err != nil {
-		// continue
+		log.Printf("failed to delete chat data for project %s: %v", projectID, err)
 	}
 
 	// 5. Xóa tất cả quan hệ giữa project và student
 	for _, studentID := range studentIDs {
 		err := projectStudentRepo.DeleteProjectStudent(ctx, projectID, studentID)
 		if err != nil {
-			// Log error but continue
-			// utils.GetLogger().Warnf("Failed to delete project-student relation for project %s and student %s: %v", projectID, studentID, err)
+			log.Printf("failed to delete project-student relation for project %s student %s: %v", projectID, studentID, err)
 		}
 	}
 
