@@ -166,6 +166,7 @@
   });
 
   async function selectRoom(room: ChatRoom) {
+    if (chatWsReconnectTimer) clearTimeout(chatWsReconnectTimer);
     selectedRoom = room;
     await loadRoomDetails(room.id);
     connectChatWs(room.id);
@@ -188,7 +189,7 @@
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg && msg._id) {
+        if (msg && (msg._id || msg.id)) {
           const sender = teamMembers.find(m => m.id === msg.sender_id);
 
           const fileUrl = msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "";

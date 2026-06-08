@@ -194,11 +194,9 @@ func (s *UserService) GetUserProfile(userID string) (*UserProfile, error) {
 	projects := []*models.Project{}
 	if err == nil {
 		projectRepo := repositories.NewProjectRepository(s.db)
-		for _, pid := range projectIDs {
-			p, err := projectRepo.FindProjectByID(ctx, pid)
-			if err == nil && p != nil {
-				projects = append(projects, p)
-			}
+		foundProjects, err := projectRepo.FindProjectsByIDs(ctx, projectIDs)
+		if err == nil {
+			projects = foundProjects
 		}
 	}
 	if projects == nil {

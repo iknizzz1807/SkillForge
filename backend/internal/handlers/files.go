@@ -24,6 +24,9 @@ func NewAvatarHandler(fileService *services.FileService) *AvatarHandler {
 func (h *AvatarHandler) ServeAvatar(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
+		userID = c.Query("user_id")
+	}
+	if userID == "" {
 		c.String(http.StatusBadRequest, "User ID is required")
 		return
 	}

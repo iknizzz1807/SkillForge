@@ -99,7 +99,8 @@ func RegisterRoutes(
 
 	// Logout - clears auth cookie (no auth needed)
 	r.POST("/api/logout", func(c *gin.Context) {
-		c.SetCookie("auth_token", "", -1, "/", "", false, true)
+		secure := c.Request.TLS != nil
+		c.SetCookie("auth_token", "", -1, "/", "", secure, true)
 		c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 	})
 

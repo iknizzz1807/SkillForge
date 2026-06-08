@@ -83,13 +83,15 @@ func (s *PortfolioService) GeneratePortfolio(userID string) (string, error) {
 
 	var projects []PortfolioProject
 	projRepo := repositories.NewProjectRepository(s.db)
-	for _, pid := range projectIDs {
-		p, err := projRepo.FindProjectByID(ctx, pid)
-		if err == nil && p != nil {
-			projects = append(projects, PortfolioProject{
-				Name:        p.Title,
-				Description: p.Description,
-			})
+	foundProjects, err := projRepo.FindProjectsByIDs(ctx, projectIDs)
+	if err == nil {
+		for _, p := range foundProjects {
+			if p != nil {
+				projects = append(projects, PortfolioProject{
+					Name:        p.Title,
+					Description: p.Description,
+				})
+			}
 		}
 	}
 

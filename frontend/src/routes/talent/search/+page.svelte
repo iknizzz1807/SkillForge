@@ -179,7 +179,7 @@
         Previous
       </button>
       <span class="text-sm text-gray-600">Page {page}</span>
-      <button onclick={nextPage} class="btn-secondary text-sm px-3 py-1">
+      <button onclick={nextPage} disabled={page >= totalPages} class="btn-secondary text-sm px-3 py-1" class:opacity-50={page >= totalPages}>
         Next
       </button>
     </div>

@@ -44,7 +44,7 @@ export const load = (async (event) => {
           userName: user.name,
           title: user.title, // Include title from backend
           // Keep using the SvelteKit API endpoint for avatar
-          avatarUrl: `${origin}/avatars`,
+          avatarUrl: `${origin}/api/avatars/${user.id}`,
         };
       }
     } catch (error) {
