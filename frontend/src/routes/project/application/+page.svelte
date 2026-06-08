@@ -3,7 +3,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const role = data.role;
+  let role = $derived(data.role);
 
   // Update Application type to match backend model
   type Application = {
@@ -24,10 +24,10 @@
   };
 
   // Initialize applications with data from server
-  let applications: Application[] = $state(data.applications || []);
+  let applications: Application[] = $state((() => data.applications ?? [])());
 
   // Add any error message from the server
-  let errorMessage = $state(data.error || null);
+  let errorMessage = $state((() => data.error ?? null)());
 
   // Filter applications
   let filterStatus: "all" | "pending" | "approved" | "rejected" = $state("all");
@@ -151,8 +151,8 @@
 
 <header class="flex justify-between items-center mb-6 ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center">
-    <a href="/project">
-      <button class="text-gray-500 hover:text-gray-700 mr-3">
+    <a href="/project" aria-label="Back to projects">
+      <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">
         <svg
           class="w-5 h-5"
           fill="none"
@@ -458,6 +458,7 @@
               {/if}
 
               <button
+                aria-label="View application details"
                 class="ml-2 p-2 text-gray-400 hover:text-[#6b48ff] hover:bg-gray-100 rounded-full"
                 onclick={() => openApplicationDetails(app)}
               >
@@ -522,6 +523,7 @@
           <button
             class="text-gray-400 hover:text-gray-600"
             onclick={closeModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -724,6 +726,7 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

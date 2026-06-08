@@ -385,6 +385,7 @@
           <!-- Notification Icon -->
           <div class="relative" bind:this={notificationContainer}>
             <button
+              aria-label="Notifications"
               class="p-1 rounded-full hover:bg-[#896DFF] focus:outline-none"
               onclick={toggleNotificationMenu}
             >
@@ -410,6 +411,7 @@
 
           <!-- Logout Icon -->
           <button
+            aria-label="Logout"
             onclick={logout}
             class="p-1 rounded-full hover:bg-[#896DFF] focus:outline-none"
           >
@@ -447,6 +449,7 @@
         >
           <h2 class="text-xl font-semibold text-gray-800">All Notifications</h2>
           <button
+            aria-label="Close notifications"
             class="text-gray-500 hover:text-gray-700"
             onclick={closeAllNotificationsModal}
           >

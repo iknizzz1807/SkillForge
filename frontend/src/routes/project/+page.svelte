@@ -20,14 +20,14 @@
     created_at: string;
   };
 
-  const token = data.token;
-  const user_id = data.id;
+  let token = $derived(data.token);
+  let user_id = $derived(data.id);
 
-  let projectsDisplay: ProjectDisplay[] = $state(data.projects);
-  const applicationCount: number = data.applicationCount;
-  let errorLoadingProjects: string | null = $state(data.error);
+  let projectsDisplay: ProjectDisplay[] = $state((() => data.projects)());
+  let applicationCount: number = $derived(data.applicationCount);
+  let errorLoadingProjects: string | null = $state((() => data.error)());
 
-  let projectsDisplayCopy = projectsDisplay;
+  let projectsDisplayCopy = $derived(projectsDisplay);
 
   let filterState: string = $state("all");
 
@@ -1923,6 +1923,7 @@
               class="group-hover:opacity-100 transition-opacity flex space-x-2"
             >
               <button
+                aria-label="Edit project"
                 class="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
                 onclick={() => openEditModal(ProjectDisplay)}
               >
@@ -1944,6 +1945,7 @@
 
               <!-- Nút mới - Quản lý ứng viên -->
               <button
+                aria-label="Manage applicants"
                 class="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
                 onclick={(e) => {
                   e.preventDefault(); // Ngăn chặn chuyển hướng từ thẻ a
@@ -1967,6 +1969,7 @@
               </button>
 
               <button
+                aria-label="Delete project"
                 class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
                 onclick={() => {
                   openDeleteModal(ProjectDisplay);
@@ -1993,6 +1996,7 @@
               class="group-hover:opacity-100 transition-opacity flex space-x-2"
             >
               <button
+                aria-label="View applicants"
                 class="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
                 onclick={(e) => {
                   e.preventDefault(); // Ngăn chặn chuyển hướng từ thẻ a
@@ -2015,6 +2019,7 @@
                 </svg>
               </button>
               <button
+                aria-label="Leave project"
                 class="p-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200"
                 onclick={(e) => {
                   e.preventDefault();
@@ -2159,6 +2164,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeApplicantsModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -2299,6 +2305,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeEditModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -2377,6 +2384,9 @@
                 <div
                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm cursor-pointer"
                   onclick={() => (showSkillsDropdown = !showSkillsDropdown)}
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => e.key === 'Enter' && (showSkillsDropdown = !showSkillsDropdown)}
                 >
                   {#if editSkills.length === 0}
                     <span class="text-gray-500">Select skills...</span>
@@ -2451,6 +2461,7 @@
                     >
                       {skill}
                       <button
+                        aria-label={"Remove " + skill}
                         type="button"
                         class="ml-1"
                         onclick={() => removeSkill(skill)}
@@ -2741,9 +2752,4 @@
 </main>
 
 <style>
-  [contenteditable]:empty:before {
-    content: attr(placeholder);
-    color: #9ca3af;
-    display: block;
-  }
 </style>

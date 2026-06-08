@@ -1,17 +1,9 @@
-import type { Cookies } from "@sveltejs/kit";
-import type { RequestHandler } from "../$types";
 import { redirect } from "@sveltejs/kit";
 
-// logout handler
-export const POST: RequestHandler = async ({
-  cookies,
-}: {
-  cookies: Cookies;
-}) => {
-  // Fix this shit pleaseeeeeeeeee
+export const POST = async ({ cookies, url }) => {
   const domainProduction = "skillforge.ikniz.site";
   const domainDevelopment = "localhost";
-  // Clear the authentication token
+
   cookies.delete("auth_token", {
     path: "/",
     domain: domainProduction || "",
@@ -36,11 +28,8 @@ export const POST: RequestHandler = async ({
     path: "/",
     domain: domainDevelopment || "",
   });
-  // Get the redirectTo parameter if it exists (optional)
-  // const redirectTo = url.searchParams.get("redirectTo") || "/login";
-  const redirectTo = "/login";
 
-  // Redirect to login page
+  const redirectTo = url.searchParams.get("redirectTo") || "/login";
+
   throw redirect(303, redirectTo);
-  // return new Response();
 };

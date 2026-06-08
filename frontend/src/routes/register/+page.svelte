@@ -173,6 +173,7 @@
                 </div>
               {/if}
               <label
+                aria-label="Upload avatar"
                 class="absolute bottom-0 right-0 bg-[#6b48ff] text-white rounded-full p-1 cursor-pointer hover:bg-[#5a3bd7] shadow-md"
               >
                 <svg
@@ -246,12 +247,13 @@
 
         <!-- Account Type - Already has red asterisk -->
         <div>
-          <label class="block text-sm font-medium mb-1"
+          <label class="block text-sm font-medium mb-1" for="role-student"
             >Account Type <span class="text-red-500">*</span></label
           >
           <div class="grid grid-cols-2 gap-3">
             <label class="role-option">
               <input
+                id="role-student"
                 type="radio"
                 name="role"
                 value="student"

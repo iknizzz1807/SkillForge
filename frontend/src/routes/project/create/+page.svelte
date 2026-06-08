@@ -1329,8 +1329,8 @@
 
 <main class="flex-1 pr-4 pl-4 ml-64 pt-4">
   <div class="flex items-center mb-6">
-    <a href="/project">
-      <button class="text-gray-500 hover:text-gray-700 mr-3">
+    <a href="/project" aria-label="Back to projects">
+      <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">
         <svg
           class="w-5 h-5"
           fill="none"
@@ -1629,6 +1629,7 @@
                 >
                   {skill}
                   <button
+                    aria-label={"Remove " + skill}
                     type="button"
                     class="ml-1"
                     onclick={() => removeSkill(skill)}
@@ -1704,12 +1705,12 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <span class="block text-sm font-medium text-gray-700 mb-1">
               Project Timeline<span class="text-[#ff6f61]">*</span>
-            </label>
+            </span>
             <div class="grid grid-cols-2 gap-4">
               <div class="relative">
-                <label class="text-xs text-gray-500 block mb-1" for="start-date"
+                <label class="text-xs text-gray-500 block mb-1" for="start-time"
                   >Start Date</label
                 >
                 <div class="relative">
@@ -1785,8 +1786,8 @@
 
           <!-- External Links -->
           <div>
-            <label class="block text-sm font-medium mb-1" for=""
-              >External References (Optional)</label
+            <span class="block text-sm font-medium mb-1"
+              >External References (Optional)</span
             >
             <div class="space-y-3">
               <div class="flex space-x-2">
@@ -1829,8 +1830,8 @@
 
           <!-- Files & References -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Attach Files</label
+            <span class="block text-sm font-medium text-gray-700 mb-1"
+              >Attach Files</span
             >
             <button
               type="button"
@@ -1885,7 +1886,7 @@
           <div
             class="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1"
           >
-            <button type="button" class="p-1.5 hover:bg-gray-200 rounded">
+            <button type="button" aria-label="Paste" class="p-1.5 hover:bg-gray-200 rounded">
               <svg
                 class="w-4 h-4 text-gray-700"
                 fill="currentColor"
@@ -1911,7 +1912,7 @@
               class="p-1.5 hover:bg-gray-200 rounded underline">U</button
             >
             <span class="border-r border-gray-300 h-6 mx-1"></span>
-            <button type="button" class="p-1.5 hover:bg-gray-200 rounded">
+            <button type="button" aria-label="Bullet list" class="p-1.5 hover:bg-gray-200 rounded">
               <svg
                 class="w-4 h-4 text-gray-700"
                 fill="currentColor"
@@ -2136,9 +2137,4 @@
 </main>
 
 <style>
-  [contenteditable]:empty:before {
-    content: attr(placeholder);
-    color: #9ca3af;
-    display: block;
-  }
 </style>

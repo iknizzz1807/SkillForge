@@ -223,11 +223,11 @@
         </div>
       {:else}
         <div class="mb-4">
-          <label class="block text-sm font-medium mb-1">Select Project</label>
+          <label class="block text-sm font-medium mb-1" for="invite-project">Select Project</label>
           {#if projects.length === 0}
             <p class="text-sm text-gray-500">No projects available. Create a project first.</p>
           {:else}
-            <select bind:value={selectedProjectId} class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none">
+            <select id="invite-project" bind:value={selectedProjectId} class="w-full p-2 border border-gray-200 rounded focus:ring-2 focus:ring-[#6b48ff] focus:border-transparent outline-none">
               <option value={null} disabled>Choose a project...</option>
               {#each projects as project}
                 <option value={project.id}>{project.title}</option>

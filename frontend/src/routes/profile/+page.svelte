@@ -2,7 +2,7 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const userData = data.userData;
+  let userData = $derived(data.userData);
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
   let portfolioUrl: string | null = $state(null);
@@ -11,9 +11,9 @@
   let portfolioCopied: boolean = $state(false);
 
   // Form data state
-  let name: string = $state(data.name || "");
-  let email: string = $state(data.email || "");
-  let title: string = $state(data.title || "");
+  let name: string = $state((() => data.name ?? "")());
+  let email: string = $state((() => data.email ?? "")());
+  let title: string = $state((() => data.title ?? "")());
   let selectedFile: File | null = $state(null);
   let previewUrl: string | null = $state(null);
   let isSubmitting: boolean = $state(false);
@@ -27,14 +27,14 @@
   // States for business info
   // Consider change the default init states to empty or something to announce business that they need to update their info
   let editBusinessInfoModalOpen: boolean = $state(false);
-  let companyType: string = $state(data.businessInfo.companyType);
-  let founded: string = $state(data.businessInfo.founded);
-  let companySize: string = $state(data.businessInfo.companySize);
-  let website: string = $state(data.businessInfo.website);
-  let aboutUs: string = $state(data.businessInfo.aboutUs);
+  let companyType: string = $state((() => data.businessInfo.companyType)());
+  let founded: string = $state((() => data.businessInfo.founded)());
+  let companySize: string = $state((() => data.businessInfo.companySize)());
+  let website: string = $state((() => data.businessInfo.website)());
+  let aboutUs: string = $state((() => data.businessInfo.aboutUs)());
 
   // Toggle this to switch between student and business profiles
-  let role: string | undefined = $state(data.role);
+  let role: string | undefined = $state((() => data.role)());
   let porfolioType: string = $state("");
 
   const toggleRole = () => {
@@ -336,6 +336,7 @@
         <button
           onclick={toggleEditBusinessInfoModal}
           class="text-gray-500 hover:text-gray-700 transition-colors"
+          aria-label="Close"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -527,6 +528,7 @@
         <button
           onclick={toggleEditProfileModal}
           class="text-gray-500 hover:text-gray-700 transition-colors"
+          aria-label="Close"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -601,7 +603,7 @@
 
           <!-- In the edit profile modal form, update the profile picture section -->
           <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Profile Picture</label
+            <label class="block text-sm font-medium mb-1" for="profile-avatar">Profile Picture</label
             >
             <div class="flex items-center space-x-4">
               <img
@@ -614,6 +616,7 @@
                   Change Photo
                   <input
                     type="file"
+                    id="profile-avatar"
                     accept="image/jpeg,image/png,image/gif"
                     class="hidden"
                     onchange={handleFileChange}
@@ -1038,7 +1041,7 @@
           <div class="grid grid-cols-3 gap-2 mb-3">
             <button onclick={() => (porfolioType = "minimal")}>
               <div
-                class={`border rounded p-2 cursor-pointer hover:border-[#6b48ff] ${porfolioType === "minimal" ? "border-[#6b48ff]" : "border-gray-200"}`}
+                class={`border rounded p-2 hover:border-[#6b48ff] ${porfolioType === "minimal" ? "border-[#6b48ff]" : "border-gray-200"}`}
               >
                 <div class="bg-gray-100 h-12 mb-1 rounded"></div>
                 <p class="text-xs text-center">Minimal</p>
@@ -1047,7 +1050,7 @@
 
             <button onclick={() => (porfolioType = "modern")}>
               <div
-                class={`border rounded p-2 cursor-pointer hover:border-[#6b48ff] ${porfolioType === "modern" ? "border-[#6b48ff]" : "border-gray-200"}`}
+                class={`border rounded p-2 hover:border-[#6b48ff] ${porfolioType === "modern" ? "border-[#6b48ff]" : "border-gray-200"}`}
               >
                 <div class="bg-gray-100 h-12 mb-1 rounded"></div>
                 <p class="text-xs text-center">Modern</p>
@@ -1056,7 +1059,7 @@
 
             <button onclick={() => (porfolioType = "creative")}>
               <div
-                class={`border rounded p-2 cursor-pointer hover:border-[#6b48ff] ${porfolioType === "creative" ? "border-[#6b48ff]" : "border-gray-200"}`}
+                class={`border rounded p-2 hover:border-[#6b48ff] ${porfolioType === "creative" ? "border-[#6b48ff]" : "border-gray-200"}`}
               >
                 <div class="bg-gray-100 h-12 mb-1 rounded"></div>
                 <p class="text-xs text-center">Creative</p>
@@ -1284,8 +1287,8 @@
                   class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
                   >Completed</span
                 >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
+                <button class="text-xs text-[#6b48ff] hover:underline"
+                  >View</button
                 >
               </div>
             </div>
@@ -1304,8 +1307,8 @@
                   class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
                   >Completed</span
                 >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
+                <button class="text-xs text-[#6b48ff] hover:underline"
+                  >View</button
                 >
               </div>
             </div>
@@ -1324,15 +1327,15 @@
                   class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
                   >Completed</span
                 >
-                <a href="#" class="text-xs text-[#6b48ff] hover:underline"
-                  >View</a
+                <button class="text-xs text-[#6b48ff] hover:underline"
+                  >View</button
                 >
               </div>
             </div>
           </div>
           <div class="text-center mt-3">
-            <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-              >View All Projects</a
+            <button class="text-sm text-[#6b48ff] hover:underline"
+              >View All Projects</button
             >
           </div>
         </div>
@@ -1376,8 +1379,8 @@
                   Issued: 18/03/2025 by TechCorp
                 </p>
               </div>
-              <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-                >Download</a
+              <button class="text-sm text-[#6b48ff] hover:underline"
+                >Download</button
               >
             </div>
             <div class="flex justify-between items-center">
@@ -1387,8 +1390,8 @@
                   Issued: 10/03/2025 by SKILLFORGE
                 </p>
               </div>
-              <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-                >Download</a
+              <button class="text-sm text-[#6b48ff] hover:underline"
+                >Download</button
               >
             </div>
             <div class="flex justify-between items-center">
@@ -1398,8 +1401,8 @@
                   Issued: 05/02/2025 by MongoDB University
                 </p>
               </div>
-              <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-                >Download</a
+              <button class="text-sm text-[#6b48ff] hover:underline"
+                >Download</button
               >
             </div>
           </div>
@@ -1553,8 +1556,8 @@
             </div>
           </div>
           <div class="text-center mt-3">
-            <a href="#" class="text-sm text-[#6b48ff] hover:underline"
-              >View All Talent</a
+            <button class="text-sm text-[#6b48ff] hover:underline"
+              >View All Talent</button
             >
           </div>
         </div>
@@ -1644,15 +1647,7 @@
     justify-content: center;
     z-index: 50;
   }
-  .skill-level {
-    position: absolute;
-    right: 0;
-    top: 0;
-    font-size: 10px;
-    padding: 2px 4px;
-    border-radius: 0 4px 0 4px;
-    background-color: rgba(255, 255, 255, 0.3);
-  }
+
   .progress-bar {
     height: 8px;
     background-color: #e2e8f0;

@@ -15,10 +15,10 @@
   } from "../../../components/taskUtils";
 
   let { data }: { data: PageData } = $props();
-  const project = data.project;
-  const userId = data.id;
-  const role = data.role;
-  const token = data.token;
+  const project = $derived(data.project);
+  const userId = $derived(data.id);
+  const role = $derived(data.role);
+  const token = $derived(data.token);
 
   let socket: any;
   let tasks = $state<
@@ -231,10 +231,10 @@
   }
 
   // Calculate progress percentage
-  const progressPercentage = calculateProgress(
+  let progressPercentage = $derived(calculateProgress(
     project.start_time,
     project.end_time
-  );
+  ));
 
   // Task creation modal
   let showTaskModal = $state(false);
@@ -472,8 +472,8 @@
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-4">
-    <a href="/project">
-      <button class="text-gray-500 hover:text-gray-700 mr-3">
+    <a href="/project" aria-label="Back to projects">
+      <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">
         <svg
           class="w-5 h-5"
           fill="none"
@@ -752,14 +752,15 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Assign to:
-                      <a href="#" class="text-[#6b48ff]"
-                        >{getMemberNameById(task.assigned_to)}</a
+                      <span class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</span
                       >
                     </p>
                   </div>
                   <button
                     class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
                     onclick={() => openEditTaskModal(task)}
+                    aria-label="Edit task"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -828,14 +829,15 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Doing by:
-                      <a href="#" class="text-[#6b48ff]"
-                        >{getMemberNameById(task.assigned_to)}</a
+                      <span class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</span
                       >
                     </p>
                   </div>
                   <button
                     class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
                     onclick={() => openEditTaskModal(task)}
+                    aria-label="Edit task"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -898,14 +900,15 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Done by:
-                      <a href="#" class="text-[#6b48ff]"
-                        >{getMemberNameById(task.assigned_to)}</a
+                      <span class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</span
                       >
                     </p>
                   </div>
                   <button
                     class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
                     onclick={() => openEditTaskModal(task)}
+                    aria-label="Edit task"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -967,14 +970,15 @@
                     <p class="text-sm font-medium">{task.title}</p>
                     <p class="text-xs text-gray-500">
                       Completed by:
-                      <a href="#" class="text-[#6b48ff]"
-                        >{getMemberNameById(task.assigned_to)}</a
+                      <span class="text-[#6b48ff]"
+                        >{getMemberNameById(task.assigned_to)}</span
                       >
                     </p>
                   </div>
                   <button
                     class="text-gray-400 hover:text-gray-600 ml-2 p-1 rounded-full hover:bg-gray-100 self-center flex-shrink-0 ignore-elements"
                     onclick={() => openEditTaskModal(task)}
+                    aria-label="Edit task"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -1014,6 +1018,7 @@
             <button
               class="text-gray-500 hover:text-gray-700"
               onclick={closeActivitiesModal}
+              aria-label="Close activities"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1110,6 +1115,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeTaskModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1139,6 +1145,7 @@
                 <button
                   class="text-gray-500 hover:text-red-500"
                   onclick={() => removeTask(index)}
+                  aria-label="Remove task"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1160,9 +1167,10 @@
 
             <div class="space-y-3">
               <div>
-                <label class="block text-sm font-medium mb-1">Task Name*</label>
+                <label class="block text-sm font-medium mb-1" for="task-name-{index}">Task Name*</label>
                 <input
                   type="text"
+                  id="task-name-{index}"
                   class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   placeholder="Enter task name"
                   bind:value={task.name}
@@ -1170,10 +1178,11 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1"
+                <label class="block text-sm font-medium mb-1" for="task-desc-{index}"
                   >Description*</label
                 >
                 <textarea
+                  id="task-desc-{index}"
                   class="w-full p-2 bg-white border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   placeholder="Enter task description"
                   rows="2"
@@ -1182,8 +1191,9 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Note</label>
+                <label class="block text-sm font-medium mb-1" for="task-note-{index}">Note</label>
                 <textarea
+                  id="task-note-{index}"
                   class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   placeholder="Note if there is"
                   rows="1"
@@ -1193,10 +1203,11 @@
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-sm font-medium mb-1"
+                  <label class="block text-sm font-medium mb-1" for="task-assigned-{index}"
                     >Assigned To</label
                   >
                   <select
+                    id="task-assigned-{index}"
                     class="w-full p-2 border bg-white border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                     bind:value={task.assignedTo}
                   >
@@ -1271,6 +1282,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeTeamMembersModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1367,6 +1379,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeEditTaskModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1391,9 +1404,10 @@
           <!-- Left column -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium mb-1">Task Name*</label>
+              <label class="block text-sm font-medium mb-1" for="edit-task-name">Task Name*</label>
               <input
                 type="text"
+                id="edit-task-name"
                 class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 placeholder="Enter task name"
                 bind:value={currentEditingTask.title}
@@ -1401,8 +1415,9 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Description</label>
+              <label class="block text-sm font-medium mb-1" for="edit-task-desc">Description</label>
               <textarea
+                id="edit-task-desc"
                 class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 placeholder="Enter task description"
                 rows="6"
@@ -1414,8 +1429,9 @@
           <!-- Right column -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium mb-1">Note</label>
+              <label class="block text-sm font-medium mb-1" for="edit-task-note">Note</label>
               <textarea
+                id="edit-task-note"
                 class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 placeholder="Additional notes"
                 rows="3"
@@ -1424,8 +1440,9 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Status</label>
+              <label class="block text-sm font-medium mb-1" for="edit-task-status">Status</label>
               <select
+                id="edit-task-status"
                 class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                 bind:value={currentEditingTask.status}
               >
@@ -1437,9 +1454,10 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Assigned To</label>
+              <label class="block text-sm font-medium mb-1" for="edit-task-assigned">Assigned To</label>
               <div class="relative">
                 <select
+                  id="edit-task-assigned"
                   class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff] appearance-none"
                   bind:value={currentEditingTask.assigned_to}
                 >
@@ -1516,6 +1534,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeCompleteProjectModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1625,6 +1644,7 @@
           <button
             class="text-gray-500 hover:text-gray-700"
             onclick={closeRatingModal}
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1664,8 +1684,8 @@
               </div>
 
               <div class="mb-3">
-                <label class="block text-sm font-medium mb-2"
-                  >Rate (1-5 stars):</label
+                <p class="block text-sm font-medium mb-2"
+                  >Rate (1-5 stars):</p
                 >
                 <div class="flex space-x-2">
                   {#each Array(5) as _, starIndex}
@@ -1673,6 +1693,7 @@
                       class="text-2xl focus:outline-none"
                       onclick={() =>
                         (tempRatings[index].rating = starIndex + 1)}
+                      aria-label={"Rate " + (starIndex + 1) + " star" + (starIndex + 1 > 1 ? "s" : "")}
                     >
                       {#if starIndex < rating.rating}
                         <span class="text-yellow-400">★</span>
@@ -1685,8 +1706,9 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-2">Comment</label>
+                <label class="block text-sm font-medium mb-2" for="rating-comment-{index}">Comment</label>
                 <textarea
+                  id="rating-comment-{index}"
                   class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
                   rows="2"
                   placeholder="Your comment about this member..."
@@ -1726,43 +1748,5 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
-  .fallback-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
 
-  .bg-gray-200 .fallback-avatar {
-    color: #4b5563;
-  }
-
-  /* Rating stars styling */
-  .star-rating {
-    display: flex;
-    align-items: center;
-  }
-
-  .star-rating button {
-    background-color: transparent;
-    border: none;
-    outline: none;
-    cursor: pointer;
-  }
-
-  .star-rating button:hover ~ button span,
-  .star-rating button:hover span {
-    color: #fcd34d;
-  }
-
-  .star-rating .filled {
-    color: #fcd34d;
-  }
-
-  .star-rating .empty {
-    color: #d1d5db;
-  }
 </style>

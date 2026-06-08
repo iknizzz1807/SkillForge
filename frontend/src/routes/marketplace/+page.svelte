@@ -20,13 +20,17 @@
   }
 
   // Đảm bảo skills là mảng
-  let projectsDisplay = $state<Project[]>(
-    data.projects.map((project: any) => ({
+  let projectsDisplay: Project[] = $derived(
+    (data.projects || []).map((project: any) => ({
       ...project,
+      id: project.id || "",
+      title: project.title || "",
+      description: project.description || "",
       skills:
         typeof project.skills === "string"
           ? (project.skills as string).split(",").map((s) => s.trim())
           : project.skills || [],
+      match_score: project.match_score ?? 0,
     }))
   );
 
@@ -38,17 +42,16 @@
       const response = await fetch("/api/projects/matching");
       if (response.ok) {
         projectsSuggest = await response.json();
-        projectsSuggest = projectsSuggest.map((project) => ({
+        projectsSuggest = projectsSuggest.map((project: any) => ({
           ...project,
-          // Standardize field names
-          id: project.ProjectID || project.project_id,
-          title: project.ProjectTitle || project.project_title,
+          id: project.ProjectID || project.project_id || "",
+          title: project.ProjectTitle || project.project_title || "",
           skills: project.ProjectSkills || project.project_skills || [],
-          start_time: project.StartTime || project.start_time,
-          end_time: project.EndTime || project.end_time,
-          created_by_name: project.CreatorName || project.creator_name,
-          match_score: project.match_score,
-        }));
+          start_time: project.StartTime || project.start_time || "",
+          end_time: project.EndTime || project.end_time || "",
+          created_by_name: project.CreatorName || project.creator_name || "",
+          match_score: project.match_score ?? 0,
+        })) as Project[];
       }
     } catch (err) {
       console.log(err);
@@ -825,7 +828,7 @@
   let selectedSkills = $state<string[]>([]);
   let isSkillDropdownOpen = $state(false);
   let skillSearchTerm = $state("");
-  let filteredProjects = $state([...projectsDisplay]);
+  let filteredProjects: Project[] = $state([]);
 
   // Danh sách các mức độ khó
   const difficulties = ["All Levels", "Beginner", "Intermediate", "Expert"];
@@ -913,10 +916,11 @@
       <div class="space-y-3">
         <!-- Search Projects -->
         <div>
-          <label class="block text-sm font-medium mb-1">Search Projects</label>
+          <label class="block text-sm font-medium mb-1" for="search-projects">Search Projects</label>
           <div class="flex items-center space-x-2">
             <input
               type="text"
+              id="search-projects"
               bind:value={searchQuery}
               class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
               placeholder="Search by name or description..."
@@ -926,8 +930,9 @@
 
         <!-- Difficulty -->
         <div>
-          <label class="block text-sm font-medium mb-1">Difficulty</label>
+          <label class="block text-sm font-medium mb-1" for="difficulty-select">Difficulty</label>
           <select
+            id="difficulty-select"
             bind:value={selectedDifficulty}
             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#6b48ff]"
           >
@@ -939,11 +944,15 @@
 
         <!-- Skills with dropdown -->
         <div class="relative">
-          <label class="block text-sm font-medium mb-1">Skills</label>
+          <label class="block text-sm font-medium mb-1" for="skills-trigger">Skills</label>
           <div class="relative">
             <div
+              id="skills-trigger"
               class="p-2 border border-gray-300 rounded flex flex-wrap gap-1 min-h-[42px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#6b48ff] skills-button"
+              role="button"
+              tabindex="0"
               onclick={() => (isSkillDropdownOpen = !isSkillDropdownOpen)}
+              onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isSkillDropdownOpen = !isSkillDropdownOpen; } }}
             >
               {#if selectedSkills.length > 0}
                 {#each selectedSkills as skill}
@@ -951,7 +960,7 @@
                     class="bg-[#6b48ff] text-white px-2 py-0.5 text-xs rounded-full flex items-center"
                   >
                     {skill}
-                    <button class="ml-1" onclick={() => toggleSkill(skill)}>
+                    <button class="ml-1" aria-label={"Remove " + skill} onclick={() => toggleSkill(skill)}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="h-3 w-3"
@@ -1085,7 +1094,7 @@
                       />
                     </svg>
                     <span class="font-bold"
-                      >{Math.round(project.match_score)}%</span
+                      >{Math.round(project.match_score ?? 0)}%</span
                     >
                     <span class="ml-1">skill match</span>
                   </span>
@@ -1284,7 +1293,7 @@
                     />
                   </svg>
                   <span>
-                    By <span role="link" tabindex="0" class="text-[#6b48ff]"
+                    By <span class="text-[#6b48ff]"
                       >{project.created_by_name}</span
                     >
                   </span>

@@ -3,15 +3,15 @@
 
   let { data }: { data: PageData } = $props();
 
-  const role: string | null | undefined = data.role;
+  let role: string | null | undefined = $derived(data.role);
 
   // const token = data.token;
 
-  const project = data.project;
+  let project = $derived(data.project);
   // Biến hasJoined và hasApplied là để dùng khi role là student, nếu đã joined hoặc apply thì sẽ không hiện form
   // apply project nữa mà sẽ điều chỉnh UI sao cho hợp lý để thông báo rằng họ đã apply hoặc joined dự án này
-  let hasJoined: boolean = $state(data.hasJoined);
-  let hasApplied: boolean = $state(data.hasApplied);
+  let hasJoined: boolean = $derived(data.hasJoined);
+  let hasApplied: boolean = $state((() => data.hasApplied)());
 
   let motivationInput: string = $state("");
   let proposalInput: string = $state("");
@@ -104,8 +104,8 @@
 
 <header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-4">
-    <a href="/marketplace">
-      <button class="text-gray-500 hover:text-gray-700 mr-3">
+    <a href="/marketplace" aria-label="Back to marketplace">
+      <button aria-label="Back to marketplace" class="text-gray-500 hover:text-gray-700 mr-3">
         <svg
           class="w-5 h-5"
           fill="none"
