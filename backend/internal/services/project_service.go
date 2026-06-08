@@ -32,13 +32,17 @@ type ProjectService struct {
 	notificationService *NotificationService
 	// aiClient để gọi API AI
 	aiClient *integrations.AIClient
+	// badgeService để trao thưởng badge
+	badgeService *BadgeService
+	// gamificationService để xử lý XP/Level
+	gamificationService *GamificationService
 }
 
 // NewProjectService khởi tạo ProjectService với các dependency
 // Input: db (*mongo.Database), notificationService (*NotificationService), aiClient (*integrations.AIClient)
 // Return: *ProjectService - con trỏ đến ProjectService
-func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient) *ProjectService {
-	return &ProjectService{db, notificationService, aiClient}
+func NewProjectService(db *mongo.Database, notificationService *NotificationService, aiClient *integrations.AIClient, badgeService *BadgeService, gamificationService *GamificationService) *ProjectService {
+	return &ProjectService{db, notificationService, aiClient, badgeService, gamificationService}
 }
 
 // GetAllProjects lấy danh sách tất cả dự án
@@ -243,6 +247,8 @@ func (s *ProjectService) UpdateProject(
 		return nil, err
 	}
 
+	oldStatus := project.Status
+
 	// Chỉ cập nhật các trường được cung cấp (không null/zero)
 	if title != "" {
 		project.Title = title
@@ -280,6 +286,23 @@ func (s *ProjectService) UpdateProject(
 		return nil, err
 	}
 
+	// Nếu project vừa được đóng (hoàn thành), trao badge và XP cho tất cả student
+	if oldStatus == "open" && status == "close" {
+		ctx := context.Background()
+		projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+		studentIDs, err := projectStudentRepo.FindStudentsByProjectID(ctx, projectID)
+		if err == nil {
+			for _, studentID := range studentIDs {
+				if s.badgeService != nil {
+					go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, projectID)
+				}
+				if s.gamificationService != nil {
+					go s.gamificationService.AddXP(studentID, 100)
+				}
+			}
+		}
+	}
+
 	return updated, nil
 }
 
@@ -306,19 +329,9 @@ func (s *ProjectService) GetProjectsByStudentID(studentID string) ([]*models.Pro
 		return []*models.Project{}, nil
 	}
 
-	// Lấy thông tin chi tiết từng project
+	// Lấy thông tin chi tiết các projects (batch query)
 	projectRepo := repositories.NewProjectRepository(s.db)
-	var projects []*models.Project
-
-	for _, projectID := range projectIDs {
-		project, err := projectRepo.FindProjectByID(ctx, projectID)
-		if err == nil && project != nil {
-			projects = append(projects, project)
-		}
-	}
-
-	// Trả về danh sách project
-	return projects, nil
+	return projectRepo.FindProjectsByIDs(ctx, projectIDs)
 }
 
 // GetProjectsByBusinessID lấy danh sách tất cả dự án được tạo bởi business
@@ -346,18 +359,8 @@ func (s *ProjectService) GetProjectsByBusinessID(businessID string) ([]*models.P
 		return []*models.Project{}, nil
 	}
 
-	// Lấy thông tin chi tiết từng project
-	var projects []*models.Project
-
-	for _, projectID := range projectIDs {
-		project, err := projectRepo.FindProjectByID(ctx, projectID)
-		if err == nil && project != nil {
-			projects = append(projects, project)
-		}
-	}
-
-	// Trả về danh sách project
-	return projects, nil
+	// Lấy thông tin chi tiết các projects (batch query)
+	return projectRepo.FindProjectsByIDs(ctx, projectIDs)
 }
 
 // AddStudentToProject thêm student vào project
@@ -398,7 +401,20 @@ func (s *ProjectService) AddStudentToProject(projectID, studentID string) error 
 	}
 
 	// Cập nhật số lượng thành viên
-	return s.UpdateProjectMemberCount(projectID)
+	err = s.UpdateProjectMemberCount(projectID)
+	if err != nil {
+		return err
+	}
+
+	// Trao badge và XP cho student khi tham gia project
+	if s.badgeService != nil {
+		go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, projectID)
+	}
+	if s.gamificationService != nil {
+		go s.gamificationService.AddXP(studentID, 50)
+	}
+
+	return nil
 }
 
 // RemoveStudentFromProject xóa student khỏi project

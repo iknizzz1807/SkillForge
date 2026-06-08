@@ -19,8 +19,6 @@ import (
 )
 
 const (
-	// defaultJWTSecret là giá trị mặc định nếu không có biến môi trường
-	defaultJWTSecret = "skillforge-secret-key"
 	defaultJWTExpiry = 24 // hours
 )
 
@@ -33,11 +31,8 @@ var (
 func initJWT() {
 	cfg := config.Load()
 	secret := cfg.JWTSecret
-	if secret == "" || secret == defaultJWTSecret {
-		log.Println("WARNING: JWT_SECRET is empty or using default value. This is insecure for production!")
-	}
 	if secret == "" {
-		secret = defaultJWTSecret
+		log.Fatal("JWT_SECRET is not set. Generate a strong secret: openssl rand -base64 32")
 	}
 	jwtSecret = secret
 

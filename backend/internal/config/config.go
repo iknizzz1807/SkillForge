@@ -56,7 +56,7 @@ func Load() *Env {
 		},
 
 		// JWT config
-		JWTSecret:      getEnv("JWT_SECRET", "skillforge-secret-key"),
+		JWTSecret:      getEnv("JWT_SECRET", ""),
 		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", "24"),
 	}
 }

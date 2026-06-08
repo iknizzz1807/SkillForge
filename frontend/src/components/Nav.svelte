@@ -167,28 +167,22 @@
   // Logout client side
   const logout = async () => {
     try {
-      // 1. Gọi API server để xóa session nếu cần
+      // Gọi API server để xóa httpOnly cookie (server-side)
       await fetch("/api/logout", {
         method: "POST",
-        credentials: "include", // Gửi kèm cookie
+        credentials: "include",
       });
 
-      // 2. Xóa cookie ở client (vì cookie có httpOnly: false nên có thể xóa ở client)
+      // Xóa dữ liệu lưu trữ cục bộ
       if (browser) {
-        // Xóa cookie với cùng các thuộc tính khi set
-        document.cookie =
-          "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-        // Xóa dữ liệu lưu trữ cục bộ
         localStorage.removeItem("user");
         sessionStorage.clear();
       }
 
-      // 3. Redirect về trang login
+      // Redirect về trang login
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout failed:", error);
-      // Vẫn cố gắng redirect nếu có lỗi
       window.location.href = "/login";
     }
   };

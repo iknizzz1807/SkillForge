@@ -151,7 +151,7 @@ func (h *UserHandler) GetAllStudents(c *gin.Context) {
 		limit = 12
 	}
 
-	students, err := h.userService.GetAllStudents(page, limit, skill)
+	students, total, err := h.userService.GetAllStudents(page, limit, skill)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -159,7 +159,10 @@ func (h *UserHandler) GetAllStudents(c *gin.Context) {
 	if students == nil {
 		students = []*models.User{}
 	}
-	c.JSON(http.StatusOK, students)
+	c.JSON(http.StatusOK, gin.H{
+		"students": students,
+		"total":    total,
+	})
 }
 
 func (h *UserHandler) GetUserProfile(c *gin.Context) {

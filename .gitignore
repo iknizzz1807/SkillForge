@@ -337,3 +337,6 @@ pyrightconfig.json
 
 # Go compiled binary
 backend/main
+
+# Backend storage directory
+backend/storage/

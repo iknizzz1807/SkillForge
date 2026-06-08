@@ -25,13 +25,15 @@ type TaskService struct {
 	db *mongo.Database
 	// notificationService để gửi thông báo
 	notificationService *NotificationService
+	// gamificationService để xử lý XP/Level
+	gamificationService *GamificationService
 }
 
 // NewTaskService khởi tạo TaskService với dependency
 // Input: db (*mongo.Database), notificationService (*NotificationService)
 // Return: *TaskService - con trỏ đến TaskService
-func NewTaskService(db *mongo.Database, notificationService *NotificationService) *TaskService {
-	return &TaskService{db, notificationService}
+func NewTaskService(db *mongo.Database, notificationService *NotificationService, gamificationService *GamificationService) *TaskService {
+	return &TaskService{db, notificationService, gamificationService}
 }
 
 // GetTaskByID lấy chi tiết task
@@ -121,6 +123,8 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 		return nil, errors.New("task not found")
 	}
 
+	oldStatus := task.Status
+
 	if task.Status != taskUpdate.Status {
 		s.InsertActivity("Move", userID, task.ProjectID, task.Title, task.Status, taskUpdate.Status)
 	}
@@ -153,6 +157,13 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 	err = taskRepo.UpdateTask(context.Background(), task)
 	if err != nil {
 		return nil, err
+	}
+
+	// Nếu task vừa được đánh dấu hoàn thành, trao XP cho người được gán
+	if oldStatus != "done" && task.Status == "done" && task.Assigned_to != "" {
+		if s.gamificationService != nil {
+			go s.gamificationService.AddXP(task.Assigned_to, 10)
+		}
 	}
 
 	// Trả về task đã cập nhật

@@ -93,12 +93,11 @@
   }
 
   $effect(() => {
-    if (form?.success) {
+    if (form && !form.error) {
       registerSuccess = true;
-      // Wait 1.5s then redirect
       setTimeout(() => {
-        goto("/login");
-      }, 1500);
+        registerSuccess = false;
+      }, 2000);
     }
   });
 </script>
@@ -386,11 +385,11 @@
           />
         </div>
 
-        {#if form?.error && !form.success}
+        {#if form?.error}
           <div class="text-red-400 text-sm">{form.message}</div>
         {/if}
 
-        {#if form?.success}
+        {#if registerSuccess}
           <div class="text-green-400 text-sm">
             Registration successful, redirecting you to Login page
           </div>

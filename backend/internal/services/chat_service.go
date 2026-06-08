@@ -31,7 +31,14 @@ func (c *ChatService) GetGroups(ctx context.Context, userID string) ([]*models.G
 	return c.chatRepo.GetGroups(ctx, userID)
 }
 
-func (c *ChatService) GetGroupInfo(groupID string) ([]*models.Message, []*models.User, error) {
+func (c *ChatService) GetGroupInfo(groupID, userID string) ([]*models.Message, []*models.User, error) {
+	hasAccess, err := c.chatRepo.CheckProjectAccess(groupID, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !hasAccess {
+		return nil, nil, errors.New("access denied")
+	}
 	Messages, err := c.chatRepo.GetGroupMessages(groupID)
 	if err != nil {
 		return nil, nil, err

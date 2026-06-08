@@ -62,6 +62,7 @@
   let currentUserId: string = $state("");
   let currentUserName: string = $state("");
   let currentUserAvatar: string = $state("");
+  let chatWsReconnectTimer: any = null;
 
   onMount(async () => {
     currentUserId = data?.id || "";
@@ -92,6 +93,7 @@
   });
 
   onDestroy(() => {
+    if (chatWsReconnectTimer) clearTimeout(chatWsReconnectTimer);
     if (ws) {
       ws.close();
     }
@@ -128,6 +130,7 @@
             ...msg,
             user_name: sender?.name || "User",
             avatar: sender?.avatar || `${PUBLIC_API_URL}/avatars/${msg.sender_id}`,
+            file_url: msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "",
             created_at: msg.created_at || new Date().toISOString(),
           };
         });
@@ -135,7 +138,7 @@
         const files: SharedFile[] = rawMessages
           .filter((m: ChatMessage) => m.type === "file" || m.file_url)
           .map((m: ChatMessage) => ({
-            url: m.file_url || "",
+            url: m.file_url ? (m.file_url.startsWith("http") ? m.file_url : `${PUBLIC_API_URL}${m.file_url}`) : "",
             name: m.file_name || "file",
             sender_id: m.sender_id,
             created_at: m.created_at,
@@ -162,9 +165,9 @@
     }
   });
 
-  function selectRoom(room: ChatRoom) {
+  async function selectRoom(room: ChatRoom) {
     selectedRoom = room;
-    loadRoomDetails(room.id);
+    await loadRoomDetails(room.id);
     connectChatWs(room.id);
     setTimeout(() => {
       const container = document.getElementById("chat-messages");
@@ -172,7 +175,7 @@
     }, 50);
   }
 
-  function connectChatWs(projectId: string) {
+  function connectChatWs(projectId: string, retryCount = 0) {
     if (ws) {
       ws.close();
     }
@@ -187,13 +190,37 @@
         const msg = JSON.parse(event.data);
         if (msg && msg._id) {
           const sender = teamMembers.find(m => m.id === msg.sender_id);
+
+          const fileUrl = msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "";
+
+          if (msg.sender_id === currentUserId) {
+            const optIndex = messages.findIndex(m => m.id.startsWith("opt_") && m.sender_id === msg.sender_id);
+            if (optIndex !== -1) {
+              const newMessages = [...messages];
+              newMessages[optIndex] = {
+                id: msg._id || msg.id,
+                content: msg.content || "",
+                sender_id: msg.sender_id,
+                group_id: msg.group_id,
+                type: msg.type || "text",
+                file_url: fileUrl,
+                file_name: msg.file_name || "",
+                created_at: msg.created_at || new Date().toISOString(),
+                user_name: sender?.name || msg.user_name || "User",
+                avatar: sender?.avatar || `${PUBLIC_API_URL}/avatars/${msg.sender_id}`,
+              };
+              messages = newMessages;
+              return;
+            }
+          }
+
           messages = [...messages, {
             id: msg._id || msg.id,
             content: msg.content || "",
             sender_id: msg.sender_id,
             group_id: msg.group_id,
             type: msg.type || "text",
-            file_url: msg.file_url || "",
+            file_url: fileUrl,
             file_name: msg.file_name || "",
             created_at: msg.created_at || new Date().toISOString(),
             user_name: sender?.name || msg.user_name || "User",
@@ -208,6 +235,17 @@
       } catch (e) {
         console.error("Error parsing message", e);
       }
+    };
+
+    ws.onclose = () => {
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+      chatWsReconnectTimer = setTimeout(() => {
+        connectChatWs(projectId, retryCount + 1);
+      }, delay);
+    };
+
+    ws.onerror = () => {
+      ws?.close();
     };
   }
 

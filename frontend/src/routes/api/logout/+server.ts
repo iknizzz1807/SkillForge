@@ -1,32 +1,11 @@
 import { redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 export const POST = async ({ cookies, url }) => {
-  const domainProduction = "skillforge.ikniz.site";
-  const domainDevelopment = "localhost";
-
   cookies.delete("auth_token", {
     path: "/",
-    domain: domainProduction || "",
-    secure: false,
-    sameSite: "lax",
-  });
-
-  cookies.delete("auth_token", {
-    path: "/",
-    secure: false,
-    sameSite: "lax",
-  });
-
-  cookies.delete("auth_token", {
-    path: "/",
-    domain: ".skillforge.ikniz.site",
-    secure: false,
-    sameSite: "lax",
-  });
-
-  cookies.delete("auth_token", {
-    path: "/",
-    domain: domainDevelopment || "",
+    secure: !dev,
+    sameSite: "strict",
   });
 
   const redirectTo = url.searchParams.get("redirectTo") || "/login";

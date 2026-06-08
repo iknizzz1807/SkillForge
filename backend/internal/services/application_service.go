@@ -274,7 +274,7 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 	// Nếu status là "approved":
 	if status == "approved" && application.Status != "approved" { // Chỉ xử lý khi chuyển sang approved
 		// Thêm student vào project (cần inject ProjectService hoặc gọi trực tiếp repo)
-			projectService := NewProjectService(s.db, s.notificationService, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
+			projectService := NewProjectService(s.db, s.notificationService, nil, nil, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
 		errAdd := projectService.AddStudentToProject(updatedApplication.ProjectID, updatedApplication.UserID)
 		if errAdd != nil {
 			// Xử lý lỗi khi thêm student vào project (quan trọng)

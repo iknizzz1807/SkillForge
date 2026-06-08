@@ -28,8 +28,9 @@
       if (skillFilter) params.set("skill", skillFilter);
       const res = await fetch(`/api/users/students?${params}`);
       if (!res.ok) throw new Error("Failed to load students");
-      students = await res.json();
-      totalPages = Math.ceil((students.length || 1) / 12);
+      const data = await res.json();
+      students = data.students;
+      totalPages = Math.ceil((data.total || 1) / 12);
     } catch (e) {
       error = e instanceof Error ? e.message : "An error occurred";
     } finally {

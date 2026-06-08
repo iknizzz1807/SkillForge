@@ -9,6 +9,8 @@ package app
 // - Là "bản đồ" của API, giúp developer dễ dàng tra cứu các route.
 
 import (
+	"net/http"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/handlers"
@@ -68,14 +70,7 @@ func RegisterRoutes(
 	websocketChatHandler := handlers.NewWebSocketChatHandler(chatService, realtimeClient)
 	invitationHandler := handlers.NewInvitationHandler(invitationService)
 
-	// Định nghĩa các route
-	// Nhóm route không cần auth
-	r.POST("/auth/register", authHandler.Register) // Tạo user mới
-	r.POST("/auth/login", authHandler.Login)       // Đăng nhập (tồn tại user)
-	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
-	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
-	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
-	// CORS - must be before auth so preflight OPTIONS requests don't get 401
+	// 1. CORS FIRST - trước mọi route để preflight OPTIONS luôn có CORS headers
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.id.vn"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -83,7 +78,18 @@ func RegisterRoutes(
 		AllowCredentials: true,
 	}))
 
-	// Public static file routes (before auth, so anyone can access)
+	// 2. Global middleware (rate limit, logging)
+	r.Use(middleware.RateLimitMiddleware())
+	r.Use(middleware.LoggingMiddleware())
+
+	// 3. Public routes (không cần auth)
+	r.POST("/auth/register", authHandler.Register)
+	r.POST("/auth/login", authHandler.Login)
+	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
+	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
+	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
+
+	// Public static file routes
 	r.Static("/storage", "./storage")
 	r.Static("/portfolios", "./storage/portfolios")
 
@@ -91,11 +97,13 @@ func RegisterRoutes(
 	r.GET("/avatars", avatarHandler.ServeAvatar)
 	r.GET("/avatars/:id", avatarHandler.ServeAvatarByUserID)
 
-	// Global middleware
-	r.Use(middleware.RateLimitMiddleware())
-	r.Use(middleware.LoggingMiddleware())
+	// Logout - clears auth cookie (no auth needed)
+	r.POST("/api/logout", func(c *gin.Context) {
+		c.SetCookie("auth_token", "", -1, "/", "", false, true)
+		c.JSON(http.StatusOK, gin.H{"message": "logged out"})
+	})
 
-	// Auth middleware - applied after CORS so preflight passes
+	// 4. Auth middleware
 	r.Use(middleware.AuthMiddleware())
 
 	// Nhóm route cần auth (dùng middleware nếu cần)

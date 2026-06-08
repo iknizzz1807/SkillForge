@@ -121,21 +121,28 @@ func (c *RealtimeClient) SendMessage(userID, message string) error {
 
 func (c *RealtimeClient) Broadcast(room string, message []byte) error {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
 
-	// Kiểm tra room tồn tại
 	if c.connections[room] == nil {
+		c.mu.RUnlock()
 		return errors.New("room not found")
 	}
 
-	// Lặp qua tất cả các kết nối trong room và gửi message
-	for _, conn := range c.connections[room] {
+	type staleConn struct {
+		room, userID string
+	}
+	var stale []staleConn
+
+	for userID, conn := range c.connections[room] {
 		err := conn.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
-			// Ghi log lỗi nhưng không dừng broadcast
-			// Có thể bạn muốn xử lý lỗi này bằng cách khác?
-			continue
+			stale = append(stale, staleConn{room, userID})
 		}
 	}
+	c.mu.RUnlock()
+
+	for _, s := range stale {
+		c.RemoveConnection(s.room, s.userID)
+	}
+
 	return nil
 }

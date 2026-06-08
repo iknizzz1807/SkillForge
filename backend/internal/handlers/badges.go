@@ -62,7 +62,7 @@ func (h *BadgeHandler) GetBadge(c *gin.Context) {
 
 // GetUserBadges xử lý endpoint GET /api/users/:id/badges
 func (h *BadgeHandler) GetUserBadges(c *gin.Context) {
-	userID := c.Param("id")
+	userID := c.Param("userID")
 
 	userBadges, err := h.badgeService.GetUserBadges(userID)
 	if err != nil {

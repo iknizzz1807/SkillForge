@@ -152,7 +152,7 @@
         formData.append("avatar", selectedFile);
       }
 
-      const response = await fetch("/api/profile", {
+      const response = await fetch("/api/user", {
         method: "PUT",
         body: formData,
       });
@@ -165,10 +165,11 @@
       const result = await response.json();
 
       // Update local data
-      data.name = result.name;
-      data.email = result.email;
-      if (result.avatar_name) {
-        data.avatarUrl = "/api/avatars";
+      const updatedUser = result.user || result;
+      data.name = updatedUser.name ?? data.name;
+      data.email = updatedUser.email ?? data.email;
+      if (updatedUser.avatar_name) {
+        data.avatarUrl = `/api/avatars/${data.id}`;
       }
 
       updateSuccess = true;

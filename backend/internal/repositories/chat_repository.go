@@ -7,6 +7,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ChatRepository struct {
@@ -59,12 +60,12 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 				Title:     project.Title,
 				CreatedAt: time.Now(),
 			}
+			_, err = r.GroupCollection.InsertOne(ctx, &group)
+			if err != nil {
+				return nil, err
+			}
 		} else if err != nil {
 			return nil, err
-		}
-		group = *&models.Group{
-			ProjectID: projectStudent.Project_id,
-			Title:     group.Title,
 		}
 		groups = append(groups, &group)
 	}
@@ -75,7 +76,8 @@ func (r *ChatRepository) GetGroups(ctx context.Context, userID string) ([]*model
 func (r *ChatRepository) GetGroupMessages(groupID string) ([]*models.Message, error) {
 	// Get all messages with groupID
 	ctx := context.Background()
-	cursor, err := r.MessageCollection.Find(ctx, bson.M{"group_id": groupID})
+	findOptions := options.Find().SetSort(bson.M{"created_at": 1})
+	cursor, err := r.MessageCollection.Find(ctx, bson.M{"group_id": groupID}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +133,26 @@ func (r *ChatRepository) GetGroupMembers(groupID string) ([]*models.User, error)
 	}
 
 	return users, nil
+}
+
+func (r *ChatRepository) CheckProjectAccess(projectID, userID string) (bool, error) {
+	ctx := context.Background()
+	count, err := r.ProjectStudentCollection.CountDocuments(ctx, bson.M{"project_id": projectID, "student_id": userID})
+	if err != nil {
+		return false, err
+	}
+	if count > 0 {
+		return true, nil
+	}
+	var project models.Project
+	err = r.ProjectCollection.FindOne(ctx, bson.M{"_id": projectID, "created_by_id": userID}).Decode(&project)
+	if err == mongo.ErrNoDocuments {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *ChatRepository) InsertMessage(message *models.Message) (*models.Message, error) {

@@ -183,6 +183,14 @@ func (r *UserRepository) FindAllStudents(ctx context.Context, page, limit int, s
 	return users, nil
 }
 
+func (r *UserRepository) CountAllStudents(ctx context.Context, skill string) (int64, error) {
+	filter := bson.M{"role": "student"}
+	if skill != "" {
+		filter["skills"] = bson.M{"$regex": skill, "$options": "i"}
+	}
+	return r.collection.CountDocuments(ctx, filter)
+}
+
 func (r *UserRepository) FindUsersByIDs(ctx context.Context, userIDs []string) ([]*models.User, error) {
 	if len(userIDs) == 0 {
 		return []*models.User{}, nil

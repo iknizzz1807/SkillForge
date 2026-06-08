@@ -27,6 +27,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017/skillforge
       - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-change-this-to-a-random-secret-in-production}
 
   frontend:
     build:

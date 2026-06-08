@@ -1,8 +1,9 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 export const actions = {
-  default: async ({ request }) => {
+  default: async ({ request, cookies }) => {
     const formData = await request.formData();
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -66,9 +67,24 @@ export const actions = {
         });
       }
 
-      return { success: true };
+      const data = await response.json();
+      const { token } = data;
+
+      cookies.set("auth_token", token, {
+        path: "/",
+        httpOnly: true,
+        secure: !dev,
+        maxAge: 60 * 60 * 24,
+        sameSite: "strict",
+      });
+
+      throw redirect(303, "/dashboard");
     } catch (err) {
-      if (err instanceof Response) throw err; // Rethrow redirect
+      // Rethrow SvelteKit redirects and Response errors
+      if (err && typeof err === "object") {
+        if ("location" in err) throw err;
+        if (err instanceof Response) throw err;
+      }
 
       console.error("Registration error:", err);
       return fail(500, {

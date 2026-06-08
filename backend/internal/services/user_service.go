@@ -135,16 +135,20 @@ func (s *UserService) UpdateUserSkills(userID string, skills []string) (*models.
 	return s.GetUserByID(userID)
 }
 
-func (s *UserService) GetAllStudents(page, limit int, skill string) ([]*models.User, error) {
+func (s *UserService) GetAllStudents(page, limit int, skill string) ([]*models.User, int64, error) {
 	userRepo := repositories.NewUserRepository(s.db)
 	students, err := userRepo.FindAllStudents(context.Background(), page, limit, skill)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	total, err := userRepo.CountAllStudents(context.Background(), skill)
+	if err != nil {
+		return nil, 0, err
 	}
 	for _, student := range students {
 		student.Password = ""
 	}
-	return students, nil
+	return students, total, nil
 }
 
 type UserProfile struct {

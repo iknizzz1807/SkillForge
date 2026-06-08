@@ -21,6 +21,7 @@ type UserSkill struct {
 	ID           string    `json:"id" bson:"_id"`
 	UserID       string    `json:"user_id" bson:"user_id"`
 	Skill        string    `json:"skill" bson:"skill"`
+	Level        int       `json:"level" bson:"level"`
 	PointNeeded  int       `json:"point_needed" bson:"point_needed"`
 	PointCurrent int       `json:"point_current" bson:"point_current"`
 	CreatedAt    time.Time `json:"created_at" bson:"created_at"`

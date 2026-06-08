@@ -123,9 +123,10 @@ func (s *GamificationService) AddSkillPoint(userID string, skillName string) (*m
 	skill.PointCurrent++
 
 	// Check for skill level up
-	if skill.PointCurrent >= skill.PointNeeded {
-		skill.PointCurrent = 0
-		skill.PointNeeded = calculatePointsNeeded(skill.PointNeeded/2 + 1)
+	for skill.PointCurrent >= skill.PointNeeded {
+		skill.PointCurrent -= skill.PointNeeded
+		skill.Level++
+		skill.PointNeeded = calculatePointsNeeded(skill.Level)
 	}
 
 	err = s.repo.UpdateUserSkill(ctx, skill)

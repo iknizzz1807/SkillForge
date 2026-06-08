@@ -202,6 +202,39 @@ func (r *ProjectRepository) GetProjectIDsByCreatorID(businessID string) ([]strin
 	return projectIDs, nil
 }
 
+// FindProjectsByIDs lấy nhiều projects theo danh sách ID (batch query)
+func (r *ProjectRepository) FindProjectsByIDs(ctx context.Context, projectIDs []string) ([]*models.Project, error) {
+	if len(projectIDs) == 0 {
+		return nil, nil
+	}
+
+	var ids []interface{}
+	for _, id := range projectIDs {
+		if isValidObjectID(id) {
+			objID, _ := primitive.ObjectIDFromHex(id)
+			ids = append(ids, objID)
+		} else {
+			ids = append(ids, id)
+		}
+	}
+
+	cursor, err := r.collection.Find(ctx, bson.M{"_id": bson.M{"$in": ids}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var projects []*models.Project
+	for cursor.Next(ctx) {
+		var project models.Project
+		if err := cursor.Decode(&project); err != nil {
+			return nil, err
+		}
+		projects = append(projects, &project)
+	}
+	return projects, nil
+}
+
 // DeleteProject xóa một project từ database
 // Input: projectID (string) - ID của project cần xóa
 // Return: error - lỗi nếu có

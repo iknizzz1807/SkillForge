@@ -98,6 +98,39 @@ func (r *BadgeRepository) AwardBadgeToUser(ctx context.Context, userBadge *model
 	return err
 }
 
+// FindBadgesByIDs lấy nhiều badges theo danh sách ID (batch query)
+func (r *BadgeRepository) FindBadgesByIDs(ctx context.Context, badgeIDs []string) ([]*models.Badge, error) {
+	if len(badgeIDs) == 0 {
+		return nil, nil
+	}
+
+	var ids []interface{}
+	for _, id := range badgeIDs {
+		if isValidObjectID(id) {
+			objID, _ := primitive.ObjectIDFromHex(id)
+			ids = append(ids, objID)
+		} else {
+			ids = append(ids, id)
+		}
+	}
+
+	cursor, err := r.badgeCollection.Find(ctx, bson.M{"_id": bson.M{"$in": ids}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var badges []*models.Badge
+	for cursor.Next(ctx) {
+		var badge models.Badge
+		if err := cursor.Decode(&badge); err != nil {
+			return nil, err
+		}
+		badges = append(badges, &badge)
+	}
+	return badges, nil
+}
+
 // FindUserBadges lấy tất cả badge của một user
 func (r *BadgeRepository) FindUserBadges(ctx context.Context, userID string) ([]*models.UserBadge, error) {
 	cursor, err := r.userBadgeCollection.Find(ctx, bson.M{"user_id": userID})
@@ -107,19 +140,28 @@ func (r *BadgeRepository) FindUserBadges(ctx context.Context, userID string) ([]
 	defer cursor.Close(ctx)
 
 	var userBadges []*models.UserBadge
+	var badgeIDs []string
+	badgeIndexMap := make(map[string]int)
+
 	for cursor.Next(ctx) {
 		var userBadge models.UserBadge
 		if err := cursor.Decode(&userBadge); err != nil {
 			return nil, err
 		}
-
-		// Lấy thông tin chi tiết của badge
-		badge, err := r.FindBadgeByID(ctx, userBadge.BadgeID)
-		if err == nil {
-			userBadge.Badge = badge
-		}
-
+		badgeIDs = append(badgeIDs, userBadge.BadgeID)
+		badgeIndexMap[userBadge.BadgeID] = len(userBadges)
 		userBadges = append(userBadges, &userBadge)
+	}
+
+	if len(badgeIDs) > 0 {
+		badges, err := r.FindBadgesByIDs(ctx, badgeIDs)
+		if err == nil {
+			for _, badge := range badges {
+				if idx, ok := badgeIndexMap[badge.ID]; ok {
+					userBadges[idx].Badge = badge
+				}
+			}
+		}
 	}
 
 	return userBadges, nil

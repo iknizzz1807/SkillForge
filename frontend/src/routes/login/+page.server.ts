@@ -1,5 +1,6 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail, type Cookies, redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 export const load = (async ({ url, cookies }) => {
   // Check if user is already logged in
@@ -64,9 +65,9 @@ export const actions = {
       cookies.set("auth_token", token, {
         path: "/",
         httpOnly: true,
-        secure: false,
+        secure: !dev,
         maxAge: 60 * 60 * 24, // 1 day
-        // sameSite: "strict",
+        sameSite: "strict",
       });
 
       // Redirect to the requested page or dashboard
