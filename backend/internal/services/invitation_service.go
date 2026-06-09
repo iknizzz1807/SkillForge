@@ -50,6 +50,16 @@ func (s *InvitationService) CreateInvitation(studentID, projectID, businessID st
 		return nil, errors.New("you do not own this project")
 	}
 
+	if project.CurrentMember >= project.MaxMember {
+		return nil, errors.New("project is full")
+	}
+
+	invitationRepo := repositories.NewInvitationRepository(s.db)
+	existing, err := invitationRepo.FindByStudentAndProject(ctx, studentID, projectID)
+	if err == nil && existing != nil {
+		return nil, errors.New("invitation already sent to this student for this project")
+	}
+
 	invitation := &models.Invitation{
 		ID:         utils.GenerateUUID(),
 		ProjectID:  projectID,
@@ -59,7 +69,6 @@ func (s *InvitationService) CreateInvitation(studentID, projectID, businessID st
 		CreatedAt:  time.Now(),
 	}
 
-	invitationRepo := repositories.NewInvitationRepository(s.db)
 	if err := invitationRepo.Create(ctx, invitation); err != nil {
 		return nil, err
 	}

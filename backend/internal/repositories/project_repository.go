@@ -105,7 +105,6 @@ func (r *ProjectRepository) FindAllProjects(ctx context.Context, page, limit int
 
 	// Tạo slice để lưu danh sách project
 	var projects []*models.Project
-	// Duyệt qua cursor và decode từng document
 	for cursor.Next(ctx) {
 		var project models.Project
 		if err := cursor.Decode(&project); err != nil {
@@ -113,8 +112,10 @@ func (r *ProjectRepository) FindAllProjects(ctx context.Context, page, limit int
 		}
 		projects = append(projects, &project)
 	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
 
-	// Trả về danh sách project
 	return projects, nil
 }
 

@@ -11,22 +11,28 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/models"
 )
 
+type clientConn struct {
+	conn *websocket.Conn
+	mu   sync.Mutex
+}
+
 type RealtimeClient struct {
 	mu sync.RWMutex
 	// connections lưu trữ danh sách kết nối WebSocket theo userID
-	connections map[string]map[string]*websocket.Conn
+	connections map[string]map[string]*clientConn
 }
 
 // NewRealtimeClient khởi tạo RealtimeClient
 // Return: *RealtimeClient - con trỏ đến RealtimeClient
 func NewRealtimeClient() *RealtimeClient {
 	return &RealtimeClient{
-		connections: make(map[string]map[string]*websocket.Conn),
+		connections: make(map[string]map[string]*clientConn),
 	}
 }
 
@@ -37,13 +43,11 @@ func (c *RealtimeClient) AddConnection(room, userID string, conn *websocket.Conn
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Kiểm tra và khởi tạo map nếu chưa tồn tại
 	if c.connections[room] == nil {
-		c.connections[room] = make(map[string]*websocket.Conn)
+		c.connections[room] = make(map[string]*clientConn)
 	}
 
-	// Lưu kết nối vào map
-	c.connections[room][userID] = conn
+	c.connections[room][userID] = &clientConn{conn: conn}
 }
 
 // RemoveConnection xóa kết nối WebSocket của user
@@ -76,21 +80,21 @@ func (c *RealtimeClient) SendNotification(userID string, notifications []*models
 		return errors.New("notification room not found")
 	}
 
-	// Tìm kết nối của user
-	conn, exists := c.connections["notification"][userID]
+	cc, exists := c.connections["notification"][userID]
 	if !exists {
 		return errors.New("user not connected")
 	}
 
 	response, _ := json.Marshal(notifications)
 
-	// Gửi message qua WebSocket
-	err := conn.WriteMessage(websocket.TextMessage, []byte(response))
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+	cc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	err := cc.conn.WriteMessage(websocket.TextMessage, []byte(response))
 	if err != nil {
 		return err
 	}
 
-	// Trả về nil nếu thành công
 	return nil
 }
 
@@ -98,24 +102,23 @@ func (c *RealtimeClient) SendMessage(userID, message string) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// Kiểm tra room và userID tồn tại
 	if c.connections["message"] == nil {
 		return errors.New("message room not found")
 	}
 
-	// Tìm kết nối của user
-	conn, exists := c.connections["message"][userID]
+	cc, exists := c.connections["message"][userID]
 	if !exists {
 		return errors.New("user not connected")
 	}
 
-	// Gửi message qua WebSocket
-	err := conn.WriteMessage(websocket.TextMessage, []byte(message))
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+	cc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	err := cc.conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		return err
 	}
 
-	// Trả về nil nếu thành công
 	return nil
 }
 
@@ -132,8 +135,11 @@ func (c *RealtimeClient) Broadcast(room string, message []byte) error {
 	}
 	var stale []staleConn
 
-	for userID, conn := range c.connections[room] {
-		err := conn.WriteMessage(websocket.TextMessage, message)
+	for userID, cc := range c.connections[room] {
+		cc.mu.Lock()
+		cc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+		err := cc.conn.WriteMessage(websocket.TextMessage, message)
+		cc.mu.Unlock()
 		if err != nil {
 			stale = append(stale, staleConn{room, userID})
 		}

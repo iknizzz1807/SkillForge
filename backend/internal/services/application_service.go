@@ -161,6 +161,13 @@ func (s *ApplicationService) GetApplicationByID(applicationID string) (*models.A
 	return application, nil
 }
 
+func (s *ApplicationService) GetProjectByID(projectID string) (*models.Project, error) {
+	if projectID == "" {
+		return nil, errors.New("project ID cannot be empty")
+	}
+	return s.projectRepo.FindProjectByID(context.Background(), projectID)
+}
+
 // GetApplicationsByUserID lấy tất cả applications của một user (student)
 func (s *ApplicationService) GetApplicationsByUserID(userID string) ([]models.Application, error) {
 	if userID == "" {

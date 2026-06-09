@@ -178,7 +178,7 @@ func (h *ProjectHandler) DeleteProject(c *gin.Context) {
 	}
 
 	// Kiểm tra người dùng có phải là người tạo project
-	if project.CreatedByID != userID && c.GetString("role") != "business" {
+	if project.CreatedByID != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have permission to delete this project"})
 		return
 	}

@@ -26,28 +26,21 @@ func Load() *Env {
 		log.Println("No .env file found, using system environment variables")
 	}
 	emailPort, _ := strconv.Atoi(getEnv("EMAIL_PORT", "587"))
-	// Tạo struct Env và điền giá trị từ biến môi trường
-	return &Env{
-		// MongoDB URI để kết nối database
-		MongoURI: getEnv("MONGO_URI", "mongodb://localhost:27017"),
 
-		// Cấu hình email (SMTP)
+	cfg := &Env{
+		MongoURI: getEnv("MONGO_URI", "mongodb://localhost:27017"),
 
 		EmailHost: getEnv("EMAIL_HOST", "smtp.example.com"),
 		EmailPort: emailPort,
 		EmailUser: getEnv("EMAIL_USER", "user@example.com"),
 		EmailPass: getEnv("EMAIL_PASS", "password"),
 
-		// URL của dịch vụ AI (FastAPI)
 		AIURL: getEnv("AI_URL", "http://ai:5000"),
 
-		// Token GitHub để tích hợp API
 		GitHubToken: getEnv("GITHUB_TOKEN", ""),
 
-		// Key Stripe để xử lý thanh toán
 		StripeKey: getEnv("STRIPE_KEY", ""),
 
-		// Cấu hình AWS S3 để lưu trữ file
 		StorageConfig: StorageConfig{
 			AWSAccessKey: getEnv("AWS_ACCESS_KEY", ""),
 			AWSSecretKey: getEnv("AWS_SECRET_KEY", ""),
@@ -55,10 +48,15 @@ func Load() *Env {
 			AWSBucket:    getEnv("AWS_BUCKET", "skillforge-storage"),
 		},
 
-		// JWT config
 		JWTSecret:      getEnv("JWT_SECRET", ""),
 		JWTExpiryHours: getEnvInt("JWT_EXPIRY_HOURS", "24"),
 	}
+
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is required")
+	}
+
+	return cfg
 }
 
 // getEnv lấy giá trị biến môi trường, trả về giá trị mặc định nếu không tồn tại

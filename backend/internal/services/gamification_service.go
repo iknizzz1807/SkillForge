@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"math"
 	"time"
 
@@ -141,8 +142,8 @@ func (s *GamificationService) AddSkillPoint(userID string, skillName string) (*m
 	// If this is the first point for this skill, update user's skills array
 	if isNewSkill {
 		user, err := s.userService.GetUserByID(userID)
-		if err != nil {
-			return nil, err
+		if err != nil || user == nil {
+			return nil, errors.New("user not found")
 		}
 
 		// Add the new skill to user's skills array

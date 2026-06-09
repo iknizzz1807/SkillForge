@@ -53,8 +53,10 @@ func (r *AnalyticsRepository) GetSkillAnalyticsByUser(ctx context.Context, userI
 		}
 		skills = append(skills, skill)
 	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
 
-	// Trả về danh sách kỹ năng
 	return skills, nil
 }
 

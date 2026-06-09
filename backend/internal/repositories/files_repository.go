@@ -29,7 +29,10 @@ func (f *FileRepository) GetFileByID(fileID string) (*models.File, error) {
 	var file models.File
 	err := f.fileCollection.FindOne(context.Background(), bson.M{"_id": fileID}).Decode(&file)
 	if err != nil {
-		return nil, errors.New("file not found")
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("file not found")
+		}
+		return nil, err
 	}
 	return &file, nil
 }

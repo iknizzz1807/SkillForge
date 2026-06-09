@@ -12,8 +12,6 @@ import (
 	"errors"
 	"time"
 
-	// "errors"
-
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -102,18 +100,31 @@ func (r *UserRepository) FindUserByEmail(ctx context.Context, email string) (*mo
 // Input: ctx (context.Context), user (*models.User)
 // Return: error (nếu có lỗi)
 func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) error {
-	// Tạo filter để tìm user theo ID
 	filter := bson.M{"_id": user.ID}
-	// Tạo update payload
-	update := bson.M{"$set": user}
+	setFields := bson.M{}
+	if user.Name != "" {
+		setFields["name"] = user.Name
+	}
+	if user.Email != "" {
+		setFields["email"] = user.Email
+	}
+	if user.Title != "" {
+		setFields["title"] = user.Title
+	}
+	if user.AvatarName != "" {
+		setFields["avatar_name"] = user.AvatarName
+	}
+	if user.Role != "" {
+		setFields["role"] = user.Role
+	}
+	setFields["updated_at"] = time.Now()
 
-	// Cập nhật trong database
+	update := bson.M{"$set": setFields}
+
 	_, err := r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
-
-	// Trả về nil nếu thành công
 	return nil
 }
 

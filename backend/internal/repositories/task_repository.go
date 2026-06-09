@@ -27,8 +27,12 @@ type TaskRepository struct {
 // Input: db (*mongo.Database)
 // Return: *TaskRepository - con trỏ đến TaskRepository
 func NewTaskRepository(db *mongo.Database) *TaskRepository {
+	collection := db.Collection("tasks")
+	_, _ = collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "project_id", Value: 1}},
+	})
 	return &TaskRepository{
-		collection: db.Collection("tasks"),
+		collection:         collection,
 		activityCollection: db.Collection("activities"),
 	}
 }

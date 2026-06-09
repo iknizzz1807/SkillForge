@@ -68,6 +68,9 @@ func (r *BadgeRepository) FindAllBadges(ctx context.Context) ([]*models.Badge, e
 		}
 		badges = append(badges, &badge)
 	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
 
 	return badges, nil
 }
@@ -87,6 +90,9 @@ func (r *BadgeRepository) FindBadgesByType(ctx context.Context, badgeType string
 			return nil, err
 		}
 		badges = append(badges, &badge)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
 	}
 
 	return badges, nil
@@ -128,6 +134,9 @@ func (r *BadgeRepository) FindBadgesByIDs(ctx context.Context, badgeIDs []string
 		}
 		badges = append(badges, &badge)
 	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
 	return badges, nil
 }
 
@@ -151,6 +160,9 @@ func (r *BadgeRepository) FindUserBadges(ctx context.Context, userID string) ([]
 		badgeIDs = append(badgeIDs, userBadge.BadgeID)
 		badgeIndexMap[userBadge.BadgeID] = len(userBadges)
 		userBadges = append(userBadges, &userBadge)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
 	}
 
 	if len(badgeIDs) > 0 {

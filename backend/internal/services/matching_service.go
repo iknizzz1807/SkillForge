@@ -6,26 +6,31 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
+	"github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/repositories"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MatchingService struct {
-	db       *mongo.Database
-	aiClient *integrations.AIClient
+	db          *mongo.Database
+	aiClient    *integrations.AIClient
+	userRepo    *repositories.UserRepository
+	projectRepo *repositories.ProjectRepository
 }
 
 func NewMatchingService(db *mongo.Database, aiClient *integrations.AIClient) *MatchingService {
 	return &MatchingService{
-		db:       db,
-		aiClient: aiClient,
+		db:          db,
+		aiClient:    aiClient,
+		userRepo:    repositories.NewUserRepository(db),
+		projectRepo: repositories.NewProjectRepository(db),
 	}
 }
 
-// ProjectMatchInfo holds match score and basic project info
 type ProjectMatchInfo struct {
 	ProjectID     string    `json:"project_id"`
 	ProjectTitle  string    `json:"project_title"`
@@ -36,32 +41,52 @@ type ProjectMatchInfo struct {
 	MatchScore    float64   `json:"match_score"`
 }
 
-// GetTopMatchesForStudent retrieves the top 10 best project matches for a student
+func joinSkills(skills []string) string {
+	seen := make(map[string]struct{})
+	var unique []string
+	for _, s := range skills {
+		trimmed := strings.TrimSpace(s)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := seen[trimmed]; !ok {
+			seen[trimmed] = struct{}{}
+			unique = append(unique, trimmed)
+		}
+	}
+	return strings.Join(unique, " ")
+}
+
 func (s *MatchingService) GetScore(userID string, projectID string) (float64, error) {
-	userRepo := repositories.NewUserRepository(s.db)
-	projectRepo := repositories.NewProjectRepository(s.db)
+	user, err := s.userRepo.FindUserByID(context.Background(), userID)
+	if err != nil {
+		return 0, err
+	}
+	if user == nil {
+		return 0, fmt.Errorf("user not found")
+	}
 
-	user, err := userRepo.FindUserByID(context.Background(), userID)
+	project, err := s.projectRepo.FindProjectByID(context.Background(), projectID)
 	if err != nil {
 		return 0, err
 	}
 
-	project, err := projectRepo.FindProjectByID(context.Background(), projectID)
-	if err != nil {
-		return 0, err
+	if len(user.Skills) == 0 {
+		return 0, nil
 	}
 
-	userInfo := ""
-	for _, skill := range user.Skills {
-		userInfo += skill + " "
+	userInfo := joinSkills(user.Skills)
+	if user.Title != "" {
+		userInfo += " " + user.Title
 	}
-	userInfo += user.Title
 
-	projectInfo := ""
-	for _, skill := range project.Skills {
-		projectInfo += skill + " "
+	projectInfo := joinSkills(project.Skills)
+	if project.Title != "" {
+		projectInfo += " " + project.Title
 	}
-	projectInfo += project.Title + " " + project.Description
+	if project.Description != "" {
+		projectInfo += " " + project.Description
+	}
 
 	matchScore, err := s.aiClient.MatchSkills(userInfo, projectInfo)
 	if err != nil {
@@ -72,34 +97,41 @@ func (s *MatchingService) GetScore(userID string, projectID string) (float64, er
 	return matchScore, nil
 }
 
-func (s *MatchingService) GetScoreUserProjects(userID string) ([]float64, error) {
-	fmt.Println("GetScoreUserProjects")
-	userRepo := repositories.NewUserRepository(s.db)
-	projectRepo := repositories.NewProjectRepository(s.db)
+func (s *MatchingService) GetScoreUserProjects(userID string, projects []*models.Project) ([]float64, error) {
+	log.Printf("GetScoreUserProjects")
 
-	user, err := userRepo.FindUserByID(context.Background(), userID)
+	user, err := s.userRepo.FindUserByID(context.Background(), userID)
 	if err != nil {
 		return nil, err
 	}
-	userInfo := ""
-	for _, skill := range user.Skills {
-		userInfo += skill + " "
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
 	}
-	userInfo += user.Title
 
-	projects, err := projectRepo.FindAllProjects(context.Background(), 1, 100000)
-	if err != nil {
-		return nil, err
+	if len(user.Skills) == 0 {
+		scores := make([]float64, len(projects))
+		return scores, nil
+	}
+
+	userInfo := joinSkills(user.Skills)
+	if user.Title != "" {
+		userInfo += " " + user.Title
 	}
 
 	listProjectInfo := []string{}
 
 	for _, project := range projects {
-		projectInfo := ""
-		for _, skill := range project.Skills {
-			projectInfo += skill + " "
+		if project == nil {
+			listProjectInfo = append(listProjectInfo, "")
+			continue
 		}
-		projectInfo += project.Title + " " + project.Description
+		projectInfo := joinSkills(project.Skills)
+		if project.Title != "" {
+			projectInfo += " " + project.Title
+		}
+		if project.Description != "" {
+			projectInfo += " " + project.Description
+		}
 		listProjectInfo = append(listProjectInfo, projectInfo)
 	}
 
@@ -112,29 +144,22 @@ func (s *MatchingService) GetScoreUserProjects(userID string) ([]float64, error)
 }
 
 func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]ProjectMatchInfo, error) {
-	fmt.Println("GetTopProjectMatchesForStudent")
-	userRepo := repositories.NewUserRepository(s.db)
-	projectRepo := repositories.NewProjectRepository(s.db)
+	log.Printf("GetTopProjectMatchesForStudent")
 
-	// Lấy danh sách dự án
-	projects, err := projectRepo.FindAllProjects(context.Background(), 1, 100000)
+	projects, err := s.projectRepo.FindAllProjects(context.Background(), 1, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	// Kiểm tra số lượng project - thêm kiểm tra này
 	if len(projects) == 0 {
-		// Trả về slice rỗng nếu không có dự án
 		return []ProjectMatchInfo{}, nil
 	}
 
-	// Lấy điểm match
-	listScores, err := s.GetScoreUserProjects(userID)
+	listScores, err := s.GetScoreUserProjects(userID, projects)
 	if err != nil {
 		return nil, err
 	}
 
-	// Thêm kiểm tra độ dài của listScores và projects
 	if len(listScores) != len(projects) {
 		return nil, fmt.Errorf("mismatch between projects count (%d) and scores count (%d)",
 			len(projects), len(listScores))
@@ -143,17 +168,19 @@ func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]Proje
 	listProjects := []ProjectMatchInfo{}
 
 	for i, project := range projects {
-		// Kiểm tra index trước khi truy cập
 		if i >= len(listScores) {
 			break
 		}
 
 		matchScore := listScores[i]
 
-		creator, err := userRepo.FindUserByID(context.Background(), project.CreatedByID)
+		creator, err := s.userRepo.FindUserByID(context.Background(), project.CreatedByID)
 		if err != nil {
-			// Log lỗi nhưng không dừng toàn bộ xử lý
 			log.Printf("Error finding creator for project %s: %v", project.ID, err)
+			continue
+		}
+		if creator == nil {
+			log.Printf("Creator not found for project %s", project.ID)
 			continue
 		}
 
@@ -168,7 +195,6 @@ func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]Proje
 		})
 	}
 
-	// Sắp xếp dự án theo điểm match
 	sort.Slice(listProjects, func(i, j int) bool {
 		return listProjects[i].MatchScore > listProjects[j].MatchScore
 	})

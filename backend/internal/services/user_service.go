@@ -65,6 +65,12 @@ func (s *UserService) UpdateUser(userID, name, email, title string) (*models.Use
 		return nil, errors.New("user not found")
 	}
 
+	if name == "" {
+		return nil, errors.New("name cannot be empty")
+	}
+	if email == "" {
+		return nil, errors.New("email cannot be empty")
+	}
 	user.Name = name
 	user.Email = email
 	user.Title = title

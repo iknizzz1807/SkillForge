@@ -49,13 +49,21 @@ func (rl *rateLimiter) cleanup() {
 	}
 }
 
-func (rl *rateLimiter) allow(ip string) bool {
+func (rl *rateLimiter) key(ip, userID string) string {
+	if userID != "" {
+		return "user:" + userID
+	}
+	return "ip:" + ip
+}
+
+func (rl *rateLimiter) allow(ip, userID string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
-	v, exists := rl.visitors[ip]
+	k := rl.key(ip, userID)
+	v, exists := rl.visitors[k]
 	if !exists {
-		rl.visitors[ip] = &visitor{count: 1, lastSeen: time.Now()}
+		rl.visitors[k] = &visitor{count: 1, lastSeen: time.Now()}
 		return true
 	}
 
@@ -73,7 +81,9 @@ func (rl *rateLimiter) allow(ip string) bool {
 func RateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
-		if !limiter.allow(ip) {
+		userID, _ := c.Get("userID")
+		uid, _ := userID.(string)
+		if !limiter.allow(ip, uid) {
 			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Rate limit exceeded"})
 			c.Abort()
 			return

@@ -62,7 +62,11 @@ func Run() {
 	talentPoolService := services.NewTalentPoolService(db)
 	fileService := services.NewFileService(repositories.NewUserRepository(db))
 	businessInfoService := services.NewBusinessInfoService(repositories.NewBusinessInfoRepository(db), userService.GetUserRepository())
-	feedbackService := services.NewFeedbackService(repositories.NewFeedbackRepository(db))
+	feedbackService := services.NewFeedbackService(
+		repositories.NewFeedbackRepository(db),
+		repositories.NewProjectRepository(db),
+		repositories.NewUserRepository(db),
+	)
 	matchingService := services.NewMatchingService(db, aiClient)
 	chatService := services.NewChatService(repositories.NewChatRepository(db))
 	invitationService := services.NewInvitationService(db, badgeService, gamificationService)

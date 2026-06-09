@@ -16,9 +16,19 @@ type GamificationRepository struct {
 }
 
 func NewGamificationRepository(db *mongo.Database) *GamificationRepository {
+	levelCollection := db.Collection("user_levels")
+	skillCollection := db.Collection("user_skills")
+
+	_, _ = levelCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "user_id", Value: 1}},
+	})
+	_, _ = skillCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "skill", Value: 1}},
+	})
+
 	return &GamificationRepository{
-		levelCollection: db.Collection("user_levels"),
-		skillCollection: db.Collection("user_skills"),
+		levelCollection: levelCollection,
+		skillCollection: skillCollection,
 	}
 }
 

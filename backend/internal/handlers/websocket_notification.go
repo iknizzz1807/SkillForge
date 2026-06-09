@@ -2,15 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
-	// "fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
-
-	// "github.com/iknizzz1807/SkillForge/internal/models"
 	"github.com/iknizzz1807/SkillForge/internal/services"
 )
 
@@ -49,11 +47,23 @@ func (h *WebSocketNotificationHandler) HandleNotificationConnection(c *gin.Conte
 		return
 	}
 
+	tokenUserID := c.GetString("userID")
+	if tokenUserID == "" || tokenUserID != userID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Error upgrading to WebSocket: %v", err)
 		return
 	}
+
+	conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+		return nil
+	})
 
 	h.realtimeClient.AddConnection(room, userID, conn)
 

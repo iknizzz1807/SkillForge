@@ -12,20 +12,39 @@ import (
 
 type FeedbackService struct {
 	feedbackRepo *repositories.FeedbackRepository
+	projectRepo  *repositories.ProjectRepository
+	userRepo     *repositories.UserRepository
 }
 
-func NewFeedbackService(feedbackRepo *repositories.FeedbackRepository) *FeedbackService {
-	return &FeedbackService{feedbackRepo: feedbackRepo}
+func NewFeedbackService(feedbackRepo *repositories.FeedbackRepository, projectRepo *repositories.ProjectRepository, userRepo *repositories.UserRepository) *FeedbackService {
+	return &FeedbackService{
+		feedbackRepo: feedbackRepo,
+		projectRepo:  projectRepo,
+		userRepo:     userRepo,
+	}
 }
 
 func (s *FeedbackService) CreateFeedback(projectID, fromID, toID, feedbackType, content string, rating int) (*models.Feedback, error) {
 	if rating < 0 || rating > 5 {
 		return nil, errors.New("rating must be between 0 and 5")
 	}
-
 	if feedbackType != "business" && feedbackType != "student" {
 		return nil, errors.New("invalid feedback type")
 	}
+	if fromID == toID {
+		return nil, errors.New("cannot give feedback to yourself")
+	}
+
+	ctx := context.Background()
+	project, err := s.projectRepo.FindProjectByID(ctx, projectID)
+	if err != nil {
+		return nil, errors.New("project not found")
+	}
+	user, err := s.userRepo.FindUserByID(ctx, fromID)
+	if err != nil || user == nil {
+		return nil, errors.New("user not found")
+	}
+	_ = project // project exists
 
 	feedback := &models.Feedback{
 		ID:        utils.GenerateUUID(),
@@ -38,7 +57,7 @@ func (s *FeedbackService) CreateFeedback(projectID, fromID, toID, feedbackType, 
 		CreatedAt: time.Now(),
 	}
 
-	err := s.feedbackRepo.CreateFeedback(context.Background(), feedback)
+	err = s.feedbackRepo.CreateFeedback(context.Background(), feedback)
 	if err != nil {
 		return nil, err
 	}

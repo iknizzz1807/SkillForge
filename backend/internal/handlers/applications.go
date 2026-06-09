@@ -76,15 +76,12 @@ func (h *ApplicationHandler) ApplyProject(c *gin.Context) {
 func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 	applicationID := c.Param("id")
 
-	// (Optional: Thêm kiểm tra quyền truy cập - ví dụ: chỉ student tạo application hoặc business sở hữu project mới được xem)
-	// userID := c.GetString("userID")
-	// role := c.GetString("role")
+	userID := c.GetString("userID")
+	role := c.GetString("role")
 
-	// Gọi service để lấy chi tiết ứng tuyển
 	application, err := h.applicationService.GetApplicationByID(applicationID)
 	if err != nil {
-		// Kiểm tra lỗi cụ thể từ service
-		if err.Error() == "application not found" { // Giả sử service trả về lỗi này
+		if err.Error() == "application not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -92,14 +89,15 @@ func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 		return
 	}
 
-	// (Optional: Kiểm tra quyền xem application)
-	// if role == constants.RoleStudent && application.UserID != userID {
-	// 	c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-	// 	return
-	// }
-	// // Tương tự kiểm tra cho business
+	if application.UserID != userID {
+		project, err := h.applicationService.GetProjectByID(application.ProjectID)
+		if err != nil || project.CreatedByID != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+	_ = role
 
-	// Trả về chi tiết ứng tuyển
 	c.JSON(http.StatusOK, application)
 }
 

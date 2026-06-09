@@ -51,11 +51,29 @@ func (r *InvitationRepository) FindByID(ctx context.Context, invitationID string
 	return &invitation, nil
 }
 
+func (r *InvitationRepository) FindByStudentAndProject(ctx context.Context, studentID, projectID string) (*models.Invitation, error) {
+	var invitation models.Invitation
+	err := r.collection.FindOne(ctx, bson.M{"student_id": studentID, "project_id": projectID}).Decode(&invitation)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &invitation, nil
+}
+
 func (r *InvitationRepository) UpdateStatus(ctx context.Context, invitationID string, status string) error {
-	_, err := r.collection.UpdateOne(
+	result, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": invitationID},
 		bson.M{"$set": bson.M{"status": status}},
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("invitation not found")
+	}
+	return nil
 }

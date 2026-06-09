@@ -8,6 +8,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -112,21 +113,21 @@ func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Regenerate portfolio in the background
 	go func(uid string) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("portfolio generation panicked for user %s: %v", uid, r)
+			}
+		}()
 		if _, err := h.portfolioService.GeneratePortfolio(uid); err != nil {
-			println("Failed to regenerate portfolio for user:", uid, err.Error())
+			log.Printf("Failed to regenerate portfolio for user: %s, error: %v", uid, err)
 		}
 	}(userID)
 
 	// Generate a new JWT token with updated user information
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name, user.Role)
 	if err != nil {
-		// Even if token generation fails, we still want to return the updated user
-		c.JSON(http.StatusOK, gin.H{
-			"user":  user,
-			"error": "Token generation failed but user was updated",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 		return
 	}
 

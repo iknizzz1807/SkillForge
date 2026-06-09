@@ -27,7 +27,7 @@ func (h *BusinessInfoHandler) GetBusinessInfo(c *gin.Context) {
 
 	// Nếu không phải business thì không trả về gì cả
 	if role != "business" {
-		c.JSON(http.StatusOK, nil)
+		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
 

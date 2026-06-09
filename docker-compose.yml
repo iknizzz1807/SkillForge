@@ -29,7 +29,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017/skillforge
       - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET:-}
+      - JWT_SECRET=${JWT_SECRET:-local-dev-secret-change-in-production}
       - AI_URL=http://ai:5000
       - JWT_EXPIRY_HOURS=24
 

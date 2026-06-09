@@ -25,15 +25,13 @@ func (h *AvatarHandler) ServeAvatarByUserID(c *gin.Context) {
 	// Lấy userID từ URL parameter
 	userID := c.Param("id")
 	if userID == "" {
-		c.String(http.StatusBadRequest, "User ID is required")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
 		return
 	}
 
-	// Sử dụng service để tìm avatar
 	avatarPath, err := h.fileService.FindAvatarByUserID(userID)
 	if err != nil {
-		// Trả về status 404 nếu không tìm thấy avatar
-		c.String(http.StatusNotFound, "Avatar not found")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Avatar not found"})
 		return
 	}
 
@@ -50,12 +48,22 @@ func (h *AvatarHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 
+	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File too large"})
+		return
+	}
+
 	file, header, err := c.Request.FormFile("avatar")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
 		return
 	}
 	defer file.Close()
+
+	if header.Size > 10<<20 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File too large (max 10MB)"})
+		return
+	}
 
 	// Sử dụng file service để lưu avatar
 	filename, err := h.fileService.SaveAvatar(userID, file, header)

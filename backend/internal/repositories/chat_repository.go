@@ -24,7 +24,7 @@ func NewChatRepository(db *mongo.Database) *ChatRepository {
 	projectStudentCollection := db.Collection("project_student")
 
 	_, _ = messageCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
-		Keys: bson.D{{Key: "group_id", Value: 1}},
+		Keys: bson.D{{Key: "group_id", Value: 1}, {Key: "timestamp", Value: -1}},
 	})
 	_, _ = groupCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.D{{Key: "project_id", Value: 1}},

@@ -15,8 +15,12 @@ type TalentPoolRepository struct {
 }
 
 func NewTalentPoolRepository(db *mongo.Database) *TalentPoolRepository {
+	collection := db.Collection("talent_pool")
+	_, _ = collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.D{{Key: "business_id", Value: 1}},
+	})
 	return &TalentPoolRepository{
-		collection: db.Collection("talent_pool"),
+		collection: collection,
 	}
 }
 
