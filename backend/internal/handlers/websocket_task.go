@@ -74,7 +74,6 @@ func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 	conn, err := h.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Error upgrading to websocket: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not establish WebSocket connection"})
 		return
 	}
 

@@ -2,10 +2,9 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const PUT: RequestHandler = async ({ request, fetch, cookies }) => {
+export const PUT: RequestHandler = async ({ request, fetch, cookies, locals }) => {
   try {
-    // Get auth token from cookies if you're using authentication
-    const token = cookies.get("auth_token");
+    const token = locals.token;
 
     if (!token) {
       return json({ error: "Unauthorized" }, { status: 401 });

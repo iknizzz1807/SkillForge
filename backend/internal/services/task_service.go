@@ -80,9 +80,9 @@ func (s *TaskService) CreateTasks(projectID, userID string, taskInputs []models.
 			Title:       input.Title,
 			Description: input.Description,
 			Note:        input.Note,
-			Assigned_to: input.AssignedTo,
-			Status:      "todo",
-			Finished_by: "",
+			AssignedTo: input.AssignedTo,
+			Status:     "todo",
+			FinishedBy: "",
 			CreatedAt:   time.Now(),
 		}
 		tasks = append(tasks, task)
@@ -141,8 +141,8 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 		s.InsertActivity("ChangeNote", userID, task.ProjectID, task.Title, task.Note, taskUpdate.Note)
 	}
 
-	if task.Assigned_to != taskUpdate.Assigned_to {
-		s.InsertActivity("ChangeAssignee", userID, task.ProjectID, task.Title, task.Assigned_to, taskUpdate.Assigned_to)
+	if task.AssignedTo != taskUpdate.AssignedTo {
+		s.InsertActivity("ChangeAssignee", userID, task.ProjectID, task.Title, task.AssignedTo, taskUpdate.AssignedTo)
 	}
 
 	// Cập nhật trạng thái và thời gian
@@ -150,7 +150,7 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 	task.Title = taskUpdate.Title
 	task.Description = taskUpdate.Description
 	task.Note = taskUpdate.Note
-	task.Assigned_to = taskUpdate.Assigned_to
+	task.AssignedTo = taskUpdate.AssignedTo
 	task.UpdatedAt = time.Now()
 
 	// Lưu thay đổi
@@ -160,9 +160,16 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 	}
 
 	// Nếu task vừa được đánh dấu hoàn thành, trao XP cho người được gán
-	if oldStatus != "done" && task.Status == "done" && task.Assigned_to != "" {
+	if oldStatus != "done" && task.Status == "done" && task.AssignedTo != "" {
 		if s.gamificationService != nil {
-			go s.gamificationService.AddXP(task.Assigned_to, 10)
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("recovered from panic in XP award: %v", r)
+					}
+				}()
+				s.gamificationService.AddXP(task.AssignedTo, 10)
+			}()
 		}
 	}
 
@@ -197,8 +204,8 @@ func (s *TaskService) DeleteTask(taskID, userID string) error {
 	}
 
 	// // Thông báo cho các bên liên quan (nếu cần)
-	// if task.Assigned_to != "" {
-	// 	s.notificationService.SendNotification(task.Assigned_to, "Task Deleted",
+	// if task.AssignedTo != "" {
+	// 	s.notificationService.SendNotification(task.AssignedTo, "Task Deleted",
 	// 		"Một task bạn được gán đã bị xóa: "+task.Description)
 	// }
 

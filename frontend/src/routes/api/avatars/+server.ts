@@ -4,10 +4,16 @@ export const GET: RequestHandler = async ({ fetch, locals, url }) => {
   const token = locals.token;
   const userId = url.searchParams.get("user_id");
 
-  let backendUrl = `http://backend:8080/avatars`;
-  if (userId) {
-    backendUrl += `?user_id=${encodeURIComponent(userId)}`;
+  if (!userId) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: "/images/default-avatar.png",
+      },
+    });
   }
+
+  const backendUrl = `http://backend:8080/avatars/${encodeURIComponent(userId)}`;
 
   try {
     const headers: Record<string, string> = {};

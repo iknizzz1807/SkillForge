@@ -36,15 +36,14 @@ func (s *FeedbackService) CreateFeedback(projectID, fromID, toID, feedbackType, 
 	}
 
 	ctx := context.Background()
-	project, err := s.projectRepo.FindProjectByID(ctx, projectID)
+	_, err := s.projectRepo.FindProjectByID(ctx, projectID)
 	if err != nil {
 		return nil, errors.New("project not found")
 	}
-	user, err := s.userRepo.FindUserByID(ctx, fromID)
-	if err != nil || user == nil {
+	user, err2 := s.userRepo.FindUserByID(ctx, fromID)
+	if err2 != nil || user == nil {
 		return nil, errors.New("user not found")
 	}
-	_ = project // project exists
 
 	feedback := &models.Feedback{
 		ID:        utils.GenerateUUID(),

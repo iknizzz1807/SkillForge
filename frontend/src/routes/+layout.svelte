@@ -15,10 +15,10 @@
   let userId: string = $state("");
 
   $effect(() => {
-    if (data.role && data.userName && data.avatarUrl) {
-      role = data.role;
-      name = data.userName;
-      avatarUrl = data.avatarUrl;
+    if (data.role !== null && data.role !== undefined) {
+      role = data.role ?? "";
+      name = data.userName ?? "";
+      avatarUrl = data.avatarUrl ?? "";
       userId = data.id || "";
     }
   });

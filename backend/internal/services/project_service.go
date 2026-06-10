@@ -155,7 +155,7 @@ func (s *ProjectService) DeleteProject(projectID string, userID string) error {
 	}
 
 	// 2. Khởi tạo các repositories cần thiết
-	applicationService := NewApplicationService(s.db, s.notificationService)
+	applicationService := NewApplicationService(s.db, s.notificationService, s.badgeService, s.gamificationService)
 	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
 
 	// 3. Xóa tất cả applications liên quan đến project
@@ -203,6 +203,11 @@ func (s *ProjectService) DeleteProject(projectID string, userID string) error {
 	for _, studentID := range studentIDs {
 		if s.notificationService != nil {
 			go func(id string) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("recovered from panic in notification: %v", r)
+					}
+				}()
 				// s.notificationService.SendNotification(
 				//    id,
 				//    "Project Removed",
@@ -294,10 +299,24 @@ func (s *ProjectService) UpdateProject(
 		if err == nil {
 			for _, studentID := range studentIDs {
 				if s.badgeService != nil {
-					go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, projectID)
+					go func() {
+						defer func() {
+							if r := recover(); r != nil {
+								log.Printf("recovered from panic in badge award: %v", r)
+							}
+						}()
+						s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, projectID)
+					}()
 				}
 				if s.gamificationService != nil {
-					go s.gamificationService.AddXP(studentID, 100)
+					go func() {
+						defer func() {
+							if r := recover(); r != nil {
+								log.Printf("recovered from panic in XP award: %v", r)
+							}
+						}()
+						s.gamificationService.AddXP(studentID, 100)
+					}()
 				}
 			}
 		}
@@ -406,12 +425,16 @@ func (s *ProjectService) AddStudentToProject(projectID, studentID string) error 
 		return err
 	}
 
-	// Trao badge và XP cho student khi tham gia project
-	if s.badgeService != nil {
-		go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, projectID)
-	}
+	// Trao XP cho student khi tham gia project
 	if s.gamificationService != nil {
-		go s.gamificationService.AddXP(studentID, 50)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("recovered from panic in XP award: %v", r)
+				}
+			}()
+			s.gamificationService.AddXP(studentID, 50)
+		}()
 	}
 
 	return nil

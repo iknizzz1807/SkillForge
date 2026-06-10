@@ -77,7 +77,6 @@ func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 	applicationID := c.Param("id")
 
 	userID := c.GetString("userID")
-	role := c.GetString("role")
 
 	application, err := h.applicationService.GetApplicationByID(applicationID)
 	if err != nil {
@@ -96,8 +95,6 @@ func (h *ApplicationHandler) GetApplication(c *gin.Context) {
 			return
 		}
 	}
-	_ = role
-
 	c.JSON(http.StatusOK, application)
 }
 

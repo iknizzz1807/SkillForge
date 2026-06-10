@@ -16,10 +16,9 @@ type ProjectDisplay = {
   created_at: string;
 };
 
-export const load = (async ({ fetch, cookies, parent }) => {
+export const load = (async ({ fetch, locals, parent }) => {
   try {
-    // Get auth token from cookies
-    const token = cookies.get("auth_token");
+    const token = locals.token;
     const parentData = await parent();
     const role = parentData.role || "user";
 

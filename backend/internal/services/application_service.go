@@ -12,6 +12,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/iknizzz1807/SkillForge/internal/models"
@@ -29,17 +30,23 @@ type ApplicationService struct {
 	projectRepo *repositories.ProjectRepository // Thêm project repo
 	// applicationRepo để truy vấn application
 	applicationRepo *repositories.ApplicationRepository // Thêm application repo
+	// badgeService để trao thưởng badge
+	badgeService *BadgeService
+	// gamificationService để xử lý XP/Level
+	gamificationService *GamificationService
 }
 
 // NewApplicationService khởi tạo ApplicationService với dependency
 // Input: db (*mongo.Database), notificationService (*NotificationService)
 // Return: *ApplicationService - con trỏ đến ApplicationService
-func NewApplicationService(db *mongo.Database, notificationService *NotificationService) *ApplicationService {
+func NewApplicationService(db *mongo.Database, notificationService *NotificationService, badgeService *BadgeService, gamificationService *GamificationService) *ApplicationService {
 	return &ApplicationService{
 		db:                  db,
 		notificationService: notificationService,
 		projectRepo:         repositories.NewProjectRepository(db),     // Khởi tạo project repo
 		applicationRepo:     repositories.NewApplicationRepository(db), // Khởi tạo application repo
+		badgeService:        badgeService,
+		gamificationService: gamificationService,
 	}
 }
 
@@ -110,7 +117,7 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 				if r := recover(); r != nil {
 					// Log the panic instead of crashing the app
 					// Ideally use a proper logger like logrus or zap here
-					println("Recovered from panic in notification goroutine:", r)
+					log.Printf("Recovered from panic in notification goroutine: %v", r)
 				}
 			}()
 
@@ -118,19 +125,19 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 			userRepo := repositories.NewUserRepository(s.db)
 			businessUser, err := userRepo.FindUserByID(ctx, project.CreatedByID)
 			if err != nil {
-				println("Failed to fetch business user for notification:", err.Error())
+				log.Printf("Failed to fetch business user for notification: %v", err)
 				return
 			}
 			
 			if businessUser != nil {
 				err := s.notificationService.SendEmail(businessUser.Email, "New Application Received", "A student has applied to your project '"+project.Title+"'.")
 				if err != nil {
-					println("Failed to send email:", err.Error())
+					log.Printf("Failed to send email: %v", err)
 				}
 				
 				err = s.notificationService.SendNotification(project.CreatedByID, "New application for project: "+project.Title, "application") // Gửi realtime notification
 				if err != nil {
-					println("Failed to send realtime notification:", err.Error())
+					log.Printf("Failed to send realtime notification: %v", err)
 				}
 			}
 		}()
@@ -264,11 +271,10 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 
 	// 2. Kiểm tra logic chuyển đổi trạng thái (ví dụ: không thể approve lại application đã rejected)
 	if application.Status == "approved" && status != "approved" {
-		// Có thể muốn ngăn việc thay đổi status sau khi đã approve, hoặc xử lý việc rút lại approval
-		// return nil, errors.New("cannot change status of an already approved application")
+		return nil, errors.New("cannot change status of an already approved application")
 	}
 	if application.Status == "rejected" && status != "rejected" {
-		// return nil, errors.New("cannot change status of an already rejected application")
+		return nil, errors.New("cannot change status of an already rejected application")
 	}
 
 	// 3. Thực hiện cập nhật status
@@ -281,7 +287,7 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 	// Nếu status là "approved":
 	if status == "approved" && application.Status != "approved" { // Chỉ xử lý khi chuyển sang approved
 		// Thêm student vào project (cần inject ProjectService hoặc gọi trực tiếp repo)
-			projectService := NewProjectService(s.db, s.notificationService, nil, nil, nil) // Tạm thời khởi tạo ở đây, nên inject vào struct
+			projectService := NewProjectService(s.db, s.notificationService, nil, s.badgeService, s.gamificationService)
 		errAdd := projectService.AddStudentToProject(updatedApplication.ProjectID, updatedApplication.UserID)
 		if errAdd != nil {
 			// Xử lý lỗi khi thêm student vào project (quan trọng)
@@ -294,8 +300,15 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 		} else {
 			userID := updatedApplication.UserID
 			userRepo := repositories.NewUserRepository(s.db)
-			user, _ := userRepo.FindUserByID(context.Background(), userID)
-			s.notificationService.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!") // Gửi email thông báo cho student
+			user, err := userRepo.FindUserByID(context.Background(), userID)
+			if err != nil || user == nil {
+				log.Printf("failed to fetch user %s for notification: %v", userID, err)
+			} else {
+				err := s.notificationService.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!")
+				if err != nil {
+					log.Printf("failed to send email: %v", err)
+				}
+			}
 		}
 	} else if status == "rejected" && application.Status != "rejected" {
 		// Gửi thông báo cho student là application đã bị rejected

@@ -298,7 +298,7 @@
                 <div>
                   <h4 class="text-base font-medium">
                     <a
-                      href={`/profile/${app.user_id}`}
+                      href={`/profile/user/${app.user_id}`}
                       class="hover:text-[#6b48ff] hover:underline"
                     >
                       {app.user_name || "User"}
@@ -555,7 +555,7 @@
             <div>
               <h4 class="text-xl font-semibold">
                 <a
-                  href={`/profile/${selectedApplication.user_id}`}
+                  href={`/profile/user/${selectedApplication.user_id}`}
                   class="hover:text-[#6b48ff] hover:underline"
                 >
                   {selectedApplication.user_name || "User"}

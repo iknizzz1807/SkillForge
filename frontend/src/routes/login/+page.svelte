@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import type { ActionData, PageData } from "./$types";
 
   let { form, data }: { form: ActionData; data: PageData } = $props();
@@ -38,6 +38,9 @@
             // If login was successful
             if (result.type === "success") {
               loginSuccess = true;
+              await invalidateAll();
+              const redirectTo = (result.data as any)?.redirectTo || "/dashboard";
+              goto(redirectTo);
             } else {
               // If there was an error, stop loading state
               isLoggingIn = false;

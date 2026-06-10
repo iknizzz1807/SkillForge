@@ -1,14 +1,14 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const PUT: RequestHandler = async ({ params, request, cookies, fetch }) => {
+export const PUT: RequestHandler = async ({ params, request, locals, fetch }) => {
   try {
     const invitationId = params.invitation_id;
     if (!invitationId) {
       return json({ error: "Missing invitation ID" }, { status: 400 });
     }
 
-    const token = cookies.get("auth_token");
+    const token = locals.token;
     if (!token) {
       return json({ error: "Unauthorized" }, { status: 401 });
     }

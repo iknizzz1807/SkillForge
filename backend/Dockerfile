@@ -18,5 +18,8 @@ COPY . .
 # Thiết lập port
 EXPOSE 8080
 
-# Command để chạy ứng dụng trong development
-CMD ["go", "run", "cmd/main.go"]
+# Install CompileDaemon for hot reload
+RUN go install github.com/githubnemo/CompileDaemon@latest
+
+# Command để chạy ứng dụng trong development với hot reload
+CMD CompileDaemon -build="go build -o main cmd/main.go" -command="./main"

@@ -6,7 +6,7 @@ import "time"
 type Feedback struct {
 	ID        string    `json:"id" bson:"_id"`
 	ProjectID string    `json:"project_id" bson:"project_id"`
-	FromID    string    `json:"from" bson:"from"`
+	FromID    string    `json:"from_id" bson:"from_id"`
 	ToID      string    `json:"to" bson:"to"`
 	Type      string    `json:"type" bson:"type"`     // "business" feedback cho business or "student" feedback cho sinh viên 
 	Rating    int       `json:"rating" bson:"rating"` // rating từ 0 đến 5 (star)

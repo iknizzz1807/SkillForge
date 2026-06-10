@@ -13,6 +13,8 @@ package app
 import (
 	"context"
 	"log"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iknizzz1807/SkillForge/internal/config"
@@ -35,6 +37,14 @@ func Run() {
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatalf("Failed to ping MongoDB: %v", err)
+	}
+	log.Println("Connected to MongoDB successfully")
+
 	defer client.Disconnect(context.Background())
 	db := client.Database("skillforge")
 
@@ -52,7 +62,7 @@ func Run() {
 	badgeService := services.NewBadgeService(repositories.NewBadgeRepository(db))
 	gamificationService := services.NewGamificationService(repositories.NewGamificationRepository(db), userService)
 	projectService := services.NewProjectService(db, notificationService, aiClient, badgeService, gamificationService)
-	applicationService := services.NewApplicationService(db, notificationService)
+	applicationService := services.NewApplicationService(db, notificationService, badgeService, gamificationService)
 	taskService := services.NewTaskService(db, notificationService, gamificationService)
 	reviewService := services.NewReviewService(db)
 	// messageService := services.NewMessageService(db, realtimeClient, webrtcClient)
@@ -70,6 +80,17 @@ func Run() {
 	matchingService := services.NewMatchingService(db, aiClient)
 	chatService := services.NewChatService(repositories.NewChatRepository(db))
 	invitationService := services.NewInvitationService(db, badgeService, gamificationService)
+	// Run migrations if any
+	if entries, err := os.ReadDir("migrations"); err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				log.Printf("Migration file found: %s (auto-migration not implemented)", entry.Name())
+			}
+		}
+	} else {
+		log.Printf("No migrations directory found, skipping migrations")
+	}
+
 	// Khởi tạo Gin router
 	r := gin.Default()
 

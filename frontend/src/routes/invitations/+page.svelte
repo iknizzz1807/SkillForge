@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { onMount } from "svelte";
 
   let invitations: any[] = $state([]);
   let loading: boolean = $state(true);
@@ -41,7 +42,7 @@
     }
   }
 
-  $effect(() => {
+  onMount(() => {
     loadInvitations();
   });
 </script>

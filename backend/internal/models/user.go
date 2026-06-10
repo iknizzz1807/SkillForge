@@ -27,7 +27,7 @@ type User struct {
 	Role string `json:"role" bson:"role"`
 
 	// Skills là danh sách kỹ năng của user (chủ yếu cho student)
-	Skills []string `json:"skills" bson:"skills"`
+	Skills []string `json:"skills,omitempty" bson:"skills,omitempty"`
 
 	// Title là trường string thể hiện mô tả ngắn gọn về công ty hoặc về bản thân student, ví dụ "Web developer",
 	// IT consultant company,...

@@ -66,7 +66,7 @@ export const actions = {
         path: "/",
         httpOnly: true,
         secure: !dev,
-        maxAge: 60 * 60 * 24, // 1 day
+        maxAge: 60 * 60 * 24 * 7, // 7 days
         sameSite: "strict",
       });
 

@@ -62,13 +62,8 @@ func (s *NotificationService) SendNotification(userID, content, Type string) err
 		return err
 	}
 
-	notifications, err := s.GetUserNotifications(userID)
-	if err != nil {
-		return err
-	}
-
 	// Gọi realtimeClient để gửi thông báo
-	err = s.realtimeClient.SendNotification(userID, notifications)
+	err = s.realtimeClient.SendNotification(userID, []*models.Notification{notification})
 	if err != nil {
 		return err
 	}

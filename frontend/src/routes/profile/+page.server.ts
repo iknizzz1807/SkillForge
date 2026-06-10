@@ -19,8 +19,7 @@ export const load = (async ({ locals, fetch, url, parent }) => {
   let userData = {};
 
   try {
-    const response = await fetch("/api/profile", {
-      method: "GET",
+    const response = await fetch("http://backend:8080/api/user", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

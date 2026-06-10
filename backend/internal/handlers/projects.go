@@ -271,6 +271,10 @@ func (h *ProjectHandler) UpdateProject(c *gin.Context) {
 func (h *ProjectHandler) RemoveStudentFromProject(c *gin.Context) {
 	projectID := c.Param("projectID")
 	studentID := c.Param("studentID")
+	if studentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "student ID is required"})
+		return
+	}
 	businessID := c.GetString("userID")
 	role := c.GetString("role")
 

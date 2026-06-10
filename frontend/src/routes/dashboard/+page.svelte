@@ -7,7 +7,7 @@
   let { data }: { data: PageData } = $props();
 
   // Toggle this value to switch between roles
-  let role = $derived(data.role);
+  let role = $derived(data.role ?? "");
 
   // Canvas references for charts
   let progressChartCanvas: HTMLCanvasElement | null = $state(null);

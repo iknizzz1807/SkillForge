@@ -7,9 +7,10 @@ package utils
 // - Hỗ trợ các tác vụ nhỏ, tái sử dụng trong hệ thống
 
 import (
+	"log"
 	"strings"
 	"time"
-	"fmt"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -90,7 +91,7 @@ func VerifyPassword(hashedPassword, password string) bool {
 func RemoveDuplicates(strList []string) []string {
     list := []string{}
     for _, item := range strList {
-        fmt.Println(item)
+        log.Printf("item: %s", item)
 		if !Contains(list, item) {
             list = append(list, item)
         }

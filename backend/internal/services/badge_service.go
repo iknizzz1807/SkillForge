@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -54,6 +55,8 @@ func (s *BadgeService) CreateBadge(
 		Prerequisites: prerequisites,
 		CreatedAt:     time.Now(),
 	}
+
+	badge.Code = "badge-" + badge.Type + "-" + badge.ID
 
 	// Lưu badge vào database
 	err := s.badgeRepo.InsertBadge(ctx, badge)
@@ -149,7 +152,7 @@ func (s *BadgeService) CheckAndAwardProjectCompletionBadges(userID string, proje
 		return err
 	}
 	
-	println("Gamification badge awarded for user:", userID, "on project:", projectID)
+	log.Printf("Gamification badge awarded for user: %s on project: %s", userID, projectID)
 	return nil
 }
 

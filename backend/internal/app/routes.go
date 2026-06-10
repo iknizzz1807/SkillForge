@@ -70,6 +70,11 @@ func RegisterRoutes(
 	websocketChatHandler := handlers.NewWebSocketChatHandler(chatService, realtimeClient)
 	invitationHandler := handlers.NewInvitationHandler(invitationService)
 
+	// Recovery middleware to prevent error message leaks
+	r.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	}))
+
 	// 1. CORS FIRST - trước mọi route để preflight OPTIONS luôn có CORS headers
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://skillforge.ikniz.id.vn"},
@@ -87,7 +92,6 @@ func RegisterRoutes(
 	r.POST("/auth/login", authHandler.Login)
 	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
 	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
-	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Public static file routes
 	r.Static("/storage", "./storage")
@@ -106,6 +110,9 @@ func RegisterRoutes(
 
 	// 4. Auth middleware
 	r.Use(middleware.AuthMiddleware())
+
+	// WebSocket notification route (must be after auth middleware to access userID from context)
+	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")

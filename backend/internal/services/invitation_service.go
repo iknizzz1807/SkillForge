@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/iknizzz1807/SkillForge/internal/models"
@@ -97,13 +98,19 @@ func (s *InvitationService) GetInvitationsByStudent(studentID string) ([]*models
 		businessIDs = append(businessIDs, inv.BusinessID)
 	}
 
-	projects, _ := projectRepo.FindProjectsByIDs(context.Background(), projectIDs)
+	projects, err := projectRepo.FindProjectsByIDs(context.Background(), projectIDs)
+	if err != nil {
+		log.Printf("failed to fetch projects: %v", err)
+	}
 	projectMap := make(map[string]string, len(projects))
 	for _, p := range projects {
 		projectMap[p.ID] = p.Title
 	}
 
-	businesses, _ := userRepo.FindUsersByIDs(context.Background(), businessIDs)
+	businesses, err := userRepo.FindUsersByIDs(context.Background(), businessIDs)
+	if err != nil {
+		log.Printf("failed to fetch users: %v", err)
+	}
 	businessMap := make(map[string]string, len(businesses))
 	for _, b := range businesses {
 		businessMap[b.ID] = b.Name
@@ -153,11 +160,15 @@ func (s *InvitationService) RespondToInvitation(invitationID, studentID, status 
 			return err
 		}
 
-		if s.badgeService != nil {
-			go s.badgeService.CheckAndAwardProjectCompletionBadges(studentID, invitation.ProjectID)
-		}
 		if s.gamificationService != nil {
-			go s.gamificationService.AddXP(studentID, 50)
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("recovered from panic in XP award: %v", r)
+					}
+				}()
+				s.gamificationService.AddXP(studentID, 50)
+			}()
 		}
 	}
 

@@ -1,11 +1,11 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
+export const POST: RequestHandler = async ({ request, locals, fetch }) => {
   try {
-    const token = cookies.get("auth_token");
+    const token = locals.token;
     if (!token) {
-      throw new Error("Authentication required");
+      return json({ error: "Authentication required" }, { status: 401 });
     }
 
     const data = await request.json();
@@ -19,7 +19,6 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
       difficulty,
     } = data;
 
-    // Validate required fields
     if (
       !title ||
       !description ||
@@ -30,7 +29,7 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
       !max_member ||
       !difficulty
     ) {
-      throw new Error("All fields are required");
+      return json({ error: "All fields are required" }, { status: 400 });
     }
 
     // Forward request to backend API
@@ -60,10 +59,9 @@ export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
         // Ignore JSON parsing errors
       }
 
-      throw new Error(errorMessage);
+      return json({ error: errorMessage }, { status: response.status });
     }
 
-    // Return the created project
     const createdProject = await response.json();
     return json(createdProject);
   } catch (err: any) {

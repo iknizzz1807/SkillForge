@@ -1,9 +1,9 @@
 import type { PageServerLoad } from "./$types";
 import { error } from "@sveltejs/kit";
 
-export const load = (async ({ params, fetch, cookies }) => {
+export const load = (async ({ params, fetch, locals }) => {
   const project_id = params.project_id;
-  const token = cookies.get("auth_token"); // For auth
+  const token = locals.token;
 
   try {
     // Fetch project based on project_id

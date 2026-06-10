@@ -33,7 +33,8 @@ type Message struct {
 }
 
 type Group struct {
-	ProjectID string `json:"project_id" bson:"project_id"`
-	Title string `json:"title" bson:"title"`
+	ID        string    `json:"id" bson:"_id"`
+	ProjectID string    `json:"project_id" bson:"project_id"`
+	Title     string    `json:"title" bson:"title"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 }

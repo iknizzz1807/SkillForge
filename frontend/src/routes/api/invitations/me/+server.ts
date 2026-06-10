@@ -1,9 +1,9 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ fetch, cookies }) => {
+export const GET: RequestHandler = async ({ fetch, locals }) => {
   try {
-    const token = cookies.get("auth_token");
+    const token = locals.token;
 
     const headers: Record<string, string> = {};
     if (token) {

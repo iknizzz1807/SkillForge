@@ -9,7 +9,7 @@
 
 {#if isOpen}
   <!-- Portfolio Generation Modal -->
-  <div id="portfolioModal" class="modal hidden">
+  <div id="portfolioModal" class="modal">
     <div class="bg-white rounded-lg w-1/2 max-w-2xl shadow-lg text-center">
       <div class="p-6">
         <!-- svg dấu tick

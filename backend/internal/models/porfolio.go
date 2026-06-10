@@ -18,10 +18,10 @@ type Portfolio struct {
 	UserID string `json:"user_id" bson:"user_id"`
 
 	// Projects là danh sách ID dự án đã tham gia
-	Projects []string `json:"projects" bson:"projects"`
+	Projects []string `json:"projects,omitempty" bson:"projects,omitempty"`
 
 	// Skills là danh sách kỹ năng đã chứng minh
-	Skills []string `json:"skills" bson:"skills"`
+	Skills []string `json:"skills,omitempty" bson:"skills,omitempty"`
 
 	// CreatedAt là thời gian tạo portfolio
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`

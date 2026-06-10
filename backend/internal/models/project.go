@@ -26,7 +26,7 @@ type Project struct {
 	Description string `json:"description" bson:"description"`
 
 	// Skills là danh sách kỹ năng yêu cầu cho dự án
-	Skills []string `json:"skills" bson:"skills"`
+	Skills []string `json:"skills,omitempty" bson:"skills,omitempty"`
 
 	// StartTime là thời gian bắt đầu dự án
 	StartTime time.Time `json:"start_time" bson:"start_time"`
@@ -48,7 +48,7 @@ type Project struct {
 	// CreatedByName là name của business tạo dự án
 	CreatedByName string `json:"created_by_name" bson:"created_by_name"`
 
-	// Status là trạng thái dự án: "open", "active", "closed"
+	// Status là trạng thái dự án: "open", "active", "close"
 	Status string `json:"status" bson:"status"`
 
 	// CreatedAt là thời gian tạo dự án, nó khác với thời gian bắt đầu

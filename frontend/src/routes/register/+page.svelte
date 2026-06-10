@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import { goto, invalidateAll } from "$app/navigation";
   import type { ActionData, PageData } from "./$types";
-  import { goto } from "$app/navigation";
 
   let { form, data }: { form: ActionData; data: PageData } = $props();
   let selectedRole = $state<string | null>(null); // Bắt đầu với null
@@ -132,6 +132,8 @@
             // If registration was successful
             if (result.type === "success") {
               registerSuccess = true;
+              await invalidateAll();
+              goto("/login");
             } else {
               // If there was an error, stop loading state
               isSubmitting = false;

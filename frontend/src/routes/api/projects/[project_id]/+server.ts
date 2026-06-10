@@ -1,10 +1,9 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-// DELETE endpoint - for deleting a project
-export const DELETE: RequestHandler = async ({ params, fetch, request }) => {
+export const DELETE: RequestHandler = async ({ params, fetch, request, locals }) => {
   const id = params.project_id;
-  const authHeader = request.headers.get("Authorization");
+  const authHeader = request.headers.get("Authorization") || (locals.token ? `Bearer ${locals.token}` : "");
 
   if (!authHeader) {
     return json({ error: "Authorization header missing" }, { status: 401 });
@@ -36,10 +35,9 @@ export const DELETE: RequestHandler = async ({ params, fetch, request }) => {
   }
 };
 
-// PUT endpoint - for updating a project
-export const PUT: RequestHandler = async ({ params, fetch, request }) => {
+export const PUT: RequestHandler = async ({ params, fetch, request, locals }) => {
   const id = params.project_id;
-  const authHeader = request.headers.get("Authorization");
+  const authHeader = request.headers.get("Authorization") || (locals.token ? `Bearer ${locals.token}` : "");
 
   if (!authHeader) {
     return json({ error: "Authorization header missing" }, { status: 401 });

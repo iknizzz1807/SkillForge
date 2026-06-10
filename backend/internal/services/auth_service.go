@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"            // Thêm fmt để log lỗi nhỏ
+	"log"
 	"mime/multipart" // Thêm multipart
 	"strings"
 	"time"
@@ -58,19 +59,19 @@ func (s *AuthService) Register(email, name, password, role, website, title strin
 		fmt.Printf("Error inserting user %s: %v\n", user.Email, err)
 		return nil, "", fmt.Errorf("could not register user: %w", err)
 	}
-	fmt.Printf("Successfully inserted user %s with ID %s\n", user.Email, user.ID)
+		log.Printf("Successfully inserted user %s with ID %s", user.Email, user.ID)
 
 	// 4. Xử lý upload avatar NẾU có file được cung cấp
 	var avatarFilename string = "" // Khởi tạo rỗng
 	if file != nil && header != nil {
-		fmt.Printf("Attempting to save avatar for user %s\n", user.ID)
+		log.Printf("Attempting to save avatar for user %s", user.ID)
 		// Gọi FileService để lưu avatar, sử dụng user.ID vừa tạo
 		savedFilename, err := s.fileService.SaveAvatar(user.ID, file, header)
 		if err != nil {
-			fmt.Printf("Warning: Failed to save avatar for user %s during registration: %v\n", user.ID, err)
+			log.Printf("Warning: Failed to save avatar for user %s during registration: %v", user.ID, err)
 			// Không return lỗi ở đây
 		} else {
-			fmt.Printf("Avatar saved for user %s with filename %s\n", user.ID, savedFilename)
+			log.Printf("Avatar saved for user %s with filename %s", user.ID, savedFilename)
 			avatarFilename = savedFilename // Lưu lại tên file để cập nhật DB
 
 			// Cập nhật thông tin user model
@@ -79,24 +80,24 @@ func (s *AuthService) Register(email, name, password, role, website, title strin
 
 			errUpdate := s.userRepo.UpdateUser(ctx, user)
 			if errUpdate != nil {
-				fmt.Printf("Warning: Failed to update user in DB for user %s after saving avatar: %v\n", user.ID, errUpdate)
+				log.Printf("Warning: Failed to update user in DB for user %s after saving avatar: %v", user.ID, errUpdate)
 			} else {
-				fmt.Printf("Successfully updated user with avatar for user %s\n", user.ID)
+				log.Printf("Successfully updated user with avatar for user %s", user.ID)
 
 				// Thêm log để kiểm tra lưu trữ avatar
 				avatarPath, _ := s.fileService.GetAvatarFilePath(avatarFilename)
-				fmt.Printf("Avatar stored at: %s\n", avatarPath)
+				log.Printf("Avatar stored at: %s", avatarPath)
 			}
 		}
 	} else {
-		fmt.Printf("No avatar file provided for user %s during registration.\n", user.ID)
+		log.Printf("No avatar file provided for user %s during registration.", user.ID)
 	}
 
 	// 5. Tạo JWT token (luôn tạo kể cả khi avatar lỗi)
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.Name, user.Role)
 	if err != nil {
 		// Lỗi này nghiêm trọng hơn, vì user không thể đăng nhập
-		fmt.Printf("Error generating JWT for user %s: %v\n", user.ID, err)
+		log.Printf("Error generating JWT for user %s: %v", user.ID, err)
 		// Có thể xem xét xóa user vừa tạo ở đây nếu muốn roll back hoàn toàn
 		return nil, "", fmt.Errorf("could not generate authentication token: %w", err)
 	}

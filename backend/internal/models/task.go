@@ -29,12 +29,12 @@ type Task struct {
 	// Note là một trường khác ngoài description để ghi chú thích về task hoặc review
 	Note string `json:"note" bson:"note"`
 
-	// Assigned by là id của người chịu trách nhiệm hoàn thành task này
-	Assigned_to string `json:"assigned_to" bson:"assigned_to"`
+	// AssignedTo là id của người chịu trách nhiệm hoàn thành task này
+	AssignedTo string `json:"assigned_to" bson:"assigned_to"`
 
-	// Finished_by là id của người đã hoàn thành task này, để trống nếu đang ở status
+	// FinishedBy là id của người đã hoàn thành task này, để trống nếu đang ở status
 	//  "todo" hoặc "in_progress"
-	Finished_by string `json:"finished_by" bson:"finished_by"`
+	FinishedBy string `json:"finished_by" bson:"finished_by"`
 
 	// CreatedAt là thời gian tạo task
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
@@ -56,7 +56,7 @@ type TaskUpdate struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Note        string `json:"note"`
-	Assigned_to string `json:"assigned_to"`
+	AssignedTo  string `json:"assigned_to"`
 }
 
 type Activity struct {

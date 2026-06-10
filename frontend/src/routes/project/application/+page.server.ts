@@ -1,5 +1,4 @@
 import type { PageServerLoad } from "./$types";
-import { env } from "$env/dynamic/private";
 
 export const load = (async (event) => {
   const user = event.locals.user;

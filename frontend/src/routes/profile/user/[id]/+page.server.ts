@@ -16,7 +16,7 @@ export const load = (async ({ params, locals, fetch }) => {
 
   try {
     const response = await fetch(
-      `/api/users/${target_user_id}/profile`,
+      `http://backend:8080/api/users/${target_user_id}/profile`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

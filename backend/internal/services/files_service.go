@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -75,7 +76,7 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	// 3. Đảm bảo thư mục lưu trữ tồn tại
 	err = os.MkdirAll(AvatarStoragePath, os.ModePerm)
 	if err != nil {
-		fmt.Printf("Error creating storage directory %s: %v\n", AvatarStoragePath, err)
+		log.Printf("Error creating storage directory %s: %v", AvatarStoragePath, err)
 		return "", errors.New("could not create storage directory")
 	}
 
@@ -86,7 +87,7 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	existingFiles, _ := filepath.Glob(filepath.Join(AvatarStoragePath, userID+".*"))
 	for _, f := range existingFiles {
 		if f != filePath { // Chỉ xóa nếu tên file khác file mới
-			fmt.Printf("Attempting to remove old avatar: %s\n", f)
+			log.Printf("Attempting to remove old avatar: %s", f)
 			os.Remove(f) // Bỏ qua lỗi nếu xóa không được
 		}
 	}
@@ -94,7 +95,7 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	// 6. Tạo file đích
 	dst, err := os.Create(filePath)
 	if err != nil {
-		fmt.Printf("Error creating file %s: %v\n", filePath, err)
+		log.Printf("Error creating file %s: %v", filePath, err)
 		return "", errors.New("could not save file")
 	}
 	defer dst.Close() // Đảm bảo file được đóng
@@ -102,7 +103,7 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	// 7. Copy dữ liệu
 	_, err = io.Copy(dst, file)
 	if err != nil {
-		fmt.Printf("Error copying file content to %s: %v\n", filePath, err)
+		log.Printf("Error copying file content to %s: %v", filePath, err)
 		// Cố gắng xóa file vừa tạo nếu copy lỗi
 		os.Remove(filePath)
 		return "", errors.New("could not write file content")
@@ -130,7 +131,7 @@ func (s *FileService) GetAvatarFilePath(filename string) (string, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return "", errors.New("avatar not found")
 	} else if err != nil {
-		fmt.Printf("Error accessing file %s: %v\n", filePath, err)
+		log.Printf("Error accessing file %s: %v", filePath, err)
 		return "", errors.New("could not access avatar file")
 	}
 
