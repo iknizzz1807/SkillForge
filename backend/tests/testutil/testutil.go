@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	testClient *mongo.Client
+	testClient  *mongo.Client
 	testDB      *mongo.Database
 	aiServerURL string
 	aiOnce      sync.Once
@@ -61,16 +61,7 @@ func GetTestDB() *mongo.Database {
 	defer dbMu.Unlock()
 
 	if testDB != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		pingErr := testClient.Ping(ctx, nil)
-		if pingErr == nil {
-			return testDB
-		}
-		log.Printf("MongoDB ping failed, reconnecting: %v", pingErr)
-		testClient.Disconnect(context.Background())
-		testClient = nil
-		testDB = nil
+		return testDB
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -79,10 +70,10 @@ func GetTestDB() *mongo.Database {
 	clientOpts := options.Client().ApplyURI(MongoURI).
 		SetMinPoolSize(1).
 		SetMaxPoolSize(10).
-		SetMaxConnIdleTime(1 * time.Second).
-		SetServerSelectionTimeout(2 * time.Second).
+		SetMaxConnIdleTime(30 * time.Second).
+		SetServerSelectionTimeout(10 * time.Second).
 		SetConnectTimeout(3 * time.Second).
-		SetSocketTimeout(5 * time.Second).
+		SetSocketTimeout(15 * time.Second).
 		SetHeartbeatInterval(2 * time.Second)
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
