@@ -102,7 +102,22 @@ func (s *UserService) UpdateUserWithAvatar(userID, name, email, title, avatarFil
 		return nil, errors.New("user not found")
 	}
 
-	// Cập nhật thông tin user
+	if name == "" {
+		name = user.Name
+	}
+	if email == "" {
+		email = user.Email
+	}
+	if title == "" {
+		title = user.Title
+	}
+	if name == "" {
+		return nil, errors.New("name cannot be empty")
+	}
+	if email == "" {
+		return nil, errors.New("email cannot be empty")
+	}
+
 	user.Name = name
 	user.Email = email
 	user.Title = title
@@ -158,10 +173,10 @@ func (s *UserService) GetAllStudents(page, limit int, skill string) ([]*models.U
 }
 
 type UserProfile struct {
-	User       *models.User          `json:"user"`
-	Badges     []*models.UserBadge   `json:"badges"`
-	Feedbacks  []*models.Feedback    `json:"feedbacks"`
-	Projects   []*models.Project     `json:"projects"`
+	User      *models.User        `json:"user"`
+	Badges    []*models.UserBadge `json:"badges"`
+	Feedbacks []*models.Feedback  `json:"feedbacks"`
+	Projects  []*models.Project   `json:"projects"`
 }
 
 func (s *UserService) GetUserProfile(userID string) (*UserProfile, error) {

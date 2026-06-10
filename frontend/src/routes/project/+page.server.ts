@@ -130,7 +130,6 @@ export const load = (async ({ fetch, locals, parent }) => {
       projects,
       applicationCount,
       error: null,
-      token: token,
     };
   } catch (error) {
     console.error("Error loading projects:", error);

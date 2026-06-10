@@ -2,6 +2,11 @@ import type { PageServerLoad, Actions } from "./$types";
 import { fail, type Cookies, redirect } from "@sveltejs/kit";
 import { dev } from "$app/environment";
 
+function safeRedirectPath(value: string, fallback = "/dashboard") {
+  if (!value.startsWith("/") || value.startsWith("//")) return fallback;
+  return value;
+}
+
 export const load = (async ({ url, cookies }) => {
   // Check if user is already logged in
   const token = cookies.get("auth_token");
@@ -82,6 +87,7 @@ export const actions = {
           // Fall back to the original value
         }
       }
+      decodedRedirectTo = safeRedirectPath(decodedRedirectTo);
 
       // Redirect to the requested page or dashboard
       return { success: true, redirectTo: decodedRedirectTo };

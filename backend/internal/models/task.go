@@ -52,6 +52,7 @@ type TaskInput struct {
 
 type TaskUpdate struct {
 	TaskID      string `json:"taskId" binding:"required"`
+	ProjectID   string `json:"project_id,omitempty"`
 	Status      string `json:"status"`
 	Title       string `json:"title"`
 	Description string `json:"description"`

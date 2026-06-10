@@ -127,13 +127,13 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 				log.Printf("Failed to fetch business user for notification: %v", err)
 				return
 			}
-			
+
 			if businessUser != nil {
 				err := s.notificationService.SendEmail(businessUser.Email, "New Application Received", "A student has applied to your project '"+project.Title+"'.")
 				if err != nil {
 					log.Printf("Failed to send email: %v", err)
 				}
-				
+
 				err = s.notificationService.SendNotification(project.CreatedByID, "New application for project: "+project.Title, "application") // Gửi realtime notification
 				if err != nil {
 					log.Printf("Failed to send realtime notification: %v", err)
@@ -276,37 +276,29 @@ func (s *ApplicationService) UpdateApplicationStatus(applicationID string, statu
 		return nil, errors.New("cannot change status of an already rejected application")
 	}
 
-	// 3. Thực hiện cập nhật status
+	// Add membership before marking approved so records cannot diverge.
+	if status == "approved" && application.Status != "approved" {
+		projectService := NewProjectService(s.db, s.notificationService, nil, s.badgeService, s.gamificationService)
+		if errAdd := projectService.AddStudentToProject(application.ProjectID, application.UserID); errAdd != nil {
+			return nil, errors.New("failed to add student to project: " + errAdd.Error())
+		}
+	}
+
 	updatedApplication, err := s.applicationRepo.UpdateStatus(applicationID, status)
 	if err != nil {
 		return nil, errors.New("failed to update application status: " + err.Error())
 	}
 
-	// 4. Xử lý logic sau khi cập nhật status
-	// Nếu status là "approved":
-	if status == "approved" && application.Status != "approved" { // Chỉ xử lý khi chuyển sang approved
-		// Thêm student vào project (cần inject ProjectService hoặc gọi trực tiếp repo)
-			projectService := NewProjectService(s.db, s.notificationService, nil, s.badgeService, s.gamificationService)
-		errAdd := projectService.AddStudentToProject(updatedApplication.ProjectID, updatedApplication.UserID)
-		if errAdd != nil {
-			// Xử lý lỗi khi thêm student vào project (quan trọng)
-			// Có thể rollback status application hoặc log lỗi nghiêm trọng
-			// Ví dụ: Rollback status
-			// _, _ = s.applicationRepo.UpdateStatus(applicationID, application.Status) // Rollback về status cũ
-			// return nil, fmt.Errorf("application approved but failed to add student to project: %v. Status rolled back", errAdd)
-			// utils.GetLogger().Errorf("Application %s approved but failed to add student %s to project %s: %v", applicationID, updatedApplication.UserID, updatedApplication.ProjectID, errAdd)
-			// Không rollback, chỉ log lỗi, vì application vẫn được coi là approved
+	if status == "approved" && application.Status != "approved" {
+		userID := updatedApplication.UserID
+		userRepo := repositories.NewUserRepository(s.db)
+		user, err := userRepo.FindUserByID(context.Background(), userID)
+		if err != nil || user == nil {
+			log.Printf("failed to fetch user %s for notification: %v", userID, err)
 		} else {
-			userID := updatedApplication.UserID
-			userRepo := repositories.NewUserRepository(s.db)
-			user, err := userRepo.FindUserByID(context.Background(), userID)
-			if err != nil || user == nil {
-				log.Printf("failed to fetch user %s for notification: %v", userID, err)
-			} else {
-				err := s.notificationService.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!")
-				if err != nil {
-					log.Printf("failed to send email: %v", err)
-				}
+			err := s.notificationService.SendEmail(user.Email, "Application Approved", "Your application has been approved. Welcome to the project!")
+			if err != nil {
+				log.Printf("failed to send email: %v", err)
 			}
 		}
 	} else if status == "rejected" && application.Status != "rejected" {

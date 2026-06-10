@@ -1,7 +1,7 @@
-import { redirect, type Handle } from "@sveltejs/kit";
+import { redirect, json, type Handle } from "@sveltejs/kit";
 
 // List of routes that don't require authentication
-const publicRoutes = ["/login", "/register", "/api/public"];
+const publicRoutes = ["/login", "/register", "/api/public", "/api/logout"];
 
 // List of auth routes that authenticated users shouldn't access
 const authRoutes = ["/login", "/register"];
@@ -15,26 +15,14 @@ interface UserData {
   isAuthenticated: boolean;
 }
 
-// Function to decode JWT without verification (verification happens on the backend)
-function decodeJWT(token: string): UserData | null {
+function safeRedirectPath(value: string | null, fallback = "/dashboard") {
+  if (!value) return fallback;
   try {
-    // Split the token into parts
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    // Decode the payload (middle part)
-    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-
-    return {
-      id: payload.user_id || "",
-      name: payload.name || "",
-      email: payload.email || "",
-      role: payload.role || "",
-      isAuthenticated: true,
-    };
-  } catch (error) {
-    console.error("Error decoding JWT:", error);
-    return null;
+    const decoded = decodeURIComponent(value);
+    if (!decoded.startsWith("/") || decoded.startsWith("//")) return fallback;
+    return decoded;
+  } catch {
+    return fallback;
   }
 }
 
@@ -49,16 +37,25 @@ export const handle: Handle = async ({ event, resolve }) => {
     user: null,
   };
 
-  // Make token available in locals for server routes if it exists and is valid
+  // Make token available in locals only after the backend verifies it.
   if (token) {
-    const userData = decodeJWT(token);
-    if (userData) {
+    const response = await fetch("http://backend:8080/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => null);
+
+    if (response?.ok) {
+      const user = await response.json();
       event.locals = {
         token: token,
-        user: userData,
+        user: {
+          id: user.id || "",
+          name: user.name || "",
+          email: user.email || "",
+          role: user.role || "",
+          isAuthenticated: true,
+        } satisfies UserData,
       };
     } else {
-      // Token is invalid, clear it
       cookies.delete("auth_token", { path: "/" });
     }
   }
@@ -67,11 +64,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Redirect them to dashboard instead
   if (event.locals.user && authRoutes.some((route) => path.startsWith(route))) {
     // Don't redirect if they're already being redirected somewhere else
-    const redirectParam = url.searchParams.get("redirectTo");
-    if (redirectParam) {
-      throw redirect(303, decodeURIComponent(redirectParam));
-    }
-    throw redirect(303, "/dashboard");
+    throw redirect(303, safeRedirectPath(url.searchParams.get("redirectTo")));
   }
 
   // CASE 2: Unauthenticated users trying to access protected routes
@@ -80,6 +73,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     !event.locals.user &&
     !publicRoutes.some((route) => path.startsWith(route))
   ) {
+    if (path.startsWith("/api/")) {
+      return json({ error: "Unauthorized" }, { status: 401 });
+    }
     const redirectTo = encodeURIComponent(path);
     throw redirect(303, `/login?redirectTo=${redirectTo}`);
   }

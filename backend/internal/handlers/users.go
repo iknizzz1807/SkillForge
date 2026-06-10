@@ -77,6 +77,7 @@ func (h *UserHandler) UpdateCurrentUser(c *gin.Context) {
 	}
 
 	// Sử dụng FormFile thay vì ShouldBindJSON để xử lý multipart form
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, services.MaxAvatarSize+1024*1024)
 	name := c.PostForm("name")
 	email := c.PostForm("email")
 	title := c.PostForm("title")

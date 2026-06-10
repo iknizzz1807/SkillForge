@@ -18,7 +18,6 @@
   const project = $derived(data.project);
   const userId = $derived(data.id);
   const role = $derived(data.role);
-  const token = $derived(data.token);
 
   let socket: any;
   let tasks = $state<
@@ -433,7 +432,7 @@
         await fetchTeamMembers();
 
         // Setup WebSocket connection with callback for data updates
-        socket = setupWebSocket(project.id, userId, token || "", (data: any) => {
+        socket = setupWebSocket(project.id, userId, (data: any) => {
           if (data.tasks) {
             // Update tasks and ensure UI reflects the changes
             tasks = data.tasks;

@@ -23,6 +23,7 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 
 // Register xử lý endpoint POST /auth/register (nhận multipart/form-data)
 func (h *AuthHandler) Register(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, services.MaxAvatarSize+1024*1024)
 	// Parse multipart form
 	err := c.Request.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {

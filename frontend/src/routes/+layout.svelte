@@ -13,7 +13,6 @@
   let name: string = $state("");
   let avatarUrl: string = $state("");
   let userId: string = $state("");
-  let token: string = $state("");
 
   $effect(() => {
     if (data.role !== null && data.role !== undefined) {
@@ -21,7 +20,6 @@
       name = data.userName ?? "";
       avatarUrl = data.avatarUrl ?? "";
       userId = data.id || "";
-      token = data.token || "";
     }
   });
 
@@ -54,6 +52,6 @@
   <title>{header}</title>
 </svelte:head>
 
-<Nav url={page.url.pathname} {role} {name} {avatarUrl} {userId} {token}>
+<Nav url={page.url.pathname} {role} {name} {avatarUrl} {userId}>
   {@render children()}
 </Nav>

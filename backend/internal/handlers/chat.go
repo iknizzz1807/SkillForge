@@ -57,6 +57,7 @@ func (ch *ChatHandler) GetGroupInfo(c *gin.Context) {
 }
 
 func (ch *ChatHandler) UploadChatFile(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, services.MaxChatFileSize+1024*1024)
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})

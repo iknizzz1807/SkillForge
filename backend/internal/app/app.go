@@ -76,6 +76,7 @@ func Run() {
 		repositories.NewFeedbackRepository(db),
 		repositories.NewProjectRepository(db),
 		repositories.NewUserRepository(db),
+		db,
 	)
 	matchingService := services.NewMatchingService(db, aiClient)
 	chatService := services.NewChatService(repositories.NewChatRepository(db))

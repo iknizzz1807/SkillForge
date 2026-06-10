@@ -61,7 +61,7 @@ func TestAIClient_Non200Response(t *testing.T) {
 
 	client := integrations.NewAIClient(server.URL)
 	score, err := client.MatchSkills("Go", "Python")
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Equal(t, float64(0), score)
 }
 

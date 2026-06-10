@@ -10,34 +10,39 @@ package integrations
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 )
 
 type AIClient struct {
 	// url là địa chỉ của dịch vụ AI (ví dụ: http://localhost:8000)
-	url string
+	url    string
+	client *http.Client
 }
 
 // NewAIClient khởi tạo AIClient với URL
 // Input: url (string) - URL của FastAPI server
 // Return: *AIClient - con trỏ đến AIClient
 func NewAIClient(url string) *AIClient {
-	return &AIClient{url}
+	return &AIClient{
+		url:    url,
+		client: &http.Client{Timeout: 10 * time.Second},
+	}
 }
 
 type MatchingRequest struct {
-    Student_infos string `json:"student_infos"`
-    Project_infos string `json:"project_infos"`
+	Student_infos string `json:"student_infos"`
+	Project_infos string `json:"project_infos"`
 }
 
 type MatchingResponse struct {
 	MatchScore float64 `json:"match_score"`
 }
 
-
 type MatchingRequest2 struct {
-    Student_infos string `json:"student_infos"`
-    Project_infos []string `json:"project_infos"`
+	Student_infos string   `json:"student_infos"`
+	Project_infos []string `json:"project_infos"`
 }
 
 type MatchingResponse2 struct {
@@ -51,7 +56,7 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	// Tạo payload JSON
 	payload := MatchingRequest{
 		Student_infos: userInfo,
-		Project_infos: projectInfo,	
+		Project_infos: projectInfo,
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -59,11 +64,14 @@ func (c *AIClient) MatchSkills(userInfo, projectInfo string) (float64, error) {
 	}
 
 	// Gửi POST request tới FastAPI
-	resp, err := http.Post(c.url+"/matching", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := c.client.Post(c.url+"/matching", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return 0, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return 0, fmt.Errorf("AI service returned status %d", resp.StatusCode)
+	}
 
 	// Decode response
 	var result MatchingResponse
@@ -80,18 +88,21 @@ func (c *AIClient) MatchSkillsWithProject(userInfo string, projectInfos []string
 	// Tạo payload JSON
 	payload := &MatchingRequest2{
 		Student_infos: userInfo,
-		Project_infos: projectInfos,	
+		Project_infos: projectInfos,
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
 	// Gửi POST request tới FastAPI
-	resp, err := http.Post(c.url+"/matching2", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := c.client.Post(c.url+"/matching2", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("AI service returned status %d", resp.StatusCode)
+	}
 	// Decode response
 	var result MatchingResponse2
 	err = json.NewDecoder(resp.Body).Decode(&result)

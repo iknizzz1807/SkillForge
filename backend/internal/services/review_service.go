@@ -39,6 +39,18 @@ func (s *ReviewService) SubmitReview(userID, taskID string, score int, comment s
 	}
 
 	// Tạo review mới
+	taskRepo := repositories.NewTaskRepository(s.db)
+	task, err := taskRepo.FindTaskByID(context.Background(), taskID)
+	if err != nil || task == nil {
+		return nil, errors.New("task not found")
+	}
+
+	taskService := NewTaskService(s.db, nil, nil)
+	hasAccess, err := taskService.CheckProjectAccess(task.ProjectID, userID)
+	if err != nil || !hasAccess {
+		return nil, errors.New("permission denied to review this task")
+	}
+
 	review := &models.Review{
 		ID:        utils.GenerateUUID(),
 		UserID:    userID,
@@ -50,7 +62,7 @@ func (s *ReviewService) SubmitReview(userID, taskID string, score int, comment s
 
 	// Lưu review vào database
 	reviewRepo := repositories.NewReviewRepository(s.db)
-	err := reviewRepo.InsertReview(context.Background(), review)
+	err = reviewRepo.InsertReview(context.Background(), review)
 	if err != nil {
 		return nil, err
 	}

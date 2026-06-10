@@ -152,7 +152,7 @@
         formData.append("avatar", selectedFile);
       }
 
-      const response = await fetch("/api/user", {
+      const response = await fetch("/api/profile", {
         method: "PUT",
         body: formData,
       });

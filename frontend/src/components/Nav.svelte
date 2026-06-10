@@ -10,7 +10,6 @@
     name,
     avatarUrl,
     userId,
-    token = "",
     children,
   }: {
     url: string;
@@ -18,7 +17,6 @@
     name: string;
     avatarUrl: string;
     userId: string;
-    token?: string;
     children: Snippet;
   } = $props();
 
@@ -36,6 +34,7 @@
   // Danh sách thông báo
   let notifications: any[] = $state([]);
   let ws: WebSocket | null = null;
+  let notificationReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   // Invitations count
   let invitationCount: number = $state(0);
 
@@ -83,9 +82,10 @@
     // Add global click listener when component mounts
     document.addEventListener("click", handleClickOutside);
 
+    let shouldReconnect = true;
     if (browser && userId) {
       const connectWs = () => {
-        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}?token=${token}`);
+        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}`);
         
         ws.onmessage = (event) => {
           try {
@@ -124,7 +124,9 @@
         };
 
         ws.onclose = () => {
-          setTimeout(connectWs, 5000); // Try to reconnect
+          if (shouldReconnect) {
+            notificationReconnectTimer = setTimeout(connectWs, 5000);
+          }
         };
       };
       connectWs();
@@ -148,7 +150,9 @@
 
     // Clean up listener when component is destroyed
     return () => {
+      shouldReconnect = false;
       document.removeEventListener("click", handleClickOutside);
+      if (notificationReconnectTimer) clearTimeout(notificationReconnectTimer);
       if (ws) {
         ws.close();
       }

@@ -20,7 +20,6 @@
     created_at: string;
   };
 
-  let token = $derived(data.token);
   let user_id = $derived(data.id);
 
   let projectsDisplay: ProjectDisplay[] = $state((() => data.projects)());
@@ -66,9 +65,6 @@
 
       // Gọi API để lấy danh sách thành viên
       const response = await fetch(`/api/projects/${projectId}/students`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {
@@ -1268,9 +1264,6 @@
         `/api/projects/${projectToLeave.id}/students/${user_id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -1317,9 +1310,6 @@
         `/api/projects/${currentProject.id}/students/${studentToRemove.id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -1478,9 +1468,6 @@
 
       const response = await fetch(`/api/projects/${currentProject.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {
@@ -1530,7 +1517,6 @@
         }),
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
 

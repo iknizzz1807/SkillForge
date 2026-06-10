@@ -5,7 +5,6 @@
 
   let role: string | null | undefined = $derived(data.role);
 
-  // const token = data.token;
 
   let project = $derived(data.project);
   // Biến hasJoined và hasApplied là để dùng khi role là student, nếu đã joined hoặc apply thì sẽ không hiện form

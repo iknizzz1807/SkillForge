@@ -17,6 +17,7 @@ import (
 
 // Định nghĩa đường dẫn lưu avatar ở đây hoặc trong config
 const AvatarStoragePath = "./storage/avatars"
+const MaxAvatarSize = 10 * 1024 * 1024
 
 type FileService struct {
 	// fileRepo *repositories.FileRepository
@@ -41,6 +42,9 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	}
 	if file == nil || header == nil {
 		return "", errors.New("file data is missing")
+	}
+	if header.Size > MaxAvatarSize {
+		return "", errors.New("file too large (max 10MB)")
 	}
 
 	// 1. Xác định phần mở rộng file
@@ -101,12 +105,17 @@ func (s *FileService) SaveAvatar(userID string, file multipart.File, header *mul
 	defer dst.Close() // Đảm bảo file được đóng
 
 	// 7. Copy dữ liệu
-	_, err = io.Copy(dst, file)
+	limited := &io.LimitedReader{R: file, N: MaxAvatarSize + 1}
+	written, err := io.Copy(dst, limited)
 	if err != nil {
 		log.Printf("Error copying file content to %s: %v", filePath, err)
 		// Cố gắng xóa file vừa tạo nếu copy lỗi
 		os.Remove(filePath)
 		return "", errors.New("could not write file content")
+	}
+	if written > MaxAvatarSize {
+		os.Remove(filePath)
+		return "", errors.New("file too large (max 10MB)")
 	}
 
 	// 8. Trả về tên file mới thành công
@@ -154,6 +163,9 @@ func (s *FileService) FindAvatarByUserID(userID string) (string, error) {
 	user, err := s.userRepo.FindUserByID(context.Background(), userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to find user: %w", err)
+	}
+	if user == nil {
+		return "", fmt.Errorf("user not found")
 	}
 
 	// 2. Kiểm tra xem user có avatar hay không

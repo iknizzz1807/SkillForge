@@ -63,7 +63,7 @@
   let currentUserName: string = $state("");
   let currentUserAvatar: string = $state("");
   let chatWsReconnectTimer: any = null;
-  const token = $derived(data?.token || "");
+  let shouldReconnectChatWs = true;
 
   onMount(async () => {
     currentUserId = data?.id || "";
@@ -71,9 +71,7 @@
     currentUserAvatar = data?.avatarUrl || `${PUBLIC_API_URL}/avatars/${data?.id}`;
 
     try {
-      const res = await fetch(`${PUBLIC_API_URL}/api/chats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/chats`);
       if (res.ok) {
         const rooms = await res.json() || [];
         chatRooms = rooms.map((r: any) => ({
@@ -92,6 +90,7 @@
   });
 
   onDestroy(() => {
+    shouldReconnectChatWs = false;
     if (chatWsReconnectTimer) clearTimeout(chatWsReconnectTimer);
     if (ws) {
       ws.close();
@@ -100,9 +99,7 @@
 
   async function loadRoomDetails(roomId: string) {
     try {
-      const res = await fetch(`${PUBLIC_API_URL}/api/chats/${roomId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/chats/${roomId}`);
       if (res.ok) {
         const roomData = await res.json();
         const rawMessages: ChatMessage[] = roomData.messages || [];
@@ -181,7 +178,7 @@
     const userId = currentUserId;
     if (!userId) return;
 
-    ws = new WebSocket(`${PUBLIC_WS_URL}/ws/chats/${projectId}/${userId}?token=${token}`);
+    ws = new WebSocket(`${PUBLIC_WS_URL}/ws/chats/${projectId}/${userId}`);
 
     ws.onmessage = (event) => {
       try {
@@ -236,6 +233,7 @@
     };
 
     ws.onclose = () => {
+      if (!shouldReconnectChatWs) return;
       const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
       chatWsReconnectTimer = setTimeout(() => {
         connectChatWs(projectId, retryCount + 1);
@@ -294,8 +292,7 @@
         formData.append("file", file);
 
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${PUBLIC_API_URL}/api/chats/upload`, true);
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.open("POST", `/api/chats/upload`, true);
 
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {

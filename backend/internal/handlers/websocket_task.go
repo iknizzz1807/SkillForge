@@ -47,6 +47,11 @@ func NewWebSocketTaskHandler(
 func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 	tokenString := c.Query("token")
 	if tokenString == "" {
+		if cookieToken, err := c.Cookie("auth_token"); err == nil {
+			tokenString = cookieToken
+		}
+	}
+	if tokenString == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 		return
 	}
@@ -66,6 +71,18 @@ func (h *WebSocketTaskHandler) HandleConnection(c *gin.Context) {
 	projectID := c.Param("projectID")
 	if projectID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing project ID"})
+		return
+	}
+
+	pathUserID := c.Param("userID")
+	if pathUserID != "" && pathUserID != userID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	hasAccess, err := h.taskService.CheckProjectAccess(projectID, userID)
+	if err != nil || !hasAccess {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}
 	room := projectID
@@ -174,6 +191,7 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 				sendErrorMessage(conn, "Failed to unmarshal task update")
 				continue
 			}
+			req.ProjectID = projectID
 
 			log.Printf("Updating task: %+v", req)
 			_, err = h.taskService.UpdateTask(req.TaskID, userID, &req)
@@ -194,7 +212,14 @@ func (h *WebSocketTaskHandler) handleMessages(room, userID, projectID string, co
 			}
 
 			log.Printf("Deleting task: %s", taskID)
-			err := h.taskService.DeleteTask(taskID, userID)
+			task, err := h.taskService.GetTaskByID(taskID)
+			if err != nil || task == nil || task.ProjectID != projectID {
+				log.Printf("Error authorizing task delete: %v", err)
+				sendErrorMessage(conn, "Task not found")
+				continue
+			}
+
+			err = h.taskService.DeleteTask(taskID, userID)
 			if err != nil {
 				log.Printf("Error deleting task: %v", err)
 				sendErrorMessage(conn, "Failed to delete task")

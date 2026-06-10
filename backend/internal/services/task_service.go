@@ -56,6 +56,36 @@ func (s *TaskService) GetTasksByProjectID(projectID string) ([]*models.Task, err
 	return tasks, nil
 }
 
+func (s *TaskService) GetTaskByID(taskID string) (*models.Task, error) {
+	if taskID == "" {
+		return nil, errors.New("task ID cannot be empty")
+	}
+	taskRepo := repositories.NewTaskRepository(s.db)
+	return taskRepo.FindTaskByID(context.Background(), taskID)
+}
+
+func (s *TaskService) CheckProjectAccess(projectID, userID string) (bool, error) {
+	if projectID == "" || userID == "" {
+		return false, errors.New("project ID and user ID are required")
+	}
+
+	projectRepo := repositories.NewProjectRepository(s.db)
+	project, err := projectRepo.FindProjectByID(context.Background(), projectID)
+	if err != nil {
+		return false, err
+	}
+	if project.CreatedByID == userID {
+		return true, nil
+	}
+
+	projectStudentRepo := repositories.NewProjectStudentRepository(s.db)
+	membership, err := projectStudentRepo.FindByProjectAndStudent(context.Background(), projectID, userID)
+	if err != nil {
+		return false, err
+	}
+	return membership != nil, nil
+}
+
 // CreateTasks tạo nhiều tasks mới cho một project
 // Input: projectID (string), taskInputs ([]TaskInput)
 // Return: []*models.Task (danh sách tasks vừa tạo), error (nếu có lỗi)
@@ -80,9 +110,9 @@ func (s *TaskService) CreateTasks(projectID, userID string, taskInputs []models.
 			Title:       input.Title,
 			Description: input.Description,
 			Note:        input.Note,
-			AssignedTo: input.AssignedTo,
-			Status:     "todo",
-			FinishedBy: "",
+			AssignedTo:  input.AssignedTo,
+			Status:      "todo",
+			FinishedBy:  "",
 			CreatedAt:   time.Now(),
 		}
 		tasks = append(tasks, task)
@@ -121,6 +151,9 @@ func (s *TaskService) UpdateTask(taskID, userID string, taskUpdate *models.TaskU
 	task, err := taskRepo.FindTaskByID(context.Background(), taskID)
 	if err != nil || task == nil {
 		return nil, errors.New("task not found")
+	}
+	if taskUpdate.ProjectID != "" && task.ProjectID != taskUpdate.ProjectID {
+		return nil, errors.New("task does not belong to project")
 	}
 
 	oldStatus := task.Status

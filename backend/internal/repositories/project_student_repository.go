@@ -14,6 +14,7 @@ import (
 	"github.com/iknizzz1807/SkillForge/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ProjectStudentRepository struct {
@@ -25,8 +26,13 @@ type ProjectStudentRepository struct {
 // Input: db (*mongo.Database)
 // Return: *ProjectStudentRepository - con trỏ đến ProjectStudentRepository
 func NewProjectStudentRepository(db *mongo.Database) *ProjectStudentRepository {
+	collection := db.Collection("project_student")
+	_, _ = collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.D{{Key: "project_id", Value: 1}, {Key: "student_id", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	})
 	return &ProjectStudentRepository{
-		collection: db.Collection("project_student"),
+		collection: collection,
 	}
 }
 

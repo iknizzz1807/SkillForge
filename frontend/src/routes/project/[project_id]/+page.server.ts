@@ -31,7 +31,6 @@ export const load = (async ({ params, fetch, locals }) => {
 
     return {
       project,
-      token,
       // Add any other data you want to return
     };
   } catch (err) {

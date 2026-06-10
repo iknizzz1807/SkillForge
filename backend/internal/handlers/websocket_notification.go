@@ -50,6 +50,11 @@ func (h *WebSocketNotificationHandler) HandleNotificationConnection(c *gin.Conte
 
 	tokenString := c.Query("token")
 	if tokenString == "" {
+		if cookieToken, err := c.Cookie("auth_token"); err == nil {
+			tokenString = cookieToken
+		}
+	}
+	if tokenString == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 		return
 	}

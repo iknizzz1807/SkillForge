@@ -130,10 +130,13 @@
             await update();
 
             // If registration was successful
-            if (result.type === "success") {
+            if (result.type === "redirect") {
+              await invalidateAll();
+              goto(result.location);
+            } else if (result.type === "success") {
               registerSuccess = true;
               await invalidateAll();
-              goto("/login");
+              goto("/dashboard");
             } else {
               // If there was an error, stop loading state
               isSubmitting = false;

@@ -150,16 +150,18 @@ func (s *InvitationService) RespondToInvitation(invitationID, studentID, status 
 		return errors.New("invitation has already been responded to")
 	}
 
-	if err := invitationRepo.UpdateStatus(ctx, invitationID, status); err != nil {
-		return err
-	}
-
 	if status == "accepted" {
 		projectService := NewProjectService(s.db, nil, nil, nil, nil)
 		if err := projectService.AddStudentToProject(invitation.ProjectID, studentID); err != nil {
 			return err
 		}
+	}
 
+	if err := invitationRepo.UpdateStatus(ctx, invitationID, status); err != nil {
+		return err
+	}
+
+	if status == "accepted" {
 		if s.gamificationService != nil {
 			go func() {
 				defer func() {

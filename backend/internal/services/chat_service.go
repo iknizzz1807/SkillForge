@@ -16,6 +16,7 @@ import (
 )
 
 const ChatFilesPath = "./storage/chat_files"
+const MaxChatFileSize = 10 * 1024 * 1024
 
 type ChatService struct {
 	chatRepo *repositories.ChatRepository
@@ -84,7 +85,7 @@ func (s *ChatService) SaveChatFile(file multipart.File, header *multipart.FileHe
 		return "", "", errors.New("invalid file type")
 	}
 
-	if header.Size > 10*1024*1024 {
+	if header.Size > MaxChatFileSize {
 		return "", "", errors.New("file too large (max 10MB)")
 	}
 
@@ -103,10 +104,15 @@ func (s *ChatService) SaveChatFile(file multipart.File, header *multipart.FileHe
 	}
 	defer dst.Close()
 
-	_, err = io.Copy(dst, file)
+	limited := &io.LimitedReader{R: file, N: MaxChatFileSize + 1}
+	written, err := io.Copy(dst, limited)
 	if err != nil {
 		os.Remove(filePath)
 		return "", "", fmt.Errorf("could not write file content: %w", err)
+	}
+	if written > MaxChatFileSize {
+		os.Remove(filePath)
+		return "", "", errors.New("file too large (max 10MB)")
 	}
 
 	return newFilename, header.Filename, nil
