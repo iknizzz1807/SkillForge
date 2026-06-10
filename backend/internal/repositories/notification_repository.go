@@ -45,7 +45,7 @@ func (r *NotificationRepository) GetUserNotifications(ctx context.Context, userI
 	// Tạo options để sort theo thời gian tạo giảm dần (mới nhất lên đầu)
 	opts := options.Find().SetSort(bson.M{"created_at": -1})
 
-	cursor, err := r.collection.Find(ctx, bson.M{"to": userID}, opts)
+	cursor, err := r.collection.Find(ctx, bson.M{"to_user_id": userID}, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -84,11 +84,10 @@ func (s *ApplicationService) ApplyProject(userID, projectID, motivation, detaile
 		return nil, errors.New("project is not open for applications")
 	}
 
-	// Fetch user information to get the user name
 	userRepo := repositories.NewUserRepository(s.db)
 	user, err := userRepo.FindUserByID(ctx, userID)
-	if err != nil {
-		return nil, errors.New("failed to fetch user information: " + err.Error())
+	if err != nil || user == nil {
+		return nil, errors.New("user not found")
 	}
 
 	// Create application with project name and user name
