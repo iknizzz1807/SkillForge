@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/iknizzz1807/SkillForge/internal/integrations"
 	"github.com/iknizzz1807/SkillForge/internal/services"
+	"github.com/iknizzz1807/SkillForge/internal/utils"
 )
 
 // WebSocketHandler xử lý các kết nối WebSocket
@@ -47,8 +48,20 @@ func (h *WebSocketNotificationHandler) HandleNotificationConnection(c *gin.Conte
 		return
 	}
 
-	tokenUserID := c.GetString("userID")
-	if tokenUserID == "" || tokenUserID != userID {
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+		return
+	}
+
+	claims, err := utils.ParseToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	tokenUserID, ok := claims["user_id"].(string)
+	if !ok || tokenUserID == "" || tokenUserID != userID {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}

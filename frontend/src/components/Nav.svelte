@@ -83,7 +83,8 @@
 
     if (browser && userId) {
       const connectWs = () => {
-        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}`);
+        const token = localStorage.getItem("token") || "";
+        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}?token=${token}`);
         
         ws.onmessage = (event) => {
           try {

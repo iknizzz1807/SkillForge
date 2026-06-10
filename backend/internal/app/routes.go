@@ -92,6 +92,7 @@ func RegisterRoutes(
 	r.POST("/auth/login", authHandler.Login)
 	r.GET("/ws/task/:projectID/:userID", websocketTaskHanlder.HandleConnection)
 	r.GET("/ws/chats/:projectID/:userID", websocketChatHandler.HandleConnection)
+	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Public static file routes
 	r.Static("/storage", "./storage")
@@ -110,9 +111,6 @@ func RegisterRoutes(
 
 	// 4. Auth middleware
 	r.Use(middleware.AuthMiddleware())
-
-	// WebSocket notification route (must be after auth middleware to access userID from context)
-	r.GET("/ws/notifi/:userID", websocketNotificationHandler.HandleNotificationConnection)
 
 	// Nhóm route cần auth (dùng middleware nếu cần)
 	api := r.Group("/api")

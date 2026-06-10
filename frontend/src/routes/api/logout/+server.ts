@@ -6,7 +6,7 @@ export const POST = async ({ cookies, url, locals }) => {
 
   if (token) {
     try {
-      await fetch("http://backend:8080/auth/logout", {
+      await fetch("http://backend:8080/api/logout", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
