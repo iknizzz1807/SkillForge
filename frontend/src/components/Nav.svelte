@@ -10,6 +10,7 @@
     name,
     avatarUrl,
     userId,
+    token = "",
     children,
   }: {
     url: string;
@@ -17,6 +18,7 @@
     name: string;
     avatarUrl: string;
     userId: string;
+    token?: string;
     children: Snippet;
   } = $props();
 
@@ -83,7 +85,6 @@
 
     if (browser && userId) {
       const connectWs = () => {
-        const token = localStorage.getItem("token") || "";
         ws = new WebSocket(`${PUBLIC_WS_URL}/ws/notifi/${userId}?token=${token}`);
         
         ws.onmessage = (event) => {
@@ -177,6 +178,7 @@
       // Xóa dữ liệu lưu trữ cục bộ
       if (browser) {
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         sessionStorage.clear();
       }
 

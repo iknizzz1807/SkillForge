@@ -16,12 +16,14 @@ export const load = (async (event) => {
     userName: string | null;
     avatarUrl: string | null;
     title: string | null;
+    token: string | null;
   } = {
     role: null,
     id: null,
     userName: null,
     avatarUrl: null,
     title: null,
+    token: null,
   };
 
   // Only fetch user data if we have an auth token
@@ -45,6 +47,7 @@ export const load = (async (event) => {
           title: user.title, // Include title from backend
           // Keep using the SvelteKit API endpoint for avatar
           avatarUrl: `${origin}/api/avatars/${user.id}`,
+          token,
         };
       }
     } catch (error) {

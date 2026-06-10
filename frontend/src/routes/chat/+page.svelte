@@ -63,6 +63,7 @@
   let currentUserName: string = $state("");
   let currentUserAvatar: string = $state("");
   let chatWsReconnectTimer: any = null;
+  const token = $derived(data?.token || "");
 
   onMount(async () => {
     currentUserId = data?.id || "";
@@ -70,7 +71,6 @@
     currentUserAvatar = data?.avatarUrl || `${PUBLIC_API_URL}/avatars/${data?.id}`;
 
     try {
-      const token = localStorage.getItem('token') || "";
       const res = await fetch(`${PUBLIC_API_URL}/api/chats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -100,7 +100,6 @@
 
   async function loadRoomDetails(roomId: string) {
     try {
-      const token = localStorage.getItem('token') || "";
       const res = await fetch(`${PUBLIC_API_URL}/api/chats/${roomId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -182,7 +181,6 @@
     const userId = currentUserId;
     if (!userId) return;
 
-    const token = localStorage.getItem('token') || "";
     ws = new WebSocket(`${PUBLIC_WS_URL}/ws/chats/${projectId}/${userId}?token=${token}`);
 
     ws.onmessage = (event) => {
@@ -292,7 +290,6 @@
       uploadProgress = 0;
 
       try {
-        const token = localStorage.getItem('token') || "";
         const formData = new FormData();
         formData.append("file", file);
 

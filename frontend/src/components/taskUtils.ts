@@ -309,11 +309,10 @@ async function initSortable(
 }
 
 // Setup WebSocket connection
-function setupWebSocket(projectId: any, userId: any, onDataReceived: any) {
+function setupWebSocket(projectId: any, userId: any, token: string, onDataReceived: any) {
   if (typeof window === "undefined") return null;
 
   try {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     let wsUrl = `${PUBLIC_WS_URL}/ws/task/${projectId}/${userId}?token=${token}`;
     
     console.log("Connecting with WebSocket to:", wsUrl);

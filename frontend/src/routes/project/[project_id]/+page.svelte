@@ -433,7 +433,7 @@
         await fetchTeamMembers();
 
         // Setup WebSocket connection with callback for data updates
-        socket = setupWebSocket(project.id, userId, (data: any) => {
+        socket = setupWebSocket(project.id, userId, token || "", (data: any) => {
           if (data.tasks) {
             // Update tasks and ensure UI reflects the changes
             tasks = data.tasks;
