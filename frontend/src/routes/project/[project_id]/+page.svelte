@@ -156,36 +156,31 @@
       return;
     }
 
-    // Temporarily remove the task from the local array to prevent duplication
     const taskToMove = tasks.find((t) => t.id === taskId);
     if (!taskToMove) {
       console.error("Task not found for movement:", taskId);
       return;
     }
 
-    // Important: Remove task from local array (prevents duplicate rendering)
+    // Optimistic update: immediately move the task locally
     tasks = tasks.filter((t) => t.id !== taskId);
+    tasks = [...tasks, { ...taskToMove, status: toStatus }];
 
-    // Then add it back with the new status
-    setTimeout(() => {
-      tasks = [...tasks, { ...taskToMove, status: toStatus }];
+    // Reinitialize sortable after Svelte re-renders
+    setTimeout(initSortable, 50);
 
-      // Reinitialize sortable after state update
-      setTimeout(initSortable, 50);
-
-      // Send update to server
-      socket.emit("message", {
-        type: "update",
-        content: {
-          taskId: taskId,
-          status: toStatus,
-          title: taskToMove.title,
-          description: taskToMove.description || "",
-          note: taskToMove.note || "",
-          assigned_to: taskToMove.assigned_to || "",
-        },
-      });
-    }, 10);
+    // Send update to server immediately
+    socket.emit("message", {
+      type: "update",
+      content: {
+        taskId: taskId,
+        status: toStatus,
+        title: taskToMove.title,
+        description: taskToMove.description || "",
+        note: taskToMove.note || "",
+        assigned_to: taskToMove.assigned_to || "",
+      },
+    });
   }
 
   function updateTaskPosition(taskId: string, newStatus: string) {
