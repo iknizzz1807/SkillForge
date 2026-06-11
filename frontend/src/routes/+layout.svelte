@@ -40,6 +40,9 @@
       } else if (page.url.pathname.startsWith("/profile")) {
         header = "Your Profile";
         description = "Manage your personal information";
+      } else if (page.url.pathname.startsWith("/talent")) {
+        header = "Talent Pool";
+        description = "Browse and search for student talent";
       } else if (page.url.pathname.startsWith("/analytics")) {
         header = "Analytics";
         description = "Track your performance and skills";
