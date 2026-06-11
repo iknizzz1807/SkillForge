@@ -29,7 +29,7 @@
   let feedbacksError = $state(false);
 
   let activeProjectsCount = $derived(
-    projects.filter((p) => p.status === "open").length
+    projects.filter((p) => p.status !== "completed" && p.status !== "close").length
   );
 
   let completedProjectsCount = $derived(
@@ -50,15 +50,13 @@
     return projects.reduce((sum, p) => sum + (p.current_member || 0), 0);
   });
 
-  let completedTasksCount = $derived.by(() => {
-    if (xpData && xpData.completed_tasks != null) return xpData.completed_tasks;
-    return null;
-  });
+  let completedTasksCount = $derived(
+    projects.filter((p) => p.status === "completed" || p.status === "close").length
+  );
 
-  let pendingTasksCount = $derived.by(() => {
-    if (xpData && xpData.pending_tasks != null) return xpData.pending_tasks;
-    return null;
-  });
+  let pendingTasksCount = $derived(
+    projects.filter((p) => p.status !== "completed" && p.status !== "close").length
+  );
 
   function getCompletionPercent(status: string): number {
     switch (status?.toLowerCase()) {
@@ -443,13 +441,13 @@
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Pending Tasks</h3>
           <p class="text-xl mt-1 accent-color">
-            {pendingTasksCount ?? "—"}
+            {pendingTasksCount}
           </p>
         </div>
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Completed Tasks</h3>
           <p class="text-xl mt-1 accent-color">
-            {completedTasksCount ?? "—"}
+            {completedTasksCount}
           </p>
         </div>
       {:else}
