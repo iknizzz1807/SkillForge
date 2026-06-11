@@ -58,6 +58,13 @@
   let ws: WebSocket | null = $state(null);
   let isUploading: boolean = $state(false);
   let uploadProgress: number = $state(0);
+  let isPageVisible = $state(true);
+
+  let sortedRooms = $derived([...filteredRooms].sort((a, b) => {
+    const tA = a.lastMessageTime || a.created_at || "";
+    const tB = b.lastMessageTime || b.created_at || "";
+    return tB.localeCompare(tA);
+  }));
 
   let currentUserId: string = $state("");
   let currentUserName: string = $state("");
@@ -66,6 +73,9 @@
   let shouldReconnectChatWs = true;
 
   onMount(async () => {
+    document.addEventListener("visibilitychange", () => {
+      isPageVisible = !document.hidden;
+    });
     currentUserId = data?.id || "";
     currentUserName = data?.userName || "";
     currentUserAvatar = data?.avatarUrl || `${PUBLIC_API_URL}/avatars/${data?.id}`;
@@ -160,8 +170,19 @@
     }
   });
 
+  function updateRoomMeta(roomId: string, lastMsg: string, lastTime: string) {
+    chatRooms = chatRooms.map(r =>
+      r.id === roomId ? { ...r, lastMessage: lastMsg, lastMessageTime: lastTime } : r
+    );
+  }
+
   async function selectRoom(room: ChatRoom) {
     if (chatWsReconnectTimer) clearTimeout(chatWsReconnectTimer);
+    if (selectedRoom?.id !== room.id) {
+      chatRooms = chatRooms.map(r =>
+        r.id === room.id ? { ...r, unread: 0 } : r
+      );
+    }
     selectedRoom = room;
     await loadRoomDetails(room.id);
     connectChatWs(room.id);
@@ -187,6 +208,10 @@
           const sender = teamMembers.find(m => m.id === msg.sender_id);
 
           const fileUrl = msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "";
+          const displayContent = msg.file_name || msg.content || "";
+          const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          updateRoomMeta(projectId, displayContent, timeStr);
 
           if (msg.sender_id === currentUserId && msg.client_id) {
             const optIndex = messages.findIndex(m => m.id === msg.client_id);
@@ -222,6 +247,12 @@
             avatar: sender?.avatar || `${PUBLIC_API_URL}/avatars/${msg.sender_id}`,
           }];
 
+          if (msg.sender_id !== currentUserId && !isPageVisible) {
+            chatRooms = chatRooms.map(r =>
+              r.id === projectId ? { ...r, unread: (r.unread || 0) + 1 } : r
+            );
+          }
+
           setTimeout(() => {
             const container = document.getElementById("chat-messages");
             if (container) container.scrollTop = container.scrollHeight;
@@ -248,7 +279,7 @@
   function sendMessage() {
     if (!messageInput.trim()) return;
 
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (ws && ws.readyState === WebSocket.OPEN && selectedRoom) {
       const optimisticId = "opt_" + Date.now();
       const optMsg = {
         id: optimisticId,
@@ -261,6 +292,7 @@
       };
       messages = [...messages, optMsg];
 
+      updateRoomMeta(selectedRoom.id, messageInput.trim(), new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       ws.send(JSON.stringify({ content: messageInput.trim(), type: "text", client_id: optimisticId }));
 
       setTimeout(() => {
@@ -432,11 +464,11 @@
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar -mx-1">
-        {#if filteredRooms.length === 0}
+        {#if sortedRooms.length === 0}
           <div class="text-center text-gray-400 text-xs py-8">No conversations found</div>
         {/if}
         <div class="space-y-0.5 px-1">
-          {#each filteredRooms as room}
+          {#each sortedRooms as room}
             <div
               class={`p-2 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center transition-colors ${
                 selectedRoom?.id === room.id ? "bg-[#6b48ff] bg-opacity-10 border-l-2 border-[#6b48ff]" : "border-l-2 border-transparent"
