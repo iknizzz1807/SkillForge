@@ -11,34 +11,45 @@ export const load = (async ({ params, locals, fetch }) => {
     throw redirect(302, "/profile");
   }
 
-  let userName = "";
-  let userTitle = "";
-  let userAvatar = "";
+  let profile: Record<string, any> = {};
 
   try {
     const response = await fetch(
       `${BACKEND_URL}/api/users/${target_user_id}/profile`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     if (response.ok) {
-      const data = await response.json();
-      const u = data.user || {};
-      userName = u.name || "";
-      userTitle = u.title || "";
-      userAvatar = u.avatar_name || "";
+      const json = await response.json();
+      profile = json;
     }
   } catch (error) {
     console.error("Failed to fetch user profile:", error);
   }
 
+  const u = profile.user || {};
+  const origin = locals.token ? "" : "";
+
   return {
     id: target_user_id,
-    name: userName,
-    title: userTitle,
-    avatarUrl: userAvatar,
+    name: u.name || "",
+    title: u.title || "",
+    email: u.email || "",
+    avatarUrl: u.id ? `/api/avatars/${u.id}` : null,
+    skills: u.skills || [],
+    badges: (profile.badges || []).map((b: any) => ({
+      name: b.badge?.name ?? b.name ?? "Badge",
+      description: b.badge?.description ?? b.description ?? "",
+      icon: b.badge?.icon ?? b.icon ?? "🏅",
+      date: b.awarded_at ?? "",
+    })),
+    projects: (profile.projects || []).map((p: any) => ({
+      title: p.title ?? p.name ?? "Untitled",
+      status: p.status ?? "",
+      end_time: p.end_time ?? "",
+      description: p.description ?? "",
+    })),
+    feedbacks: profile.feedbacks || [],
   };
 }) satisfies PageServerLoad;

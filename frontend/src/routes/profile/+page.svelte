@@ -314,7 +314,13 @@
         const res = await fetch(`/api/badges/${data.id}`);
         if (res.ok) {
           const json = await res.json();
-          userBadges = Array.isArray(json) ? json : json.badges ?? [];
+          userBadges = (Array.isArray(json) ? json : json.badges ?? []).map((b: any) => ({
+            name: b.badge?.name ?? b.name ?? "Badge",
+            description: b.badge?.description ?? b.description ?? "",
+            icon: b.badge?.icon ?? b.icon ?? "🏅",
+            achieved: true,
+            date: b.awarded_at ?? b.date ?? "",
+          }));
         }
       } catch (e) {
         console.error("Failed to fetch badges:", e);
@@ -1047,7 +1053,7 @@
               {#each userSkills as skill}
                 <div>
                   <div class="flex justify-between mb-1">
-                    <span class="text-sm font-medium">{skill.name ?? skill.skill_name ?? "Skill"}</span>
+                    <span class="text-sm font-medium">{skill.skill ?? skill.name ?? skill.skill_name ?? "Skill"}</span>
                     <span class="text-xs text-[#6b48ff]">{skill.proficiency ?? skill.level ?? ""}</span>
                   </div>
                   <div class="progress-bar">
