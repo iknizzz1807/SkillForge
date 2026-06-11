@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+/* Global card style */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+
+/* Custom scrollbar */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(107, 72, 255, 0.2);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 72, 255, 0.4);
+}
+
 /* SortableJS Kanban drag-and-drop styles */
 .task-ghost {
   opacity: 0.4;

@@ -82,7 +82,7 @@
   });
 </script>
 
-<main class="flex-1 ml-64 pr-4 pl-4 pt-4 pb-4">
+<main class="flex-1 pr-4 pl-4 pt-4 pb-4">
   <button onclick={() => goto("/talent/search")} class="text-sm text-[#6b48ff] hover:underline mb-4 flex items-center">
     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />

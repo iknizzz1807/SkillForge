@@ -149,7 +149,7 @@
   <title>Project Applications</title>
 </svelte:head>
 
-<header class="flex justify-between items-center mb-6 ml-64 pr-4 pl-4 pt-4">
+<header class="flex justify-between items-center mb-6 pr-4 pl-4 pt-4">
   <div class="flex items-center">
     <a href="/project" aria-label="Back to projects">
       <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">
@@ -239,7 +239,7 @@
   </div>
 </header>
 
-<main class="flex-1 pr-4 pl-4 ml-64">
+<main class="flex-1 pr-4 pl-4 ">
   {#if errorMessage}
     <div
       class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"

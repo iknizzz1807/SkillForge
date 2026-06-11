@@ -22,13 +22,33 @@
 
   let user_id = $derived(data.id);
 
-  let projectsDisplay: ProjectDisplay[] = $state((() => data.projects)());
+  let projects: ProjectDisplay[] = $state(data.projects);
   let applicationCount: number = $derived(data.applicationCount);
-  let errorLoadingProjects: string | null = $state((() => data.error)());
-
-  let projectsDisplayCopy = $derived(projectsDisplay);
+  let errorLoadingProjects: string | null = $derived(data.error);
 
   let filterState: string = $state("all");
+  let projectsDisplay = $derived.by(() => {
+    if (filterState === "all") return projects;
+    return projects.filter(
+      (p) => p.status.toLowerCase() === filterState
+    );
+  });
+
+  let activeCount = $derived(projects.filter((p) => p.status === "open").length);
+  let totalAllocated = $derived(projects.reduce((sum, p) => sum + p.current_member, 0));
+  let totalCapacity = $derived(projects.reduce((sum, p) => sum + p.max_member, 0));
+  let allocationPercent = $derived(totalCapacity > 0 ? Math.round((totalAllocated / totalCapacity) * 100) : 0);
+
+  let talentPool: any[] = $state([]);
+
+  $effect(() => {
+    if (data.role === "business") {
+      fetch("/api/talentpool")
+        .then((r) => r.ok ? r.json() : [])
+        .then((data) => { talentPool = Array.isArray(data) ? data : []; })
+        .catch(() => {});
+    }
+  });
 
   // Modal states
   let showEditModal: boolean = $state(false);
@@ -61,7 +81,7 @@
       showApplicantsModal = true;
 
       // Lưu lại project ID hiện tại cho modal này
-      currentProject = projectsDisplay.find((p) => p.id === projectId) || null;
+      currentProject = projects.find((p) => p.id === projectId) || null;
 
       // Gọi API để lấy danh sách thành viên
       const response = await fetch(`/api/projects/${projectId}/students`, {
@@ -1272,11 +1292,9 @@
         throw new Error(errorData.error || "Failed to leave project");
       }
 
-      // Xóa dự án khỏi danh sách hiển thị
-      projectsDisplay = projectsDisplay.filter(
+      projects = projects.filter(
         (p) => p.id !== projectToLeave?.id
       );
-      projectsDisplayCopy = projectsDisplay;
 
       // Đóng modal xác nhận
       closeLeaveProjectModal();
@@ -1326,10 +1344,8 @@
       // Đóng modal xác nhận
       closeRemoveStudentModal();
 
-      // Cập nhật số lượng thành viên hiện tại trong dự án
       if (currentProject) {
-        // Giảm số lượng thành viên trong dự án
-        projectsDisplay = projectsDisplay.map((p) => {
+        projects = projects.map((p) => {
           if (p.id === studentToRemove.projectId) {
             return {
               ...p,
@@ -1338,9 +1354,6 @@
           }
           return p;
         });
-
-        // Cập nhật bản sao dữ liệu
-        projectsDisplayCopy = projectsDisplay;
       }
 
       // Hiển thị thông báo thành công
@@ -1414,20 +1427,7 @@
     }
   });
 
-  // Thêm một computed state để lọc projects dựa trên filterState
-  $effect(() => {
-    if (filterState === "all") {
-      projectsDisplay = projectsDisplayCopy;
-    } else if (filterState === "open") {
-      projectsDisplay = projectsDisplayCopy.filter(
-        (project) => project.status.toLowerCase() === "open"
-      );
-    } else if (filterState === "close") {
-      projectsDisplay = projectsDisplayCopy.filter(
-        (project) => project.status.toLowerCase() === "close"
-      );
-    }
-  });
+
 
   // Close skills dropdown when clicking outside
   $effect(() => {
@@ -1475,11 +1475,9 @@
         throw new Error(errorData.error || "Failed to delete project");
       }
 
-      // Remove the deleted project from the display list
-      projectsDisplay = projectsDisplay.filter(
+      projects = projects.filter(
         (p) => p.id !== currentProject?.id
       );
-      projectsDisplayCopy = projectsDisplay;
 
       // Close the modal after successful deletion
       closeDeleteModal();
@@ -1525,13 +1523,10 @@
         throw new Error(errorData.error || "Failed to update project");
       }
 
-      // Update the local state with the edited project
       const updatedProject = await response.json();
-      projectsDisplay = projectsDisplay.map((p) =>
+      projects = projects.map((p) =>
         p.id === currentProject?.id ? updatedProject : p
       );
-
-      projectsDisplayCopy = projectsDisplay;
 
       // Close the modal after successful update
       closeEditModal();
@@ -1609,7 +1604,7 @@
   }
 </script>
 
-<header class="flex justify-between items-center mb-4 ml-64 pr-4 pl-4 pt-4">
+<header class="flex justify-between items-center mb-4 pr-4 pl-4 pt-4">
   <button class="btn-secondary">
     <a href="/project/application">
       <div class="flex items-center">
@@ -1648,10 +1643,9 @@
   {/if}
 </header>
 
-<main class="flex-1 pr-4 pl-4 ml-64 pt-2">
-  <div class="flex space-x-4">
-    <!-- Phần danh sách dự án active -->
-    <div class="w-3/5 space-y-3">
+<main class="flex-1 pr-4 pl-4 pt-2">
+  <div class="flex flex-col xl:flex-row gap-4">
+    <div class="w-full xl:w-3/5 space-y-3">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">Your Active Projects</h3>
         <div class="flex space-x-2">
@@ -1691,7 +1685,7 @@
           <!-- Project Card demo -->
           <a
             href={"/project/" + ProjectDisplay.id}
-            class="card p-4 block relative group hover:shadow-lg transition-all duration-200 border-l-4"
+            class="card p-4 block group border-l-4"
             style="border-left-color: {ProjectDisplay.difficulty === 'beginner'
               ? '#4ade80'
               : ProjectDisplay.difficulty === 'intermediate'
@@ -1886,7 +1880,7 @@
 
                   <!-- Arrow icon cho navigation -->
                   <svg
-                    class="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform duration-200"
+                    class="w-5 h-5 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1905,9 +1899,7 @@
           </a>
           <!-- Project action buttons - Only show for business users and only on hover -->
           {#if data.role === "business"}
-            <div
-              class="group-hover:opacity-100 transition-opacity flex space-x-2"
-            >
+            <div class="flex space-x-2">
               <button
                 aria-label="Edit project"
                 class="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
@@ -1978,9 +1970,7 @@
               </button>
             </div>
           {:else if data.role === "student"}
-            <div
-              class="group-hover:opacity-100 transition-opacity flex space-x-2"
-            >
+            <div class="flex space-x-2">
               <button
                 aria-label="View applicants"
                 class="p-1.5 bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
@@ -2039,8 +2029,7 @@
     </div>
 
     {#if data.role === "business"}
-      <!-- Right sidebar with analytics and talent pool -->
-      <div class="w-2/5 space-y-4">
+      <div class="w-full xl:w-2/5 space-y-4">
         <!-- Business Analytics -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Project Analytics</h3>
@@ -2048,28 +2037,22 @@
             <div>
               <div class="flex justify-between mb-1">
                 <span class="text-sm">Active Projects</span>
-                <span class="text-sm font-medium">4</span>
+                <span class="text-sm font-medium">{activeCount}</span>
               </div>
               <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-[#6b48ff]" style="width: 80%"></div>
+                <div
+                  class="h-full bg-[#6b48ff]"
+                  style="width: {projects.length > 0 ? Math.round((activeCount / projects.length) * 100) : 0}%"
+                ></div>
               </div>
             </div>
             <div>
               <div class="flex justify-between mb-1">
                 <span class="text-sm">Talent Allocation</span>
-                <span class="text-sm font-medium">12/15</span>
+                <span class="text-sm font-medium">{totalAllocated}/{totalCapacity}</span>
               </div>
               <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-[#ff6f61]" style="width: 75%"></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm">Tasks Completion</span>
-                <span class="text-sm font-medium">92%</span>
-              </div>
-              <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-green-500" style="width: 92%"></div>
+                <div class="h-full bg-[#ff6f61]" style="width: {allocationPercent}%"></div>
               </div>
             </div>
           </div>
@@ -2079,59 +2062,26 @@
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Talent Pool</h3>
           <div class="space-y-2">
-            <div
-              class="flex items-center justify-between p-2 bg-gray-100 rounded"
-            >
-              <div class="flex items-center">
-                <img
-                  class="w-8 h-8 rounded-full mr-2"
-                  src="https://avatars.githubusercontent.com/u/234567?v=4"
-                  alt="Developer"
-                />
-                <div>
-                  <p class="text-sm font-medium">Sarah Johnson</p>
-                  <p class="text-xs text-gray-500">React, Node.js</p>
+            {#each talentPool.slice(0, 3) as entry}
+              {@const student = entry.student || entry}
+              <div class="flex items-center justify-between p-2 bg-gray-100 rounded">
+                <div class="flex items-center min-w-0 flex-1">
+                  <img
+                    class="w-8 h-8 rounded-full mr-2 flex-shrink-0 object-cover"
+                    src={"/api/avatars/" + student.id}
+                    alt=""
+                    onerror={(e) => { (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(student.name || "U") + "&background=6b48ff&color=fff"; }}
+                  />
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium truncate">{student.name || "Unknown"}</p>
+                    <p class="text-xs text-gray-500 truncate">{Array.isArray(student.skills) ? student.skills.join(", ") : (student.skills || "No skills")}</p>
+                  </div>
                 </div>
+                <a href={"/profile/user/" + student.id} class="btn-secondary text-xs flex-shrink-0 ml-2">View</a>
               </div>
-              <button class="btn-secondary text-xs">View</button>
-            </div>
-            <div
-              class="flex items-center justify-between p-2 bg-gray-100 rounded"
-            >
-              <div class="flex items-center">
-                <img
-                  class="w-8 h-8 rounded-full mr-2"
-                  src="https://avatars.githubusercontent.com/u/345678?v=4"
-                  alt="Developer"
-                />
-                <div>
-                  <p class="text-sm font-medium">Michael Chen</p>
-                  <p class="text-xs text-gray-500">Python, MongoDB</p>
-                </div>
-              </div>
-              <button class="btn-secondary text-xs">View</button>
-            </div>
-            <div
-              class="flex items-center justify-between p-2 bg-gray-100 rounded"
-            >
-              <div class="flex items-center">
-                <img
-                  class="w-8 h-8 rounded-full mr-2"
-                  src="https://avatars.githubusercontent.com/u/456789?v=4"
-                  alt="Developer"
-                />
-                <div>
-                  <p class="text-sm font-medium">Alex Rivera</p>
-                  <p class="text-xs text-gray-500">UI/UX, Vue.js</p>
-                </div>
-              </div>
-              <button class="btn-secondary text-xs">View</button>
-            </div>
-            <div class="flex justify-center mt-2">
-              <button class="text-sm text-[#6b48ff] hover:underline">
-                View All Talent
-              </button>
-            </div>
+            {:else}
+              <p class="text-sm text-gray-400 text-center py-4">No talent pool data</p>
+            {/each}
           </div>
         </div>
       </div>

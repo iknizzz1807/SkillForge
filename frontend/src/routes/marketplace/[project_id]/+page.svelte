@@ -101,7 +101,7 @@
   <title>Project Detail</title>
 </svelte:head>
 
-<header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
+<header class="flex justify-between items-center pr-4 pl-4 pt-4">
   <div class="flex items-center mb-4">
     <a href="/marketplace" aria-label="Back to marketplace">
       <button aria-label="Back to marketplace" class="text-gray-500 hover:text-gray-700 mr-3">
@@ -128,7 +128,7 @@
   </div>
 </header>
 
-<main class="flex-1 ml-64 pl-4 pr-4">
+<main class="flex-1 pl-4 pr-4">
   <!-- Two-column layout -->
   <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
     <!-- Left column - Main content: Business Info & Project Info stacked -->

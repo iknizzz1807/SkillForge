@@ -215,7 +215,7 @@
   });
 </script>
 
-<main class="flex-1 ml-64 pr-4 pl-4 pt-4 pb-4">
+<main class="flex-1 pr-4 pl-4 pt-4 pb-4">
   <!-- Header with role display -->
   <div class="mb-4 flex justify-between items-center">
     <div>

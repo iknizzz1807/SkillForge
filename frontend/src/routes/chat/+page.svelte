@@ -404,7 +404,7 @@
   }
 </script>
 
-<main class="flex-1 flex flex-col ml-64 p-4 h-screen bg-gray-50">
+<main class="flex-1 flex flex-col p-4 h-screen bg-gray-50">
   <div class="flex gap-4 flex-1 h-full overflow-hidden">
     <!-- Chat Rooms List -->
     <div class="bg-white rounded-xl shadow-sm p-3 w-64 flex flex-col flex-shrink-0 border border-gray-100">

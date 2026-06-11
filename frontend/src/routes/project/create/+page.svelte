@@ -1327,7 +1327,7 @@
   <title>Create New Project</title>
 </svelte:head>
 
-<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
+<main class="flex-1 pr-4 pl-4 pt-4">
   <div class="flex items-center mb-6">
     <a href="/project" aria-label="Back to projects">
       <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">

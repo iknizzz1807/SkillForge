@@ -844,9 +844,27 @@
   let selectedSkills = $state<string[]>([]);
   let isSkillDropdownOpen = $state(false);
   let skillSearchTerm = $state("");
-  let filteredProjects: Project[] = $state([]);
+  let filteredProjects: Project[] = $derived(
+    projectsDisplay.filter((project) => {
+      const matchesSearch = searchQuery
+        ? project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          project.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
 
-  // Danh sách các mức độ khó
+      const matchesDifficulty =
+        selectedDifficulty === "All Levels"
+          ? true
+          : project.difficulty?.toLowerCase() === selectedDifficulty.toLowerCase();
+
+      const matchesSkills =
+        selectedSkills.length === 0
+          ? true
+          : selectedSkills.some((skill) => project.skills && project.skills.includes(skill));
+
+      return matchesSearch && matchesDifficulty && matchesSkills;
+    })
+  );
+
   const difficulties = ["All Levels", "Beginner", "Intermediate", "Expert"];
 
   // Toggle skill selection
@@ -873,34 +891,6 @@
     }
   }
 
-  // Apply filters - dùng $effect để theo dõi thay đổi và cập nhật filteredProjects
-  $effect(() => {
-    filteredProjects = projectsDisplay.filter((project) => {
-      // Filter by search query
-      const matchesSearch = searchQuery
-        ? project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        : true;
-
-      // Filter by difficulty
-      const matchesDifficulty =
-        selectedDifficulty === "All Levels"
-          ? true
-          : project.difficulty.toLocaleLowerCase() ===
-            selectedDifficulty.toLocaleLowerCase();
-
-      // Filter by skills
-      const matchesSkills =
-        selectedSkills.length === 0
-          ? true
-          : selectedSkills.some(
-              (skill) => project.skills && project.skills.includes(skill)
-            );
-
-      return matchesSearch && matchesDifficulty && matchesSkills;
-    });
-  });
-
   // Reset filters
   function resetFilters() {
     searchQuery = "";
@@ -923,9 +913,10 @@
   });
 </script>
 
-<div class="flex space-x-4 ml-64 pl-4 pr-4 pt-4">
-  <!-- Left Column - Contains Filter Panel -->
-  <div class="w-2/5 space-y-4 flex-shrink-0">
+<main class="flex-1 p-4 min-h-screen">
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    <!-- Left Column - Contains Filter Panel -->
+    <div class="w-full xl:w-2/5 space-y-4 flex-shrink-0">
     <!-- Filter Panel -->
     <div class="card p-4">
       <h3 class="text-base font-semibold mb-3">Filters</h3>
@@ -1148,7 +1139,7 @@
   </div>
 
   <!-- Project List -->
-  <div class="w-3/5 space-y-3">
+  <div class="w-full xl:w-3/5 space-y-3">
     <!-- Projects Count -->
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
@@ -1375,4 +1366,5 @@
       {/each}
     {/if}
   </div>
-</div>
+  </div>
+</main>

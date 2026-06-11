@@ -469,7 +469,7 @@
   });
 </script>
 
-<header class="flex justify-between items-center ml-64 pr-4 pl-4 pt-4">
+<header class="flex justify-between items-center pr-4 pl-4 pt-4">
   <div class="flex items-center mb-4">
     <a href="/project" aria-label="Back to projects">
       <button aria-label="Back to projects" class="text-gray-500 hover:text-gray-700 mr-3">
@@ -520,7 +520,7 @@
   {/if}
 </header>
 
-<main class="flex-1 pr-4 pl-4 ml-64">
+<main class="flex-1 pr-4 pl-4 ">
   <div class="space-y-4">
     <!-- Top section: Timeline, Progression, and Recent Activities -->
     <div class="flex space-x-4">

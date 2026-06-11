@@ -787,7 +787,7 @@
   </div>
 {/if}
 
-<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
+<main class="flex-1 pr-4 pl-4 pt-4">
   <!-- Header with role toggle -->
   <div class="mb-4 flex justify-between items-center">
     <h1 class="text-2xl font-bold">

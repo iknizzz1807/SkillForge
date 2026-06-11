@@ -23,7 +23,7 @@
   };
 </script>
 
-<main class="flex-1 pr-4 pl-4 ml-64 pt-4">
+<main class="flex-1 pr-4 pl-4 pt-4">
   <div class="max-w-2xl mx-auto">
     <div class="card p-8 text-center">
       <img

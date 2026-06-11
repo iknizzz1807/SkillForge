@@ -108,7 +108,7 @@
   });
 </script>
 
-<main class="flex-1 ml-64 pr-4 pl-4 pt-4 pb-4">
+<main class="flex-1 pr-4 pl-4 pt-4 pb-4">
   <div class="mb-4">
     <h1 class="text-2xl font-bold">Browse Students</h1>
     <p class="text-gray-600">Find talented students for your projects</p>
