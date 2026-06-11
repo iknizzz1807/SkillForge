@@ -25,8 +25,6 @@
   let feedbacks: any[] = $state([]);
   let loading = $state(true);
 
-  let projectsError = $state(false);
-  let xpError = $state(false);
   let marketplaceError = $state(false);
   let feedbacksError = $state(false);
 
@@ -284,51 +282,53 @@
 
     (async () => {
       try {
-        const res = await fetch("/api/projects");
+        const url = role === "student" ? "/api/projects/student" : "/api/projects/business";
+        const res = await fetch(url);
         if (res.ok) {
           const d = await res.json();
           projects = Array.isArray(d) ? d : [];
-        } else {
-          projectsError = true;
         }
       } catch {
-        projectsError = true;
+        // ignore - projects stays empty
+      }
+      if (projects.length === 0) {
+        try {
+          const res = await fetch("/api/projects");
+          if (res.ok) {
+            const d = await res.json();
+            projects = Array.isArray(d) ? d : [];
+          }
+        } catch { /* ignore */ }
       }
 
       if (role === "student") {
         try {
-          const res = await fetch("/api/gamification/me/level");
+          const res = await fetch("/api/levels");
           if (res.ok) xpData = await res.json();
-        } catch {
-          xpError = true;
-        }
+        } catch { /* ignore */ }
 
         try {
-          const res = await fetch("/api/marketplace?limit=3");
+          const res = await fetch("/api/projects");
           if (res.ok) {
             const d = await res.json();
             marketplaceProjects = Array.isArray(d) ? d.slice(0, 3) : [];
+          } else {
+            marketplaceError = true;
           }
-        } catch {
-          marketplaceError = true;
-        }
+        } catch { marketplaceError = true; }
       } else {
         try {
           const res = await fetch("/api/talentpool");
           if (res.ok) talentData = await res.json();
-        } catch {
-          // ignore
-        }
+        } catch { /* ignore */ }
 
         try {
-          const res = await fetch("/api/feedbacks?business=true");
+          const res = await fetch("/api/feedbacks/business/" + data.id);
           if (res.ok) {
             const d = await res.json();
             feedbacks = Array.isArray(d) ? d : [];
           }
-        } catch {
-          feedbacksError = true;
-        }
+        } catch { /* ignore */ }
       }
 
       loading = false;
@@ -437,38 +437,38 @@
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Active Projects</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError ? "—" : activeProjectsCount}
+            {activeProjectsCount}
           </p>
         </div>
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Pending Tasks</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError && !xpData ? "—" : pendingTasksCount ?? "—"}
+            {pendingTasksCount ?? "—"}
           </p>
         </div>
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Completed Tasks</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError && !xpData ? "—" : completedTasksCount ?? "—"}
+            {completedTasksCount ?? "—"}
           </p>
         </div>
       {:else}
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Active Projects</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError ? "—" : activeProjectsCount}
+            {activeProjectsCount}
           </p>
         </div>
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Total Students</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError ? "—" : totalStudents}
+            {totalStudents}
           </p>
         </div>
         <div class="card p-3 w-1/3">
           <h3 class="text-sm font-semibold">Completed Projects</h3>
           <p class="text-xl mt-1 accent-color">
-            {projectsError ? "—" : completedProjectsCount}
+            {completedProjectsCount}
           </p>
         </div>
       {/if}
@@ -489,11 +489,7 @@
           </a>
         </div>
         <div class="space-y-2">
-          {#if projectsError}
-            <div class="p-3 text-center text-gray-500 text-sm">
-              Could not load projects. Please try again later.
-            </div>
-          {:else if role === "student"}
+          {#if role === "student"}
             {#each projects as project}
               {#if project.members || (data.user && project.created_by_id !== data.user?.id)}
                 <div class="p-2 bg-gray-100 rounded">
