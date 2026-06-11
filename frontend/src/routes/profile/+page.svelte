@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { PageData } from "./$types";
 
+  import { onMount } from "svelte";
+
   let { data }: { data: PageData } = $props();
-  let userData = $derived(data.userData);
+  let userData: Record<string, any> = $derived(data.userData ?? {});
   let editProfileModalOpen: boolean = $state(false);
   let generatePortfolioModalOpen: boolean = $state(false);
   let portfolioUrl: string | null = $state(null);
@@ -279,49 +281,115 @@
   };
 
   // Badges data for gamification
-  const studentBadges = [
-    {
-      name: "First Project",
-      icon: "🏆",
-      description: "Completed your first project",
-      achieved: true,
-      date: "10/02/2025",
-    },
-    {
-      name: "Quick Learner",
-      icon: "🚀",
-      description: "Completed 5 skills assessments",
-      achieved: true,
-      date: "15/02/2025",
-    },
-    {
-      name: "Team Player",
-      icon: "👥",
-      description: "Collaborated with 3+ students",
-      achieved: true,
-      date: "01/03/2025",
-    },
-    {
-      name: "Code Master",
-      icon: "💻",
-      description: "Wrote 1000+ lines of code",
-      achieved: false,
-      date: "",
-    },
-    {
-      name: "Perfect Score",
-      icon: "⭐",
-      description: "Received 5.0 rating on a project",
-      achieved: false,
-      date: "",
-    },
-  ];
+  let userBadges: any[] = $state([]);
+  let badgesLoading = $state(true);
+
+  // Gamification level data
+  let levelData: any = $state(null);
+  let gamificationLoading = $state(true);
+
+  // Skills data
+  let userSkills: any[] = $state([]);
+  let skillsLoading = $state(true);
+
+  // Talent pool data
+  let talentPool: any[] = $state([]);
+  let talentPoolLoading = $state(true);
+
+  // Completed projects data
+  let completedProjects: any[] = $state([]);
+  let completedProjectsLoading = $state(true);
 
   // Calculate XP and level for gamification
-  const studentXP = 1250;
-  const currentLevel = Math.floor(studentXP / 300) + 1;
-  const xpForNextLevel = currentLevel * 300;
-  const xpProgress = ((studentXP % 300) / 300) * 100;
+  const studentXP = $derived(levelData?.xp_current ?? 1250);
+  const currentLevel = $derived(levelData?.level ?? Math.floor(1250 / 300) + 1);
+  const xpForNextLevel = $derived(levelData?.xp_need ?? 300);
+  const xpProgress = $derived(levelData
+    ? Math.min((levelData.xp_current ?? 0) / (levelData.xp_need ?? 300) * 100, 100)
+    : ((1250 % 300) / 300) * 100);
+
+  onMount(() => {
+    const fetchBadges = async () => {
+      try {
+        const res = await fetch("/api/badges/mine");
+        if (res.ok) {
+          const json = await res.json();
+          userBadges = Array.isArray(json) ? json : json.badges ?? [];
+        }
+      } catch (e) {
+        console.error("Failed to fetch badges:", e);
+      } finally {
+        badgesLoading = false;
+      }
+    };
+
+    const fetchLevel = async () => {
+      try {
+        const res = await fetch("/api/gamification/me/level");
+        if (res.ok) {
+          levelData = await res.json();
+        }
+      } catch (e) {
+        console.error("Failed to fetch level:", e);
+      } finally {
+        gamificationLoading = false;
+      }
+    };
+
+    const fetchSkills = async () => {
+      try {
+        const res = await fetch("/api/gamification/skills");
+        if (res.ok) {
+          const json = await res.json();
+          userSkills = Array.isArray(json) ? json : json.skills ?? [];
+        }
+      } catch (e) {
+        console.error("Failed to fetch skills:", e);
+      } finally {
+        skillsLoading = false;
+      }
+    };
+
+    const fetchTalentPool = async () => {
+      try {
+        const endpoint = data.role === "business" ? "/api/talentpool" : "/api/users/students";
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const json = await res.json();
+          talentPool = Array.isArray(json) ? json : json.students ?? json.talent ?? [];
+        }
+      } catch (e) {
+        console.error("Failed to fetch talent pool:", e);
+      } finally {
+        talentPoolLoading = false;
+      }
+    };
+
+    const fetchCompletedProjects = async () => {
+      try {
+        const res = await fetch("/api/projects");
+        if (res.ok) {
+          const json = await res.json();
+          const projects = Array.isArray(json) ? json : json.projects ?? [];
+          completedProjects = projects.filter(
+            (p: any) => p.status === "completed" || p.status === "close"
+          );
+        }
+      } catch (e) {
+        console.error("Failed to fetch completed projects:", e);
+      } finally {
+        completedProjectsLoading = false;
+      }
+    };
+
+    Promise.all([
+      fetchBadges(),
+      fetchLevel(),
+      fetchSkills(),
+      fetchTalentPool(),
+      fetchCompletedProjects(),
+    ]);
+  });
 </script>
 
 {#if editBusinessInfoModalOpen}
@@ -969,67 +1037,25 @@
             <!-- <button class="text-xs text-[#6b48ff]">+ Add Skill</button> -->
           </div>
 
-          <div class="space-y-4">
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">React</span>
-                <span class="text-xs text-[#6b48ff]">Advanced</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 85%"></div>
-              </div>
+          {#if skillsLoading}
+            <p class="text-sm text-gray-500">Loading skills...</p>
+          {:else if userSkills.length === 0}
+            <p class="text-sm text-gray-500">No skills added yet.</p>
+          {:else}
+            <div class="space-y-4">
+              {#each userSkills as skill}
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium">{skill.name ?? skill.skill_name ?? "Skill"}</span>
+                    <span class="text-xs text-[#6b48ff]">{skill.proficiency ?? skill.level ?? ""}</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: {Math.min((skill.point_current ?? skill.progress ?? 0) / (skill.point_needed ?? skill.max ?? 100) * 100, 100)}%"></div>
+                  </div>
+                </div>
+              {/each}
             </div>
-
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">Node.js</span>
-                <span class="text-xs text-[#6b48ff]">Intermediate</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 65%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">JavaScript</span>
-                <span class="text-xs text-[#6b48ff]">Advanced</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 90%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">MongoDB</span>
-                <span class="text-xs text-[#6b48ff]">Intermediate</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 60%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">Python</span>
-                <span class="text-xs text-[#6b48ff]">Beginner</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 30%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="text-sm font-medium">UI/UX Design</span>
-                <span class="text-xs text-[#6b48ff]">Intermediate</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 70%"></div>
-              </div>
-            </div>
-          </div>
+          {/if}
         </div>
 
         <!-- Portfolio Generator -->
@@ -1252,19 +1278,19 @@
           <h3 class="text-base font-semibold mb-3">Engagement Statistics</h3>
           <div class="grid grid-cols-2 gap-3">
             <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">15</p>
+              <p class="text-xl font-bold text-[#6b48ff]">{userData?.projects_posted ?? userData?.projects_posted_count ?? 0}</p>
               <p class="text-xs text-gray-500">Projects Posted</p>
             </div>
             <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">42</p>
+              <p class="text-xl font-bold text-[#6b48ff]">{userData?.students_engaged ?? 0}</p>
               <p class="text-xs text-gray-500">Students Engaged</p>
             </div>
             <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">12</p>
+              <p class="text-xl font-bold text-[#6b48ff]">{userData?.completed_projects ?? completedProjects.length ?? 0}</p>
               <p class="text-xs text-gray-500">Completed Projects</p>
             </div>
             <div class="text-center p-2 bg-gray-50 rounded">
-              <p class="text-xl font-bold text-[#6b48ff]">4.8</p>
+              <p class="text-xl font-bold text-[#6b48ff]">{userData?.avg_rating ?? userData?.rating ?? "—"}</p>
               <p class="text-xs text-gray-500">Avg. Student Rating</p>
             </div>
           </div>
@@ -1273,67 +1299,35 @@
         <!-- Business Completed Projects -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Completed Projects</h3>
-          <div class="space-y-3">
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">Company Website Redesign</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 10/03/2025 • 5 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
+          {#if completedProjectsLoading}
+            <p class="text-sm text-gray-500">Loading projects...</p>
+          {:else if completedProjects.length === 0}
+            <p class="text-sm text-gray-500">No completed projects yet.</p>
+          {:else}
+            <div class="space-y-3">
+              {#each completedProjects as project}
+                <div
+                  class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
                 >
-                <button class="text-xs text-[#6b48ff] hover:underline"
-                  >View</button
-                >
-              </div>
+                  <div>
+                    <p class="text-sm font-medium">{project.name ?? project.title ?? "Untitled"}</p>
+                    <p class="text-xs text-gray-500">
+                      {(project.completed_date ?? project.end_date ?? project.updated_at) ? "Completed: " + (project.completed_date ?? project.end_date ?? project.updated_at) : ""}{(project.member_count ?? project.students_count ?? project.students) ? " • " + (project.member_count ?? project.students_count ?? project.students) + " students" : ""}
+                    </p>
+                  </div>
+                  <div class="flex items-center">
+                    <span
+                      class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
+                      >Completed</span
+                    >
+                    <button class="text-xs text-[#6b48ff] hover:underline"
+                      >View</button
+                    >
+                  </div>
+                </div>
+              {/each}
             </div>
-
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">CRM Integration</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 25/02/2025 • 3 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
-                >
-                <button class="text-xs text-[#6b48ff] hover:underline"
-                  >View</button
-                >
-              </div>
-            </div>
-
-            <div
-              class="flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <div>
-                <p class="text-sm font-medium">Payment Gateway API</p>
-                <p class="text-xs text-gray-500">
-                  Completed: 15/01/2025 • 4 students
-                </p>
-              </div>
-              <div class="flex items-center">
-                <span
-                  class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded mr-2"
-                  >Completed</span
-                >
-                <button class="text-xs text-[#6b48ff] hover:underline"
-                  >View</button
-                >
-              </div>
-            </div>
-          </div>
+          {/if}
           <div class="text-center mt-3">
             <button class="text-sm text-[#6b48ff] hover:underline"
               >View All Projects</button
@@ -1350,13 +1344,18 @@
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Badges & Achievements</h3>
           <div class="grid grid-cols-3 gap-3">
-            {#each studentBadges as badge}
+            {#if badgesLoading}
+            <p class="text-sm text-gray-500 col-span-3">Loading badges...</p>
+          {:else if userBadges.length === 0}
+            <p class="text-sm text-gray-500 col-span-3">No badges earned yet.</p>
+          {:else}
+            {#each userBadges as badge}
               <div
                 class="text-center p-3 rounded border {badge.achieved
                   ? 'border-[#6b48ff] bg-purple-50'
                   : 'border-gray-200 bg-gray-50 opacity-50'}"
               >
-                <div class="text-2xl mb-1">{badge.icon}</div>
+                <div class="text-2xl mb-1">{badge.icon ?? "🏅"}</div>
                 <p class="text-sm font-medium">{badge.name}</p>
                 <p class="text-xs text-gray-500">{badge.description}</p>
                 {#if badge.achieved}
@@ -1366,6 +1365,7 @@
                 {/if}
               </div>
             {/each}
+          {/if}
           </div>
         </div>
 
@@ -1495,67 +1495,35 @@
         <!-- Business Top Talent Pool -->
         <div class="card p-4">
           <h3 class="text-base font-semibold mb-3">Top Talent Pool</h3>
-          <div class="space-y-3">
-            <div
-              class="flex items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <img
-                src="https://randomuser.me/api/portraits/women/44.jpg"
-                alt="Student"
-                class="w-10 h-10 rounded-full mr-3"
-              />
-              <div class="flex-1">
-                <p class="text-sm font-medium">Sarah Johnson</p>
-                <p class="text-xs text-gray-500">React, Node.js • 4.9/5 ⭐</p>
-              </div>
-              <div>
-                <button
-                  class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >View</button
+          {#if talentPoolLoading}
+            <p class="text-sm text-gray-500">Loading talent pool...</p>
+          {:else if talentPool.length === 0}
+            <p class="text-sm text-gray-500">No students found.</p>
+          {:else}
+            <div class="space-y-3">
+              {#each talentPool as student}
+                <div
+                  class="flex items-center p-2 bg-gray-50 rounded border border-gray-200"
                 >
-              </div>
+                  <img
+                    src={student.avatar_url ?? `/api/avatars/${student.id}`}
+                    alt={student.name}
+                    class="w-10 h-10 rounded-full mr-3"
+                  />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{student.name ?? "Unknown"}</p>
+                    <p class="text-xs text-gray-500">{Array.isArray(student.skills) ? student.skills.join(", ") : student.skills ?? ""}{student.rating ? " • " + student.rating + "/5 ⭐" : ""}</p>
+                  </div>
+                  <div>
+                    <button
+                      class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
+                      >View</button
+                    >
+                  </div>
+                </div>
+              {/each}
             </div>
-
-            <div
-              class="flex items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <img
-                src="https://randomuser.me/api/portraits/men/32.jpg"
-                alt="Student"
-                class="w-10 h-10 rounded-full mr-3"
-              />
-              <div class="flex-1">
-                <p class="text-sm font-medium">David Chen</p>
-                <p class="text-xs text-gray-500">Python, ML/AI • 4.8/5 ⭐</p>
-              </div>
-              <div>
-                <button
-                  class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >View</button
-                >
-              </div>
-            </div>
-
-            <div
-              class="flex items-center p-2 bg-gray-50 rounded border border-gray-200"
-            >
-              <img
-                src="https://randomuser.me/api/portraits/women/68.jpg"
-                alt="Student"
-                class="w-10 h-10 rounded-full mr-3"
-              />
-              <div class="flex-1">
-                <p class="text-sm font-medium">Maria Garcia</p>
-                <p class="text-xs text-gray-500">UI/UX, React • 4.7/5 ⭐</p>
-              </div>
-              <div>
-                <button
-                  class="text-xs bg-[#6b48ff] text-white px-2 py-1 rounded"
-                  >View</button
-                >
-              </div>
-            </div>
-          </div>
+          {/if}
           <div class="text-center mt-3">
             <button class="text-sm text-[#6b48ff] hover:underline"
               >View All Talent</button

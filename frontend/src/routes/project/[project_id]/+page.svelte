@@ -2,6 +2,7 @@
   import type { PageData } from "./$types";
   import { onMount, onDestroy } from "svelte";
   import { browser } from "$app/environment";
+  import { goto } from "$app/navigation";
   import {
     formatDate,
     formatActivityDate,
@@ -110,17 +111,39 @@
   }
 
   // Hàm hoàn thành đánh giá và kết thúc dự án
-  function completeRatingAndProject() {
-    // Lưu đánh giá
+  async function completeRatingAndProject() {
     teamRatings = [...tempRatings];
 
-    // Gửi dữ liệu đánh giá lên server (mô phỏng)
-    console.log("Project completed with ratings:", teamRatings);
+    const avgRating = Math.round(
+      teamRatings.reduce((sum, r) => sum + r.rating, 0) / teamRatings.length
+    );
 
-    // Đóng modal đánh giá
-    closeRatingModal();
+    try {
+      const promises = teamRatings.map((rating) =>
+        fetch("/api/feedbacks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project_id: project.id,
+            to_id: rating.id.toString(),
+            type: "student",
+            rating: rating.rating,
+            content: rating.comment || "",
+          }),
+        })
+      );
 
-    // Hiển thị thông báo thành công
+      const responses = await Promise.all(promises);
+      if (!responses.every((r) => r.ok)) {
+        throw new Error("Failed to submit one or more ratings");
+      }
+
+      closeRatingModal();
+      goto("/project");
+    } catch (error) {
+      console.error("Error submitting ratings:", error);
+      alert("Failed to submit ratings. Please try again.");
+    }
   }
 
   function handleTaskMove(

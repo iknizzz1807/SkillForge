@@ -23,18 +23,19 @@ type BadgeService struct {
 // NewBadgeService khởi tạo BadgeService với các repository cần thiết
 func NewBadgeService(
 	badgeRepo *repositories.BadgeRepository,
-	// userRepo *repositories.UserRepository,
-	// projectRepo *repositories.ProjectRepository,
-	// taskRepo *repositories.TaskRepository,
-	// reviewRepo *repositories.ReviewRepository,
+	optionalRepos ...*repositories.UserRepository,
 ) *BadgeService {
-	return &BadgeService{
-		badgeRepo: badgeRepo,
-		// userRepo:    userRepo,
-		// projectRepo: projectRepo,
-		// taskRepo:    taskRepo,
-		// reviewRepo:  reviewRepo,
+	svc := &BadgeService{badgeRepo: badgeRepo}
+	if len(optionalRepos) > 0 {
+		svc.userRepo = optionalRepos[0]
 	}
+	return svc
+}
+
+// WithProjectRepo sets the project repository for badge condition checking
+func (s *BadgeService) WithProjectRepo(repo *repositories.ProjectRepository) *BadgeService {
+	s.projectRepo = repo
+	return s
 }
 
 // CreateBadge tạo mới một badge
@@ -143,16 +144,15 @@ func (s *BadgeService) CheckAndAwardProjectCompletionBadges(userID string, proje
 		return err
 	}
 
-	// Just award the first project badge found as a placeholder logic
-	// Ideally we check conditions
-	badge := badges[0]
-	_, err = s.AwardBadgeToUser(userID, badge.ID, projectID)
-	
-	if err != nil {
-		return err
+	for _, badge := range badges {
+		_, err = s.AwardBadgeToUser(userID, badge.ID, projectID)
+		if err != nil {
+			log.Printf("BadgeService: error awarding badge '%s' to user %s: %v", badge.Name, userID, err)
+		} else {
+			log.Printf("BadgeService: awarded badge '%s' to user %s on project %s", badge.Name, userID, projectID)
+		}
 	}
-	
-	log.Printf("Gamification badge awarded for user: %s on project: %s", userID, projectID)
+
 	return nil
 }
 

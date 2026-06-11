@@ -63,29 +63,23 @@ func (s *GamificationService) GetUserLevel(userID string) (*models.UserLevel, er
 	return level, nil
 }
 
-// NOTE: AddXP uses a read-modify-write pattern with $set, which has a race condition
-// under concurrent requests (e.g., two AddXP calls for the same user could overwrite
-// each other's updates). A production fix should use MongoDB $inc for XP counters
-// and handle level-up logic atomically.
 func (s *GamificationService) AddXP(userID string, xp int) (*models.UserLevel, error) {
 	ctx := context.Background()
-	level, err := s.GetUserLevel(userID)
+
+	level, err := s.repo.AddXPAtomic(ctx, userID, xp, calculateXPNeeded(1))
 	if err != nil {
 		return nil, err
 	}
 
-	level.XPCurrent += xp
-
-	// Check for level up
 	for level.XPCurrent >= level.XPNeed {
 		level.XPCurrent -= level.XPNeed
 		level.Level++
 		level.XPNeed = calculateXPNeeded(level.Level)
-	}
 
-	err = s.repo.UpdateUserLevel(ctx, level)
-	if err != nil {
-		return nil, err
+		err = s.repo.LevelUpAtomically(ctx, userID, level.XPCurrent, level.Level, level.XPNeed)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return level, nil
@@ -118,35 +112,31 @@ func (s *GamificationService) GetSkill(userID string, skillName string) (*models
 
 func (s *GamificationService) AddSkillPoint(userID string, skillName string) (*models.UserSkill, error) {
 	ctx := context.Background()
-	skill, err := s.GetSkill(userID, skillName)
+
+	existingSkill, _ := s.repo.GetUserSkill(ctx, userID, skillName)
+	isNew := existingSkill == nil
+
+	skill, err := s.repo.AddSkillPointAtomic(ctx, userID, skillName, calculatePointsNeeded(1))
 	if err != nil {
 		return nil, err
 	}
 
-	isNewSkill := skill.PointCurrent == 0
-
-	skill.PointCurrent++
-
-	// Check for skill level up
 	for skill.PointCurrent >= skill.PointNeeded {
 		skill.PointCurrent -= skill.PointNeeded
 		skill.Level++
 		skill.PointNeeded = calculatePointsNeeded(skill.Level)
+
+		err = s.repo.SkillLevelUpAtomically(ctx, userID, skillName, skill.PointCurrent, skill.Level, skill.PointNeeded)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	err = s.repo.UpdateUserSkill(ctx, skill)
-	if err != nil {
-		return nil, err
-	}
-
-	// If this is the first point for this skill, update user's skills array
-	if isNewSkill {
+	if isNew {
 		user, err := s.userService.GetUserByID(userID)
 		if err != nil || user == nil {
 			return nil, errors.New("user not found")
 		}
-
-		// Add the new skill to user's skills array
 		newSkills := append(user.Skills, skillName)
 		_, err = s.userService.UpdateUserSkills(userID, newSkills)
 		if err != nil {
