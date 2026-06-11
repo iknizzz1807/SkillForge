@@ -317,6 +317,6 @@
 {/if}
 
 <!-- Main content wrapper -->
-<div class="flex-1 w-full md:pl-64 pt-16 md:pt-0 min-h-screen">
+<div class="flex-1 w-full {url === '/login' || url === '/register' ? '' : 'md:pl-64 pt-16 md:pt-0'} min-h-screen">
   {@render children()}
 </div>
