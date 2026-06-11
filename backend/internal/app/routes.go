@@ -66,6 +66,7 @@ func RegisterRoutes(
 	feedbackHandler := handlers.NewFeedbackHandler(feedbackService)
 	matchingHandler := handlers.NewMatchingHandler(matchingService)
 	levelHandler := handlers.NewLevelHandler(gamificationService)
+	skillHandler := handlers.NewSkillHandler(gamificationService)
 	chatHandler := handlers.NewChatHandler(chatService)
 	websocketChatHandler := handlers.NewWebSocketChatHandler(chatService, realtimeClient)
 	invitationHandler := handlers.NewInvitationHandler(invitationService)
@@ -210,6 +211,9 @@ func RegisterRoutes(
 
 		//Route cho level
 		api.GET("/levels", levelHandler.GetUserLevel)
+
+		// Route cho skills
+		api.GET("/skills", skillHandler.GetUserSkills)
 
 		// Route cho chat
 		// :id là projectID

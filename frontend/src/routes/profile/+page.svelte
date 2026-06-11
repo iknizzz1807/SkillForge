@@ -311,7 +311,7 @@
   onMount(() => {
     const fetchBadges = async () => {
       try {
-        const res = await fetch("/api/badges/mine");
+        const res = await fetch(`/api/badges/${data.id}`);
         if (res.ok) {
           const json = await res.json();
           userBadges = Array.isArray(json) ? json : json.badges ?? [];
@@ -325,9 +325,10 @@
 
     const fetchLevel = async () => {
       try {
-        const res = await fetch("/api/gamification/me/level");
+        const res = await fetch("/api/levels");
         if (res.ok) {
-          levelData = await res.json();
+          const json = await res.json();
+          levelData = json.level ?? json;
         }
       } catch (e) {
         console.error("Failed to fetch level:", e);
@@ -338,7 +339,7 @@
 
     const fetchSkills = async () => {
       try {
-        const res = await fetch("/api/gamification/skills");
+        const res = await fetch("/api/skills");
         if (res.ok) {
           const json = await res.json();
           userSkills = Array.isArray(json) ? json : json.skills ?? [];
@@ -352,8 +353,8 @@
 
     const fetchTalentPool = async () => {
       try {
-        const endpoint = data.role === "business" ? "/api/talentpool" : "/api/users/students";
-        const res = await fetch(endpoint);
+        if (data.role !== "business") { talentPoolLoading = false; return; }
+        const res = await fetch("/api/talentpool");
         if (res.ok) {
           const json = await res.json();
           talentPool = Array.isArray(json) ? json : json.students ?? json.talent ?? [];
