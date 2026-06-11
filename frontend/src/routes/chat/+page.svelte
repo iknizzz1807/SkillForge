@@ -276,11 +276,17 @@
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.csv,.xlsx,.xls";
+    const targetRoomId = selectedRoom?.id;
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
       if (file.size > 10 * 1024 * 1024) {
         alert("File too large (max 10MB)");
+        return;
+      }
+
+      if (selectedRoom?.id !== targetRoomId) {
+        alert("Cannot upload file: you switched to a different chat group. Please try again.");
         return;
       }
 
@@ -309,33 +315,33 @@
           xhr.send(formData);
         });
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          const optimisticId = "opt_file_" + Date.now();
-          messages = [...messages, {
-            id: optimisticId,
-            content: file.name,
-            sender_id: currentUserId,
-            type: "file",
-            file_url: result.url,
-            file_name: result.name,
-            created_at: new Date().toISOString(),
-            user_name: currentUserName,
-            avatar: currentUserAvatar,
-          }];
+        if (selectedRoom?.id !== targetRoomId || !ws || ws.readyState !== WebSocket.OPEN) return;
 
-          ws.send(JSON.stringify({
-            content: file.name,
-            type: "file",
-            file_url: result.url,
-            file_name: result.name,
-            client_id: optimisticId,
-          }));
+        const optimisticId = "opt_file_" + Date.now();
+        messages = [...messages, {
+          id: optimisticId,
+          content: file.name,
+          sender_id: currentUserId,
+          type: "file",
+          file_url: result.url,
+          file_name: result.name,
+          created_at: new Date().toISOString(),
+          user_name: currentUserName,
+          avatar: currentUserAvatar,
+        }];
 
-          setTimeout(() => {
-            const container = document.getElementById("chat-messages");
-            if (container) container.scrollTop = container.scrollHeight;
-          }, 50);
-        }
+        ws.send(JSON.stringify({
+          content: file.name,
+          type: "file",
+          file_url: result.url,
+          file_name: result.name,
+          client_id: optimisticId,
+        }));
+
+        setTimeout(() => {
+          const container = document.getElementById("chat-messages");
+          if (container) container.scrollTop = container.scrollHeight;
+        }, 50);
       } catch (e) {
         console.error("Upload error", e);
         alert("Failed to upload file");
