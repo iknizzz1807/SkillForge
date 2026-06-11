@@ -16,18 +16,22 @@ import (
 )
 
 type MatchingService struct {
-	db          *mongo.Database
-	aiClient    *integrations.AIClient
-	userRepo    *repositories.UserRepository
-	projectRepo *repositories.ProjectRepository
+	db              *mongo.Database
+	aiClient        *integrations.AIClient
+	userRepo        *repositories.UserRepository
+	projectRepo     *repositories.ProjectRepository
+	appRepo         *repositories.ApplicationRepository
+	projectStuRepo  *repositories.ProjectStudentRepository
 }
 
 func NewMatchingService(db *mongo.Database, aiClient *integrations.AIClient) *MatchingService {
 	return &MatchingService{
-		db:          db,
-		aiClient:    aiClient,
-		userRepo:    repositories.NewUserRepository(db),
-		projectRepo: repositories.NewProjectRepository(db),
+		db:              db,
+		aiClient:        aiClient,
+		userRepo:        repositories.NewUserRepository(db),
+		projectRepo:     repositories.NewProjectRepository(db),
+		appRepo:         repositories.NewApplicationRepository(db),
+		projectStuRepo:  repositories.NewProjectStudentRepository(db),
 	}
 }
 
@@ -58,7 +62,21 @@ func joinSkills(skills []string) string {
 }
 
 func (s *MatchingService) GetScore(userID string, projectID string) (float64, error) {
-	user, err := s.userRepo.FindUserByID(context.Background(), userID)
+	ctx := context.Background()
+
+	// Check if user already applied to this project
+	app, err := s.appRepo.FindByUserAndProject(ctx, userID, projectID)
+	if err == nil && app != nil {
+		return 0, nil
+	}
+
+	// Check if user is already a member of this project
+	ps, err := s.projectStuRepo.FindByProjectAndStudent(ctx, projectID, userID)
+	if err == nil && ps != nil {
+		return 0, nil
+	}
+
+	user, err := s.userRepo.FindUserByID(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
@@ -66,7 +84,7 @@ func (s *MatchingService) GetScore(userID string, projectID string) (float64, er
 		return 0, fmt.Errorf("user not found")
 	}
 
-	project, err := s.projectRepo.FindProjectByID(context.Background(), projectID)
+	project, err := s.projectRepo.FindProjectByID(ctx, projectID)
 	if err != nil {
 		return 0, err
 	}
@@ -146,7 +164,30 @@ func (s *MatchingService) GetScoreUserProjects(userID string, projects []*models
 func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]ProjectMatchInfo, error) {
 	log.Printf("GetTopProjectMatchesForStudent")
 
-	projects, err := s.projectRepo.FindAllProjects(context.Background(), 1, 0)
+	ctx := context.Background()
+
+	// Fetch projects user has applied to (any status: pending, approved, rejected)
+	apps, err := s.appRepo.FindByUserID(userID)
+	if err != nil {
+		log.Printf("Error fetching applications for user %s: %v", userID, err)
+		apps = nil
+	}
+	appliedProjectIDs := make(map[string]bool)
+	for _, app := range apps {
+		appliedProjectIDs[app.ProjectID] = true
+	}
+
+	// Fetch projects user is already a member of
+	joinedProjectIDs, err := s.projectStuRepo.FindProjectsByStudentID(ctx, userID)
+	if err != nil {
+		log.Printf("Error fetching joined projects for user %s: %v", userID, err)
+		joinedProjectIDs = nil
+	}
+	for _, pid := range joinedProjectIDs {
+		appliedProjectIDs[pid] = true
+	}
+
+	projects, err := s.projectRepo.FindAllProjects(ctx, 1, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -155,26 +196,38 @@ func (s *MatchingService) GetTopProjectMatchesForStudent(userID string) ([]Proje
 		return []ProjectMatchInfo{}, nil
 	}
 
-	listScores, err := s.GetScoreUserProjects(userID, projects)
+	// Filter out projects the user has already applied to or is a member of
+	var filteredProjects []*models.Project
+	for _, p := range projects {
+		if !appliedProjectIDs[p.ID] {
+			filteredProjects = append(filteredProjects, p)
+		}
+	}
+
+	if len(filteredProjects) == 0 {
+		return []ProjectMatchInfo{}, nil
+	}
+
+	listScores, err := s.GetScoreUserProjects(userID, filteredProjects)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(listScores) != len(projects) {
+	if len(listScores) != len(filteredProjects) {
 		return nil, fmt.Errorf("mismatch between projects count (%d) and scores count (%d)",
-			len(projects), len(listScores))
+			len(filteredProjects), len(listScores))
 	}
 
 	listProjects := []ProjectMatchInfo{}
 
-	for i, project := range projects {
+	for i, project := range filteredProjects {
 		if i >= len(listScores) {
 			break
 		}
 
 		matchScore := listScores[i]
 
-		creator, err := s.userRepo.FindUserByID(context.Background(), project.CreatedByID)
+		creator, err := s.userRepo.FindUserByID(ctx, project.CreatedByID)
 		if err != nil {
 			log.Printf("Error finding creator for project %s: %v", project.ID, err)
 			continue

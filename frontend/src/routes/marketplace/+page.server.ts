@@ -39,28 +39,22 @@ export const load = (async ({ fetch, locals, parent }) => {
       };
     }
 
-    // Parse the response data
     const responseData = await response.json();
 
-    // Handle null response - treat as empty array
     if (responseData === null) {
-      console.log("API returned null, treating as empty array");
       return {
         projects: [],
         error: null,
       };
     }
 
-    // Check if the response data is an array
     if (!Array.isArray(responseData)) {
-      console.error("API returned invalid data format:", responseData);
       return {
         projects: [],
         error: "Received invalid data format from server",
       };
     }
 
-    // Map the returned data to our frontend format
     const projects: ProjectDisplay[] = responseData.map((project: any) => ({
       id: project.id || "",
       title: project.title || "",
@@ -77,16 +71,41 @@ export const load = (async ({ fetch, locals, parent }) => {
       created_at: project.created_at || new Date().toISOString(),
     }));
 
-    // Success
+    // Fetch user's applications (student only) to show status badges on marketplace
+    let userApplications: { project_id: string; status: string }[] = [];
+    if (role === "student" && token) {
+      try {
+        const appsResponse = await fetch(BACKEND_URL + "/api/applications/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (appsResponse.ok) {
+          const appsData = await appsResponse.json();
+          if (Array.isArray(appsData)) {
+            userApplications = appsData.map((app: any) => ({
+              project_id: app.project_id || "",
+              status: app.status || "pending",
+            }));
+          }
+        }
+      } catch (appErr) {
+        console.error("Error fetching user applications:", appErr);
+      }
+    }
+
     return {
       role: role,
       projects,
+      userApplications,
       error: null,
     };
   } catch (error) {
     console.error("Error loading projects:", error);
     return {
       projects: [],
+      userApplications: [],
       error: "Failed to load projects. Please try again later.",
     };
   }

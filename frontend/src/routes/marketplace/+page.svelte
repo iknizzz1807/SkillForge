@@ -16,8 +16,22 @@
     ProjectID?: string;
     score?: number;
     match_score?: number;
+    user_status?: string | null;
     [key: string]: any;
   }
+
+  // Build a map of project_id → application status for the current user
+  let userAppMap: Record<string, string> = $derived(
+    (data as any).userApplications
+      ? ((data as any).userApplications as { project_id: string; status: string }[]).reduce(
+          (map, app) => {
+            map[app.project_id] = app.status;
+            return map;
+          },
+          {} as Record<string, string>
+        )
+      : {}
+  );
 
   // Đảm bảo skills là mảng
   let projectsDisplay: Project[] = $derived(
@@ -31,6 +45,7 @@
           ? (project.skills as string).split(",").map((s) => s.trim())
           : project.skills || [],
       match_score: project.match_score ?? 0,
+      user_status: userAppMap[project.id] || null,
     }))
   );
 
@@ -42,11 +57,15 @@
     // Keep the investor demo responsive: show a deterministic local suggestion
     // immediately, then replace it if the AI matching endpoint responds in time.
     projectsSuggest = projectsDisplay
-      .filter((project) => project.status !== "close")
+      .filter(
+        (project) =>
+          project.status !== "close" && !project.user_status
+      )
       .slice(0, 3)
       .map((project, index) => ({
         ...project,
         match_score: project.match_score || [92, 86, 78][index] || 70,
+        user_status: null,
       }));
 
     try {
@@ -67,6 +86,7 @@
           end_time: project.EndTime || project.end_time || "",
           created_by_name: project.CreatorName || project.creator_name || "",
           match_score: project.match_score ?? 0,
+          user_status: userAppMap[project.ProjectID || project.project_id || ""] || null,
         })) as Project[];
       }
     } catch (err) {
@@ -1308,6 +1328,21 @@
               </div>
 
               <div class="flex flex-col items-end space-y-2">
+                <!-- User status badge (applied/joined/rejected) -->
+                {#if project.user_status === "pending"}
+                  <span class="text-xs px-2 py-1 rounded font-bold bg-yellow-100 text-yellow-800">
+                    APPLIED
+                  </span>
+                {:else if project.user_status === "approved"}
+                  <span class="text-xs px-2 py-1 rounded font-bold bg-blue-100 text-blue-800">
+                    JOINED
+                  </span>
+                {:else if project.user_status === "rejected"}
+                  <span class="text-xs px-2 py-1 rounded font-bold bg-red-100 text-red-800">
+                    REJECTED
+                  </span>
+                {/if}
+
                 <!-- Status badge -->
                 <span
                   class={`text-xs px-2 py-1 rounded font-bold ${
