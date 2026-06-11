@@ -1,4 +1,5 @@
 import type { LayoutServerLoad } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 // Modify your +layout.server.ts file
 export const load = (async (event) => {
@@ -28,7 +29,7 @@ export const load = (async (event) => {
   if (token) {
     try {
       // Make request to backend API
-      const response = await fetch("http://backend:8080/api/user", {
+      const response = await fetch(BACKEND_URL + "/api/user", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

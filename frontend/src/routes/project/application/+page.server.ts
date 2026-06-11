@@ -1,4 +1,5 @@
 import type { PageServerLoad } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const load = (async (event) => {
   const user = event.locals.user;
@@ -16,7 +17,7 @@ export const load = (async (event) => {
   try {
     // Get applications based on user role
     // The endpoint returns different data for business vs student users
-    const response = await fetch(`http://backend:8080/api/applications/me`, {
+    const response = await fetch(`${BACKEND_URL}/api/applications/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

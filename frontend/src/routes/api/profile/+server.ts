@@ -1,6 +1,7 @@
 // Cái endpoint này là để cập nhật profile cơ bản trong /profile
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const PUT: RequestHandler = async ({ request, fetch, cookies, locals }) => {
   try {
@@ -11,7 +12,7 @@ export const PUT: RequestHandler = async ({ request, fetch, cookies, locals }) =
     }
 
     // Forward the formdata to your Go backend
-    const response = await fetch("http://backend:8080/api/user", {
+    const response = await fetch(BACKEND_URL + "/api/user", {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,

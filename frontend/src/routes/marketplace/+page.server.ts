@@ -1,4 +1,5 @@
 import type { PageServerLoad } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 type ProjectDisplay = {
   id: string;
@@ -23,7 +24,7 @@ export const load = (async ({ fetch, locals, parent }) => {
     const role = parentData.role || "user";
 
     // Make API request with proper URL and headers
-    const response = await fetch("http://backend:8080/api/projects", {
+    const response = await fetch(BACKEND_URL + "/api/projects", {
       headers: {
         Authorization: token ? `Bearer ${token}` : "",
         "Content-Type": "application/json",

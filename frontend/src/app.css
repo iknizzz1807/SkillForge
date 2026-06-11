@@ -1,1 +1,40 @@
 @import "tailwindcss";
+
+/* SortableJS Kanban drag-and-drop styles */
+.task-ghost {
+  opacity: 0.4;
+  background: #e5e7eb !important;
+  border: 2px dashed #6b48ff !important;
+  border-radius: 8px;
+  transform: none !important;
+}
+
+.task-chosen {
+  box-shadow: 0 8px 24px rgba(107, 72, 255, 0.25);
+  transform: none !important;
+}
+
+.task-drag {
+  opacity: 0.95;
+  transform: rotate(2deg) scale(1.03) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+  cursor: grabbing !important;
+}
+
+.sortable-fallback {
+  opacity: 0.95 !important;
+  transform: rotate(2deg) scale(1.03) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2) !important;
+}
+
+.kanban-column {
+  min-height: 120px;
+  transition: background-color 0.2s ease;
+}
+
+.kanban-column.sortable-over {
+  background-color: rgba(107, 72, 255, 0.08) !important;
+  outline: 2px dashed #6b48ff;
+  outline-offset: -2px;
+  border-radius: 8px;
+}

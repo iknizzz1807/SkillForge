@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const DELETE: RequestHandler = async ({ params, fetch, request, locals }) => {
   const id = params.project_id;
@@ -10,7 +11,7 @@ export const DELETE: RequestHandler = async ({ params, fetch, request, locals })
   }
 
   try {
-    const response = await fetch(`http://backend:8080/api/projects/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/projects/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: authHeader,
@@ -46,7 +47,7 @@ export const PUT: RequestHandler = async ({ params, fetch, request, locals }) =>
   try {
     const requestData = await request.json();
 
-    const response = await fetch(`http://backend:8080/api/projects/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/projects/${id}`, {
       method: "PUT",
       body: JSON.stringify(requestData),
       headers: {

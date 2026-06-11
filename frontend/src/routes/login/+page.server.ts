@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail, type Cookies, redirect } from "@sveltejs/kit";
 import { dev } from "$app/environment";
+import { BACKEND_URL } from '$lib/backend';
 
 function safeRedirectPath(value: string, fallback = "/dashboard") {
   if (!value.startsWith("/") || value.startsWith("//")) return fallback;
@@ -46,7 +47,7 @@ export const actions = {
 
     try {
       // Call the login endpoint
-      const response = await fetch("http://backend:8080/auth/login", {
+      const response = await fetch(BACKEND_URL + "/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

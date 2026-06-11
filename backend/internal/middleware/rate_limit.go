@@ -8,6 +8,7 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -80,6 +81,10 @@ func (rl *rateLimiter) allow(ip, userID string) bool {
 
 func RateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if os.Getenv("DISABLE_RATE_LIMIT") == "true" {
+			c.Next()
+			return
+		}
 		ip := c.ClientIP()
 		userID, _ := c.Get("userID")
 		uid, _ := userID.(string)

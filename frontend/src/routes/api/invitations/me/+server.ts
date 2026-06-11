@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals }) => {
   try {
@@ -10,7 +11,7 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch("http://backend:8080/api/invitations/me", {
+    const response = await fetch(BACKEND_URL + "/api/invitations/me", {
       headers,
     });
 

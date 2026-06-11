@@ -1,4 +1,5 @@
 import { json } from "@sveltejs/kit";
+import { BACKEND_URL } from '$lib/backend';
 
 // Get one chat group, return messages and list of users in the group
 export async function GET({ fetch, locals, params }) {
@@ -6,7 +7,7 @@ export async function GET({ fetch, locals, params }) {
     const token = locals.token;
     const id = params.id;
 
-    const response = await fetch("http://backend:8080/api/chats/" + id, {
+    const response = await fetch(BACKEND_URL + "/api/chats/" + id, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const DELETE: RequestHandler = async ({ params, fetch, locals }) => {
   try {
@@ -17,7 +18,7 @@ export const DELETE: RequestHandler = async ({ params, fetch, locals }) => {
 
     // Gọi đến API backend
     const response = await fetch(
-      `http://backend:8080/api/projects/students/${student_id}/${project_id}`,
+      `${BACKEND_URL}/api/projects/students/${student_id}/${project_id}`,
       {
         method: "DELETE",
         headers: {

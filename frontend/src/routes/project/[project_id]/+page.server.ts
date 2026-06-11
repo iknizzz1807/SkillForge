@@ -1,5 +1,6 @@
 import type { PageServerLoad } from "./$types";
 import { error } from "@sveltejs/kit";
+import { BACKEND_URL } from '$lib/backend';
 
 export const load = (async ({ params, fetch, locals }) => {
   const project_id = params.project_id;
@@ -8,7 +9,7 @@ export const load = (async ({ params, fetch, locals }) => {
   try {
     // Fetch project based on project_id
     const response = await fetch(
-      `http://backend:8080/api/projects/${project_id}`,
+      `${BACKEND_URL}/api/projects/${project_id}`,
       {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",

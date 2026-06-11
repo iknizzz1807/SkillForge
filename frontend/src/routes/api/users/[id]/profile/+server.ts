@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals, params }) => {
   const token = locals.token;
@@ -8,7 +9,7 @@ export const GET: RequestHandler = async ({ fetch, locals, params }) => {
   }
 
   const response = await fetch(
-    `http://backend:8080/api/users/${params.id}/profile`,
+    `${BACKEND_URL}/api/users/${params.id}/profile`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }

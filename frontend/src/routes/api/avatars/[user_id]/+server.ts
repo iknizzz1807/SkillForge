@@ -1,4 +1,5 @@
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals, params }) => {
   const token = locals.token; // Get auth token from locals
@@ -11,7 +12,7 @@ export const GET: RequestHandler = async ({ fetch, locals, params }) => {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`http://backend:8080/avatars/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/avatars/${id}`, {
       headers,
     });
 

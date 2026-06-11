@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
   const user = locals.user;
@@ -34,7 +35,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
     }
 
     const response = await fetch(
-      `http://backend:8080/api/applications/status/${applicationId}`,
+      `${BACKEND_URL}/api/applications/status/${applicationId}`,
       {
         method: "PUT",
         headers: {

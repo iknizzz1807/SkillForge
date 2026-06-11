@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
 import { dev } from "$app/environment";
+import { BACKEND_URL } from '$lib/backend';
 
 export const actions = {
   default: async ({ request, cookies }) => {
@@ -53,7 +54,7 @@ export const actions = {
       }
 
       // Call the registration endpoint with FormData
-      const response = await fetch("http://backend:8080/auth/register", {
+      const response = await fetch(BACKEND_URL + "/auth/register", {
         method: "POST",
         body: apiFormData, // No content-type header - browser sets it automatically with boundary
       });

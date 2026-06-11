@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const POST: RequestHandler = async ({ fetch, locals, request }) => {
   const token = locals.token;
@@ -8,7 +9,7 @@ export const POST: RequestHandler = async ({ fetch, locals, request }) => {
   }
 
   const body = await request.json();
-  const response = await fetch("http://backend:8080/api/invitations", {
+  const response = await fetch(BACKEND_URL + "/api/invitations", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -26,12 +26,11 @@ export default defineConfig({
       usePolling: false,
     },
     proxy: {
-      "/api": "http://backend:8080",
-      "/avatars": "http://backend:8080",
-      "/portfolios": "http://backend:8080",
-      "/storage": "http://backend:8080",
+      "/avatars": process.env.BACKEND_URL || "http://backend:8080",
+      "/portfolios": process.env.BACKEND_URL || "http://backend:8080",
+      "/storage": process.env.BACKEND_URL || "http://backend:8080",
       "/ws": {
-        target: "ws://backend:8080",
+        target: (process.env.BACKEND_URL || "http://backend:8080").replace(/^http/, "ws"),
         ws: true,
       },
     },

@@ -1,11 +1,12 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals }) => {
   const token = locals.token;
 
   try {
-    const response = await fetch("http://backend:8080/api/matches", {
+    const response = await fetch(BACKEND_URL + "/api/matches", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

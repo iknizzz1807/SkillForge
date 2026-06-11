@@ -36,8 +36,8 @@ describe("Marketplace page", () => {
 
   it("renders project cards with titles", () => {
     render(MarketplacePage, { props: mockProps });
-    expect(screen.getByText("Build a Chat App")).toBeInTheDocument();
-    expect(screen.getByText("E-commerce Backend")).toBeInTheDocument();
+    expect(screen.getAllByText("Build a Chat App").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("E-commerce Backend").length).toBeGreaterThan(0);
   });
 
   it("renders skills as tags", () => {

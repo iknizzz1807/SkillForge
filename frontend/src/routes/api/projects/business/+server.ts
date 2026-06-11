@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals }) => {
   const token = locals.token;
@@ -7,7 +8,7 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const response = await fetch("http://backend:8080/api/projects/business", {
+  const response = await fetch(BACKEND_URL + "/api/projects/business", {
     headers: { Authorization: `Bearer ${token}` },
   });
 

@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 // GET endpoint to retrieve business info
 export const GET: RequestHandler = async ({ fetch, locals }) => {
@@ -12,7 +13,7 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
     }
 
     // Forward the request to the backend API
-    const response = await fetch(`http://backend:8080/api/business-info`, {
+    const response = await fetch(`${BACKEND_URL}/api/business-info`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${locals.token}`,
@@ -57,7 +58,7 @@ export const PUT: RequestHandler = async ({ request, fetch, locals }) => {
     const formData = await request.formData();
 
     // Forward the request to the backend API
-    const response = await fetch(`http://backend:8080/api/business-info`, {
+    const response = await fetch(`${BACKEND_URL}/api/business-info`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${locals.token}`,

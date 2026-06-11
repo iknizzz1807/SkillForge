@@ -1,4 +1,5 @@
 import type { PageServerLoad, Actions } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 type ProjectDisplay = {
   id: string;
@@ -30,7 +31,7 @@ export const load = (async ({ fetch, locals, parent }) => {
 
     // Fetch application count in parallel with projects
     applicationCountResponse = await fetch(
-      "http://backend:8080/api/applications/count",
+      BACKEND_URL + "/api/applications/count",
       {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
@@ -42,7 +43,7 @@ export const load = (async ({ fetch, locals, parent }) => {
     if (role === "business") {
       // Make get request to the business API
       // Make API request with proper URL and headers
-      response = await fetch("http://backend:8080/api/projects/business", {
+      response = await fetch(BACKEND_URL + "/api/projects/business", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",
@@ -51,7 +52,7 @@ export const load = (async ({ fetch, locals, parent }) => {
     } else if (role === "student") {
       // Make get request to the student API
       // Make API request with proper URL and headers
-      response = await fetch("http://backend:8080/api/projects/student", {
+      response = await fetch(BACKEND_URL + "/api/projects/student", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type": "application/json",

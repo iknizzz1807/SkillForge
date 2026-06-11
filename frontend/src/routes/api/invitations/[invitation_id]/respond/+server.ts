@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const PUT: RequestHandler = async ({ params, request, locals, fetch }) => {
   try {
@@ -16,7 +17,7 @@ export const PUT: RequestHandler = async ({ params, request, locals, fetch }) =>
     const body = await request.json();
 
     const response = await fetch(
-      `http://backend:8080/api/invitations/${invitationId}/respond`,
+      `${BACKEND_URL}/api/invitations/${invitationId}/respond`,
       {
         method: "PUT",
         headers: {

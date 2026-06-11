@@ -1,5 +1,6 @@
 import type { PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
+import { BACKEND_URL } from '$lib/backend';
 
 export const load = (async ({ params, locals, fetch }) => {
   const current_user_id = locals.user?.id;
@@ -16,7 +17,7 @@ export const load = (async ({ params, locals, fetch }) => {
 
   try {
     const response = await fetch(
-      `http://backend:8080/api/users/${target_user_id}/profile`,
+      `${BACKEND_URL}/api/users/${target_user_id}/profile`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

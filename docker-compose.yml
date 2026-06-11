@@ -32,6 +32,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-local-dev-secret-change-in-production}
       - AI_URL=http://ai:5000
       - JWT_EXPIRY_HOURS=24
+      - DISABLE_RATE_LIMIT=true
 
   frontend:
     build:
@@ -52,6 +53,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - NODE_ENV=development
+      - BACKEND_URL=http://backend:8080
 
   mongodb:
     image: mongo:6.0

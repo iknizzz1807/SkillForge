@@ -1,12 +1,13 @@
 import { redirect, json } from "@sveltejs/kit";
 import { dev } from "$app/environment";
+import { BACKEND_URL } from '$lib/backend';
 
 export const POST = async ({ cookies, url, locals }) => {
   const token = locals.token;
 
   if (token) {
     try {
-      await fetch("http://backend:8080/api/logout", {
+      await fetch(BACKEND_URL + "/api/logout", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

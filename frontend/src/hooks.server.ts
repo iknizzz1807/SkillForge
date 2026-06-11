@@ -1,4 +1,5 @@
 import { redirect, json, type Handle } from "@sveltejs/kit";
+import { BACKEND_URL } from '$lib/backend';
 
 // List of routes that don't require authentication
 const publicRoutes = ["/login", "/register", "/api/public", "/api/logout"];
@@ -39,7 +40,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   // Make token available in locals only after the backend verifies it.
   if (token) {
-    const response = await fetch("http://backend:8080/api/user", {
+    const response = await fetch(BACKEND_URL + "/api/user", {
       headers: { Authorization: `Bearer ${token}` },
     }).catch(() => null);
 

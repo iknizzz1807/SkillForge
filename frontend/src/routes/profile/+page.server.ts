@@ -1,4 +1,5 @@
 import type { PageServerLoad } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const load = (async ({ locals, fetch, url, parent }) => {
   const user = locals.user;
@@ -19,7 +20,7 @@ export const load = (async ({ locals, fetch, url, parent }) => {
   let userData = {};
 
   try {
-    const response = await fetch("http://backend:8080/api/user", {
+    const response = await fetch(BACKEND_URL + "/api/user", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

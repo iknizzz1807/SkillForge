@@ -1,4 +1,5 @@
 import type { RequestHandler } from "./$types";
+import { BACKEND_URL } from '$lib/backend';
 
 export const GET: RequestHandler = async ({ fetch, locals, url }) => {
   const token = locals.token;
@@ -13,7 +14,7 @@ export const GET: RequestHandler = async ({ fetch, locals, url }) => {
     });
   }
 
-  const backendUrl = `http://backend:8080/avatars/${encodeURIComponent(userId)}`;
+  const backendUrl = `${BACKEND_URL}/avatars/${encodeURIComponent(userId)}`;
 
   try {
     const headers: Record<string, string> = {};
