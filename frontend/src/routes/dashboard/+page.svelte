@@ -584,13 +584,13 @@
         <canvas id="progressChart" height="70" bind:this={progressChartCanvas}></canvas>
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap items-start gap-3">
         <div class="card p-3 w-[calc(50%-0.375rem)]">
           <h3 class="text-base font-semibold mb-2">Your Skills Assessment</h3>
           <canvas id="skillsChart" height="200" bind:this={skillsChartCanvas}></canvas>
         </div>
 
-        <div class="card p-3 w-[calc(50%-0.375rem)]">
+        <div class="card p-3 w-[calc(50%-0.375rem)] self-start">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-base font-semibold">
               Suggested Projects (AI Match)

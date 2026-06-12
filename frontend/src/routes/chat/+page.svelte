@@ -140,6 +140,11 @@
           };
         });
 
+        if (messages.length > 0) {
+          const latestMessage = messages[messages.length - 1];
+          updateRoomMeta(roomId, buildMessagePreview(latestMessage), formatRoomListTime(latestMessage.created_at));
+        }
+
         const files: SharedFile[] = rawMessages
           .filter((m: ChatMessage) => m.type === "file" || m.file_url)
           .map((m: ChatMessage) => ({
@@ -176,6 +181,34 @@
     );
   }
 
+  function formatRoomListTime(timestamp: string) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return timestamp;
+
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function buildMessagePreview(message: Partial<ChatMessage>) {
+    const senderName = message.sender_id === currentUserId ? "You" : message.user_name || "Someone";
+    if (message.type === "file" || message.file_url || message.file_name) {
+      return `${senderName}: Sent ${message.file_name || "an attachment"}`;
+    }
+    return `${senderName}: ${message.content || "Sent a message"}`;
+  }
+
+  function getRoomPreview(room: ChatRoom) {
+    return room.lastMessage || "Start the conversation";
+  }
+
   async function selectRoom(room: ChatRoom) {
     if (chatWsReconnectTimer) clearTimeout(chatWsReconnectTimer);
     if (selectedRoom?.id !== room.id) {
@@ -208,10 +241,17 @@
           const sender = teamMembers.find(m => m.id === msg.sender_id);
 
           const fileUrl = msg.file_url ? (msg.file_url.startsWith("http") ? msg.file_url : `${PUBLIC_API_URL}${msg.file_url}`) : "";
-          const displayContent = msg.file_name || msg.content || "";
           const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const incomingMessage = {
+            content: msg.content || "",
+            sender_id: msg.sender_id,
+            type: msg.type || "text",
+            file_url: fileUrl,
+            file_name: msg.file_name || "",
+            user_name: sender?.name || msg.user_name || "User",
+          };
 
-          updateRoomMeta(projectId, displayContent, timeStr);
+          updateRoomMeta(projectId, buildMessagePreview(incomingMessage), timeStr);
 
           if (msg.sender_id === currentUserId && msg.client_id) {
             const optIndex = messages.findIndex(m => m.id === msg.client_id);
@@ -247,7 +287,7 @@
             avatar: sender?.avatar || `${PUBLIC_API_URL}/avatars/${msg.sender_id}`,
           }];
 
-          if (msg.sender_id !== currentUserId && !isPageVisible) {
+          if (msg.sender_id !== currentUserId && (selectedRoom?.id !== projectId || !isPageVisible)) {
             chatRooms = chatRooms.map(r =>
               r.id === projectId ? { ...r, unread: (r.unread || 0) + 1 } : r
             );
@@ -292,7 +332,7 @@
       };
       messages = [...messages, optMsg];
 
-      updateRoomMeta(selectedRoom.id, messageInput.trim(), new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      updateRoomMeta(selectedRoom.id, buildMessagePreview(optMsg), new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       ws.send(JSON.stringify({ content: messageInput.trim(), type: "text", client_id: optimisticId }));
 
       setTimeout(() => {
@@ -309,6 +349,7 @@
     input.type = "file";
     input.accept = "image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.csv,.xlsx,.xls";
     const targetRoomId = selectedRoom?.id;
+    if (!targetRoomId) return;
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -361,6 +402,8 @@
           user_name: currentUserName,
           avatar: currentUserAvatar,
         }];
+
+        updateRoomMeta(targetRoomId, `You: Sent ${result.name || file.name}`, new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
 
         ws.send(JSON.stringify({
           content: file.name,
@@ -471,7 +514,7 @@
           {#each sortedRooms as room}
             <div
               class={`p-2 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center transition-colors ${
-                selectedRoom?.id === room.id ? "bg-[#6b48ff] bg-opacity-10 border-l-2 border-[#6b48ff]" : "border-l-2 border-transparent"
+                selectedRoom?.id === room.id ? "bg-purple-50 border-l-2 border-[#6b48ff]" : "border-l-2 border-transparent"
               }`}
               role="button" tabindex="0"
               onclick={() => selectRoom(room)}
@@ -482,11 +525,11 @@
               </div>
               <div class="flex-1 overflow-hidden min-w-0">
                 <div class="flex justify-between items-center">
-                  <span class="text-xs font-medium text-gray-800 truncate">{room.title}</span>
-                  <span class="text-[10px] text-gray-400 ml-1 flex-shrink-0">{room.lastMessageTime || ""}</span>
+                  <span class={`text-xs font-medium truncate ${selectedRoom?.id === room.id ? "text-[#3f2ca8]" : "text-gray-800"}`}>{room.title}</span>
+                  <span class={`text-[10px] ml-1 flex-shrink-0 ${selectedRoom?.id === room.id ? "text-[#6b48ff]" : "text-gray-400"}`}>{room.lastMessageTime || ""}</span>
                 </div>
                 <div class="flex justify-between items-center mt-0.5">
-                  <p class="text-[10px] text-gray-500 truncate">{room.lastMessage || "No messages yet"}</p>
+                  <p class={`text-[10px] truncate ${selectedRoom?.id === room.id ? "text-[#4f35c9]" : "text-gray-500"}`}>{getRoomPreview(room)}</p>
                   {#if room.unread && room.unread > 0}
                     <span class="flex-shrink-0 bg-[#6b48ff] text-white text-[10px] font-medium rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 ml-1">{room.unread}</span>
                   {/if}
@@ -659,7 +702,8 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <p class="text-xs">No messages yet. Start a conversation!</p>
+              <p class="text-sm font-medium text-gray-500">Start the conversation</p>
+              <p class="text-xs text-gray-400">Send the first message to your team.</p>
             </div>
           {/if}
         </div>
