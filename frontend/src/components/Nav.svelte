@@ -142,12 +142,12 @@
 
 {#if url !== "/login" && url !== "/register"}
   <!-- Mobile header -->
-  <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-950 border-b border-gray-800 flex items-center justify-between px-4 z-40">
+  <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-gradient-to-r from-[#6b48ff] to-[#896DFF] border-b border-white/15 flex items-center justify-between px-4 z-40 shadow-lg shadow-[#6b48ff]/20">
     <h1 class="text-lg font-bold text-white flex items-center gap-2">
       <img src="/favicon.png" alt="SkillForge" class="h-7 w-7" />
       <span>SKILLFORGE</span>
     </h1>
-    <button class="p-2 text-gray-400 hover:text-white" onclick={() => (isSidebarOpen = true)} aria-label="Open menu">
+    <button class="p-2 text-white/80 hover:text-white" onclick={() => (isSidebarOpen = true)} aria-label="Open menu">
       <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
@@ -161,10 +161,10 @@
 
   <!-- Sidebar -->
   <aside
-    class="fixed top-0 left-0 h-full w-64 bg-gray-950 text-white border-r border-gray-800 flex flex-col z-50 transition-transform duration-300 md:translate-x-0 {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
+    class="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-[#5f3df2] via-[#6b48ff] to-[#896DFF] text-white border-r border-white/15 flex flex-col z-50 shadow-2xl shadow-[#6b48ff]/25 transition-transform duration-300 md:translate-x-0 {isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
   >
     <!-- Logo -->
-    <div class="p-4 border-b border-gray-800 hidden md:block">
+    <div class="p-4 border-b border-white/15 hidden md:block">
       <h1 class="text-xl font-bold flex items-center gap-2">
         <img src="/favicon.png" alt="SkillForge" class="h-8 w-8" />
         <span>SKILLFORGE</span>
@@ -177,7 +177,7 @@
         <a
           href={item.href}
           onclick={closeSidebar}
-          class={"flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors " + ((item.href === "/profile" ? url === "/profile" || url === "/profile/" : url.startsWith(item.href)) ? "bg-[#896DFF] text-white font-semibold" : "text-gray-300 hover:text-white hover:bg-[#896DFF]/10")}
+          class={"flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors " + ((item.href === "/profile" ? url === "/profile" || url === "/profile/" : url.startsWith(item.href)) ? "bg-white/20 text-white font-semibold shadow-sm" : "text-white/75 hover:text-white hover:bg-white/10")}
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon} />
@@ -190,7 +190,7 @@
         <a
           href="/invitations"
           onclick={closeSidebar}
-          class={"flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors " + (url.startsWith("/invitations") ? "bg-[#896DFF] text-white font-semibold" : "text-gray-300 hover:text-white hover:bg-[#896DFF]/10")}
+          class={"flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors " + (url.startsWith("/invitations") ? "bg-white/20 text-white font-semibold shadow-sm" : "text-white/75 hover:text-white hover:bg-white/10")}
         >
           <div class="flex items-center gap-3">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +206,7 @@
         <a
           href="/talent"
           onclick={closeSidebar}
-          class={"flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors " + ((url.startsWith("/talent") || url.startsWith("/profile/user")) ? "bg-[#896DFF] text-white font-semibold" : "text-gray-300 hover:text-white hover:bg-[#896DFF]/10")}
+          class={"flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors " + ((url.startsWith("/talent") || url.startsWith("/profile/user")) ? "bg-white/20 text-white font-semibold shadow-sm" : "text-white/75 hover:text-white hover:bg-white/10")}
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -217,18 +217,18 @@
     </nav>
 
     <!-- User section -->
-    <div class="p-3 border-t border-gray-800">
+    <div class="p-3 border-t border-white/15">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3 min-w-0 flex-1">
-          <img class="w-9 h-9 rounded-full object-cover border border-gray-700 flex-shrink-0" src={avatarUrl} alt="" />
+          <img class="w-9 h-9 rounded-full object-cover border border-white/30 flex-shrink-0" src={avatarUrl} alt="" />
           <div class="min-w-0">
             <p class="text-sm font-medium truncate">{name}</p>
-            <p class="text-xs text-gray-400 truncate">{role.charAt(0).toUpperCase() + role.slice(1)}</p>
+            <p class="text-xs text-white/65 truncate">{role.charAt(0).toUpperCase() + role.slice(1)}</p>
           </div>
         </div>
         <div class="flex gap-1 flex-shrink-0">
           <div class="relative" bind:this={notificationContainer}>
-            <button class="p-1.5 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white" onclick={toggleNotificationMenu} aria-label="Notifications">
+            <button class="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white" onclick={toggleNotificationMenu} aria-label="Notifications">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
@@ -237,7 +237,7 @@
               {/if}
             </button>
           </div>
-          <button class="p-1.5 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white" onclick={logout} aria-label="Logout">
+          <button class="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white" onclick={logout} aria-label="Logout">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>

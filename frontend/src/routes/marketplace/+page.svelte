@@ -50,9 +50,12 @@
   );
 
   let projectsSuggest: Project[] = $state([]);
+  let suggestionsLoading = $state(false);
 
   onMount(async () => {
     if (data.role !== "student") return;
+
+    suggestionsLoading = true;
 
     // Keep the investor demo responsive: show a deterministic local suggestion
     // immediately, then replace it if the AI matching endpoint responds in time.
@@ -91,6 +94,8 @@
       }
     } catch (err) {
       console.log(err);
+    } finally {
+      suggestionsLoading = false;
     }
   });
 
@@ -1089,7 +1094,7 @@
                 No projects are available in the marketplace.
               </p>
             </div>
-          {:else if projectsSuggest.length === 0}
+          {:else if suggestionsLoading && projectsSuggest.length === 0}
             <div class="flex justify-center items-center py-4">
               <div
                 class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6b48ff]"
@@ -1097,6 +1102,12 @@
               <span class="ml-2 text-sm text-gray-600"
                 >Loading suggestions...</span
               >
+            </div>
+          {:else if projectsSuggest.length === 0}
+            <div class="text-center py-4">
+              <p class="text-sm text-gray-600">
+                No suggestions right now. Check the marketplace for available projects.
+              </p>
             </div>
           {:else}
             {#each projectsSuggest as project}

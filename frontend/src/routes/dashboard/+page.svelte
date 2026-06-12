@@ -306,10 +306,22 @@
         } catch { /* ignore */ }
 
         try {
-          const res = await fetch("/api/projects");
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 3500);
+          const res = await fetch("/api/projects/matching", { signal: controller.signal });
+          clearTimeout(timeout);
           if (res.ok) {
             const d = await res.json();
-            marketplaceProjects = Array.isArray(d) ? d.slice(0, 3) : [];
+            marketplaceProjects = Array.isArray(d)
+              ? d.slice(0, 3).map((project: any) => ({
+                  ...project,
+                  id: project.ProjectID || project.project_id || project.id || "",
+                  title: project.ProjectTitle || project.project_title || project.title || "",
+                  skills: project.ProjectSkills || project.project_skills || project.skills || [],
+                  created_by_name: project.CreatorName || project.creator_name || project.created_by_name || "",
+                  match_score: project.match_score ?? project.MatchScore ?? 0,
+                }))
+              : [];
           } else {
             marketplaceError = true;
           }
