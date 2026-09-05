@@ -387,7 +387,7 @@ ws://localhost:8080/ws/notifi/:userID               → Notifications
 ```mermaid
 flowchart TD
     B[Browser] -- 3 WebSocket connections --> R[RealtimeClient Go]
-    R --> RM[Room Map<br/>room → {userID → conn}]
+    R --> RM["Room Map<br/>room → {userID → conn}"]
     RM --> BC[Broadcast<br/>all in room]
     RM --> SU[SendUser<br/>specific]
     RM --> SN[SendNotif<br/>specific]
@@ -411,7 +411,7 @@ flowchart TD
     PE --> PP[Mean Pooling + L2 Norm]
     SP --> C{cosine_sim × 100}
     PP --> C
-    C --> SCORE[Score = dot A,B × 100 → 72%]
+    C --> SCORE["Score = dot A,B × 100 → 72%"]
 ```
 
 ### Model Details
