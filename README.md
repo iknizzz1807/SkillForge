@@ -61,47 +61,25 @@ SkillForge uses **sentence transformers** to encode student skills and project r
 
 SkillForge follows a **three-tier microservices architecture** with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Browser (SPA)                           │
-│                  SvelteKit · Tailwind v4 · Chart.js             │
-└──────────┬──────────────────────────────┬───────────────────────┘
-           │ HTTP / REST                  │ WebSocket (3 channels)
-           ▼                              ▼
-┌──────────────────┐            ┌──────────────────┐
-│  SvelteKit BFF   │            │  WebSocket Hub   │
-│  Server-Side     │            │  Gorilla WS      │
-│  Rendering +     │            │  Room-based      │
-│  API Proxy       │            │  Pub/Sub         │
-└────────┬─────────┘            └────────┬─────────┘
-         │                               │
-         ▼                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Go Backend (Gin)                           │
-│         Handler → Service → Repository (Clean Architecture)     │
-│  ┌─────────┐ ┌──────────┐ ┌────────────┐ ┌──────────────────┐  │
-│  │  Auth   │ │ Projects │ │   Tasks    │ │   Gamification   │  │
-│  │  (JWT)  │ │   CRUD   │ │  Kanban    │ │  XP · Badges     │  │
-│  └─────────┘ └──────────┘ └────────────┘ └──────────────────┘  │
-└───────┬──────────────┬──────────────────┬───────────────────────┘
-        │              │                  │
-        ▼              ▼                  ▼
-┌──────────────┐ ┌───────────┐ ┌──────────────────┐
-│   MongoDB    │ │ AI Service│ │  JWT Auth        │
-│  17 collections│ │ FastAPI   │ │  HS256 · httpOnly│
-│  Users·Tasks │ │ Python    │ │  cookie          │
-└──────────────┘ └─────┬─────┘ └──────────────────┘
-                       │
-                       ▼
-              ┌─────────────────┐
-              │   Sentence      │
-              │  Transformers   │
-              │ all-MiniLM-L6-v2│
-              │  384-dim · Cos  │
-              └─────────────────┘
-```
+<p align="center">
+  <img src="docs/screenshots/architecture.png" alt="SkillForge System Architecture" width="100%" />
+</p>
 
-> **Interactive Architecture Diagram:** Open [`docs/skillforge-architecture.html`](docs/skillforge-architecture.html) in a browser to explore the system with focus modes, zoom, and guided views.
+<p align="center">
+  <em>Generated with <a href="https://github.com/tt-a1i/archify">Archify</a> — open the live <a href="docs/skillforge-architecture.html">interactive diagram</a> for focus modes, zoom, and guided story views.</em>
+</p>
+
+```mermaid
+flowchart LR
+    Browser[Browser SPA] -->|HTTP / REST| BFF[SvelteKit BFF]
+    Browser -->|WebSocket x3| Hub[WebSocket Hub]
+    BFF -->|REST API| Go[Go Backend]
+    Hub -->|Broadcast| Go
+    Go -->|CRUD| Mongo[(MongoDB)]
+    Go -->|POST /matching2| AI[AI Matching Service]
+    AI -->|encode + cos_sim| Model[Sentence Transformers]
+    Go -->|Validate| JWT[JWT Auth]
+```
 
 ### Architectural Decisions
 
@@ -118,7 +96,9 @@ SkillForge follows a **three-tier microservices architecture** with clear separa
 
 ## Screenshots
 
-<!-- TODO: Add screenshots after demo recording -->
+**Product UI** — *coming soon* (see TODOs below):
+
+<!-- TODO: Add product screenshots after demo recording -->
 
 | Dashboard | Kanban Board | AI Matching | Chat |
 |---|---|---|---|
@@ -404,21 +384,13 @@ ws://localhost:8080/ws/notifi/:userID               → Notifications
 
 ### Real-time Architecture
 
-```
-Browser ──[3 WebSocket connections]──→ RealtimeClient (Go)
-                                          │
-                                    ┌─────┴─────┐
-                                    │  Room Map  │
-                                    │ room → {   │
-                                    │   userID → │
-                                    │   conn     │
-                                    │ }          │
-                                    └────────────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              ▼           ▼           ▼
-                         Broadcast   SendUser   SendNotif
-                        (all in room) (specific) (specific)
+```mermaid
+flowchart TD
+    B[Browser] -- 3 WebSocket connections --> R[RealtimeClient Go]
+    R --> RM[Room Map<br/>room → {userID → conn}]
+    RM --> BC[Broadcast<br/>all in room]
+    RM --> SU[SendUser<br/>specific]
+    RM --> SN[SendNotif<br/>specific]
 ```
 
 ---
@@ -429,39 +401,17 @@ Browser ──[3 WebSocket connections]──→ RealtimeClient (Go)
 
 The matching system uses **semantic similarity** to pair students with relevant projects:
 
-```
-Student Profile                          Project Requirements
-┌─────────────────────┐                  ┌─────────────────────┐
-│ Skills: ["React",   │                  │ Skills: ["React",   │
-│  "TypeScript",      │                  │  "Node.js",         │
-│  "UI/UX"]           │                  │  "MongoDB"]         │
-│ Title: "Frontend    │                  │ Title: "E-commerce  │
-│  Developer"         │                  │  Platform"          │
-└──────────┬──────────┘                  └──────────┬──────────┘
-           │                                        │
-           ▼                                        ▼
-    ┌──────────────┐                         ┌──────────────┐
-    │  Tokenizer   │                         │  Tokenizer   │
-    │  (BERT)      │                         │  (BERT)      │
-    └──────┬───────┘                         └──────┬───────┘
-           │                                        │
-           ▼                                        ▼
-    ┌──────────────┐                         ┌──────────────┐
-    │  BERT Encoder│                         │  BERT Encoder│
-    │  (6 layers)  │                         │  (6 layers)  │
-    └──────┬───────┘                         └──────┬───────┘
-           │                                        │
-           ▼                                        ▼
-    ┌──────────────┐                         ┌──────────────┐
-    │Mean Pooling  │                         │Mean Pooling  │
-    │+ L2 Norm     │                         │+ L2 Norm     │
-    └──────┬───────┘                         └──────┬───────┘
-           │                                        │
-           ▼                                        ▼
-    ┌──────────────────────────────────────────────────────┐
-    │              Cosine Similarity Score                  │
-    │         score = dot(A, B) × 100 → 72%               │
-    └──────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    S[Student Profile<br/>Skills: React, TypeScript, UI/UX] --> ST[Tokenizer BERT]
+    P[Project Requirements<br/>Skills: React, Node.js, MongoDB] --> PT[Tokenizer BERT]
+    ST --> SE[BERT Encoder 6 layers]
+    PT --> PE[BERT Encoder 6 layers]
+    SE --> SP[Mean Pooling + L2 Norm]
+    PE --> PP[Mean Pooling + L2 Norm]
+    SP --> C{cosine_sim × 100}
+    PP --> C
+    C --> SCORE[Score = dot A,B × 100 → 72%]
 ```
 
 ### Model Details
