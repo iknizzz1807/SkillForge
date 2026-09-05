@@ -96,13 +96,31 @@ flowchart LR
 
 ## Screenshots
 
-**Product UI** — *coming soon* (see TODOs below):
+Live product UI — captured from the running SkillForge application.
 
-<!-- TODO: Add product screenshots after demo recording -->
+### Dashboard
 
-| Dashboard | Kanban Board | AI Matching | Chat |
-|---|---|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Kanban](docs/screenshots/kanban.png) | ![Matching](docs/screenshots/matching.png) | ![Chat](docs/screenshots/chat.png) |
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="SkillForge Dashboard" width="90%" />
+</p>
+
+### Kanban Board
+
+<p align="center">
+  <img src="docs/screenshots/kanban.png" alt="SkillForge Kanban Board" width="90%" />
+</p>
+
+### AI Matching
+
+<p align="center">
+  <img src="docs/screenshots/matching.png" alt="SkillForge AI Matching" width="90%" />
+</p>
+
+### Chat
+
+<p align="center">
+  <img src="docs/screenshots/chat.png" alt="SkillForge Chat" width="90%" />
+</p>
 
 ---
 
