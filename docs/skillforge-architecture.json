@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SkillForge — System Architecture",
+    "output": "skillforge-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "Student / Business", "pos": [30, 120], "size": [100, 46] },
+    { "id": "sveltekit", "type": "frontend", "label": "SvelteKit Frontend", "sublabel": "BFF + SSR", "pos": [210, 120], "size": [130, 50], "tag": "Svelte 5 · Tailwind v4" },
+    { "id": "websocket", "type": "messagebus", "label": "WebSocket Hub", "sublabel": "Gorilla WS", "pos": [210, 10], "size": [120, 46], "tag": "Chat · Tasks · Notifications" },
+    { "id": "go", "type": "backend", "label": "Go Backend", "sublabel": "Gin · Clean Architecture", "pos": [440, 120], "size": [130, 50], "tag": "Handler → Service → Repository" },
+    { "id": "ai", "type": "backend", "label": "AI Matching Service", "sublabel": "FastAPI · Python", "pos": [670, 120], "size": [130, 50], "tag": "Sentence Transformers" },
+    { "id": "model", "type": "cloud", "label": "Sentence Transformers", "sublabel": "all-MiniLM-L6-v2", "pos": [900, 120], "size": [140, 46], "tag": "384-dim · Cosine Similarity" },
+    { "id": "mongo", "type": "database", "label": "MongoDB", "sublabel": "6.0 · 17 collections", "pos": [440, 280], "size": [130, 46] },
+    { "id": "jwt", "type": "security", "label": "JWT Auth", "sublabel": "HS256 · httpOnly cookie", "pos": [670, 280], "size": [120, 46] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Backend Services", "wraps": ["go", "mongo", "jwt"] },
+    { "kind": "security-group", "label": "AI / ML Pipeline", "wraps": ["ai", "model"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "browser", "to": "sveltekit", "label": "HTTP", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "c2", "from": "sveltekit", "to": "go", "label": "REST API", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "c3", "from": "go", "to": "ai", "label": "POST /matching2", "fromSide": "right", "toSide": "left", "labelAt": [615, 85] },
+    { "id": "c4", "from": "ai", "to": "model", "label": "encode + cos_sim", "fromSide": "right", "toSide": "left", "labelAt": [845, 100] },
+    { "id": "c5", "from": "go", "to": "mongo", "label": "CRUD", "fromSide": "bottom", "toSide": "top", "labelAt": [510, 255] },
+    { "id": "c6", "from": "browser", "to": "websocket", "label": "WebSocket", "variant": "dashed", "fromSide": "top", "toSide": "left" },
+    { "id": "c7", "from": "websocket", "to": "go", "label": "Broadcast", "fromSide": "right", "toSide": "top" },
+    { "id": "c8", "from": "go", "to": "jwt", "label": "Validate", "fromSide": "bottom", "toSide": "left" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Clean Architecture",
+      "items": ["Handler → Service → Repository", "18 models · 15 repos · 16 services", "Rate limiter (100 req/min)", "Role-based access control"]
+    },
+    {
+      "dot": "cyan",
+      "title": "Real-time Engine",
+      "items": ["Gorilla WebSocket · Room-based", "Chat · Kanban · Notifications", "Optimistic UI + server confirm", "Exponential backoff reconnect"]
+    },
+    {
+      "dot": "violet",
+      "title": "AI Matching",
+      "items": ["all-MiniLM-L6-v2 (384-dim)", "Cosine similarity (0–100%)", "Batch: 1 student vs N projects", "Filtered by application status"]
+    },
+    {
+      "dot": "rose",
+      "title": "Gamification",
+      "items": ["XP with exponential leveling", "Atomic skill point tracking", "Badge on project completion", "Async goroutine pipeline"]
+    }
+  ]
+}
